@@ -86,6 +86,10 @@ export interface AppDict {
   checkNowRunning: string;
   checkNowResult: (n: number) => string;
   checkNowFailed: string;
+  checkNowNotEnabled: string;
+  checkNowNoSub: string;
+  checkNowNotSubscribed: string;
+  checkNowNetwork: string;
   notifications: string;
   notifTitle: string;
   notifEmpty: string;
@@ -204,6 +208,10 @@ export const dictionaries: Record<Locale, Dict> = {
       checkNowRunning: 'Checking…',
       checkNowResult: (n) => (n > 0 ? `Sent ${n} notification${n === 1 ? '' : 's'} — check your lock screen.` : 'Checked — nothing crossed right now.'),
       checkNowFailed: 'Couldn’t run the check — try re-enabling push.',
+      checkNowNotEnabled: 'Push isn’t granted in this browser — enable the toggle above first.',
+      checkNowNoSub: 'No local push subscription — toggle push off and back on.',
+      checkNowNotSubscribed: 'Server still can’t find your subscription after re-registering — check Vercel env vars (Upstash) and try again in a minute.',
+      checkNowNetwork: 'Network error reaching the server — try again.',
       notifications: 'Notifications',
       notifTitle: 'Notifications',
       notifEmpty: 'No notifications yet',
@@ -324,6 +332,10 @@ export const dictionaries: Record<Locale, Dict> = {
       checkNowRunning: 'Kontrol ediliyor…',
       checkNowResult: (n) => (n > 0 ? `${n} bildirim gönderildi — kilit ekranına bak.` : 'Kontrol edildi — şu an geçen bir eşik yok.'),
       checkNowFailed: 'Kontrol çalıştırılamadı — push\'u yeniden açmayı dene.',
+      checkNowNotEnabled: 'Bu tarayıcıda push izni yok — önce yukarıdaki anahtarı aç.',
+      checkNowNoSub: 'Yerel push aboneliği yok — push\'u kapatıp tekrar aç.',
+      checkNowNotSubscribed: 'Yeniden kaydettikten sonra bile sunucu aboneliği bulamadı — Vercel env değişkenlerini (Upstash) kontrol edip bir dakika sonra tekrar dene.',
+      checkNowNetwork: 'Sunucuya ulaşırken ağ hatası — tekrar dene.',
       notifications: 'Bildirimler',
       notifTitle: 'Bildirimler',
       notifEmpty: 'Henüz bildirim yok',

@@ -1033,7 +1033,12 @@ function SetPanel({
                 )}
                 {checkStatus !== 'idle' && checkStatus !== 'running' && (
                   <div className={`w-full text-[11.5px] leading-relaxed ${typeof checkStatus === 'object' ? 'text-water' : 'text-overflow'}`}>
-                    {typeof checkStatus === 'object' ? d.checkNowResult(checkStatus.sent) : d.checkNowFailed}
+                    {typeof checkStatus === 'object' ? d.checkNowResult(checkStatus.sent)
+                      : checkStatus === 'not-enabled' ? d.checkNowNotEnabled
+                      : checkStatus === 'no-subscription' ? d.checkNowNoSub
+                      : checkStatus === 'not-subscribed' ? d.checkNowNotSubscribed
+                      : checkStatus === 'network' ? d.checkNowNetwork
+                      : d.checkNowFailed}
                   </div>
                 )}
               </div>

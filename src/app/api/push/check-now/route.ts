@@ -26,20 +26,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'bad-subscription' }, { status: 400 });
   }
 
-  const repo = getRepository();
-  const id = await watcherIdFromEndpoint(sub.endpoint);
-  const watcher = await repo.get(id);
-  if (!watcher) return NextResponse.json({ ok: false, error: 'not-subscribed' }, { status: 404 });
+  try {
+    const repo = getRepository();
+    const id = await watcherIdFromEndpoint(sub.endpoint);
+    const watcher = await repo.get(id);
+    if (!watcher) return NextResponse.json({ ok: false, error: 'not-subscribed' }, { status: 404 });
 
-  const pairs = [...new Set(
-    watcher.thresholds.filter((t) => !t.paused && t.base !== 'TEST').map((t) => pairKey(t.base, t.quote))
-  )];
-  const quotes = pairs.length ? await getRates(pairs) : [];
-  const rateMap = new Map(quotes.map((q) => [q.pair, q.rate]));
+    const pairs = [...new Set(
+      watcher.thresholds.filter((t) => !t.paused && t.base !== 'TEST').map((t) => pairKey(t.base, t.quote))
+    )];
+    const quotes = pairs.length ? await getRates(pairs) : [];
+    const rateMap = new Map(quotes.map((q) => [q.pair, q.rate]));
 
-  const result = await checkAndNotify(watcher, rateMap);
-  if (result.dead) await repo.remove(watcher.id);
-  else if (result.dirty) { watcher.updatedAt = Date.now(); await repo.put(watcher); }
+    const result = await checkAndNotify(watcher, rateMap);
+    if (result.dead) await repo.remove(watcher.id);
+    else if (result.dirty) { watcher.updatedAt = Date.now(); await repo.put(watcher); }
 
-  return NextResponse.json({ ok: true, sent: result.sent });
+    return NextResponse.json({ ok: true, sent: result.sent });
+  } catch (e: any) {
+    console.error('check-now failed:', e?.message ?? e);
+    return NextResponse.json({ ok: false, error: 'internal-error' }, { status: 500 });
+  }
 }

@@ -149,10 +149,15 @@ const ALLOWED_PAIRS = new Set([
 
 export async function getRates(pairs: string[]): Promise<RateQuote[]> {
   const valid = pairs.filter((p) => ALLOWED_PAIRS.has(p));
-  return Promise.all(
+  // Promise.all yerine allSettled: bir parite için tüm sağlayıcılar geçici
+  // olarak başarısız olursa (ör. USD/TRY), diğer paritelerin (hatta cron'un
+  // kendisinin) etkilenmemesi gerekir — tek bir kur hatası tüm isteği 500'e
+  // düşürmemeli.
+  const settled = await Promise.allSettled(
     valid.map((p) => {
       const [base, quote] = p.split('/');
       return getRate(base, quote);
     })
   );
+  return settled.filter((r): r is PromiseFulfilledResult<RateQuote> => r.status === 'fulfilled').map((r) => r.value);
 }

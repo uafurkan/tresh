@@ -20,25 +20,30 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  const repo = getRepository();
-  const watchers = await repo.getAll();
-  if (watchers.length === 0) return NextResponse.json({ ok: true, watchers: 0, sent: 0 });
+  try {
+    const repo = getRepository();
+    const watchers = await repo.getAll();
+    if (watchers.length === 0) return NextResponse.json({ ok: true, watchers: 0, sent: 0 });
 
-  // TEST/DEMO gerçek bir kur değil — bildirim testleri için ayrı işlenir,
-  // sağlayıcılardan veri çekilmez.
-  const pairs = [...new Set(
-    watchers.flatMap((w) => w.thresholds.filter((t) => !t.paused && t.base !== 'TEST').map((t) => pairKey(t.base, t.quote)))
-  )];
-  const quotes = pairs.length ? await getRates(pairs) : [];
-  const rateMap = new Map(quotes.map((q) => [q.pair, q.rate]));
+    // TEST/DEMO gerçek bir kur değil — bildirim testleri için ayrı işlenir,
+    // sağlayıcılardan veri çekilmez.
+    const pairs = [...new Set(
+      watchers.flatMap((w) => w.thresholds.filter((t) => !t.paused && t.base !== 'TEST').map((t) => pairKey(t.base, t.quote)))
+    )];
+    const quotes = pairs.length ? await getRates(pairs) : [];
+    const rateMap = new Map(quotes.map((q) => [q.pair, q.rate]));
 
-  let sent = 0;
-  for (const w of watchers) {
-    const result = await checkAndNotify(w, rateMap);
-    sent += result.sent;
-    if (result.dead) await repo.remove(w.id);
-    else if (result.dirty) { w.updatedAt = Date.now(); await repo.put(w); }
+    let sent = 0;
+    for (const w of watchers) {
+      const result = await checkAndNotify(w, rateMap);
+      sent += result.sent;
+      if (result.dead) await repo.remove(w.id);
+      else if (result.dirty) { w.updatedAt = Date.now(); await repo.put(w); }
+    }
+
+    return NextResponse.json({ ok: true, watchers: watchers.length, pairs: pairs.length, sent });
+  } catch (e: any) {
+    console.error('cron check failed:', e?.message ?? e);
+    return NextResponse.json({ ok: false, error: 'internal-error' }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true, watchers: watchers.length, pairs: pairs.length, sent });
 }
