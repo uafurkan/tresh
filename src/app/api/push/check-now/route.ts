@@ -44,7 +44,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, sent: result.sent });
   } catch (e: any) {
-    console.error('check-now failed:', e?.message ?? e);
-    return NextResponse.json({ ok: false, error: 'internal-error' }, { status: 500 });
+    const message = e?.message ?? String(e);
+    console.error('check-now failed:', message);
+    // Geçici teşhis için gerçek hata mesajını da döndürüyoruz — tek
+    // kullanıcılı test aşamasında hassas bilgi sızdırma riski yok, kök
+    // sebebi (Upstash HTTP kodu, timeout vb.) hızlıca görmek için gerekli.
+    return NextResponse.json({ ok: false, error: 'internal-error', message }, { status: 500 });
   }
 }

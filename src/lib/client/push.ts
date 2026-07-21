@@ -94,7 +94,9 @@ export async function sendTestPush(locale = 'en'): Promise<TestPushResult> {
   }
 }
 
-export type CheckNowResult = { ok: true; sent: number } | { ok: false; reason: 'not-enabled' | 'no-subscription' | 'not-subscribed' | 'server-error' | 'network' };
+export type CheckNowResult =
+  | { ok: true; sent: number }
+  | { ok: false; reason: 'not-enabled' | 'no-subscription' | 'not-subscribed' | 'server-error' | 'network'; detail?: string };
 
 async function checkNowOnce(sub: PushSubscription): Promise<CheckNowResult> {
   try {
@@ -104,9 +106,9 @@ async function checkNowOnce(sub: PushSubscription): Promise<CheckNowResult> {
       body: JSON.stringify({ subscription: sub.toJSON() }),
     });
     if (res.status === 404) return { ok: false, reason: 'not-subscribed' };
-    if (!res.ok) return { ok: false, reason: 'server-error' };
     const data = await res.json().catch(() => ({ ok: false }));
-    return data.ok ? { ok: true, sent: data.sent ?? 0 } : { ok: false, reason: 'server-error' };
+    if (!res.ok || !data.ok) return { ok: false, reason: 'server-error', detail: data?.message };
+    return { ok: true, sent: data.sent ?? 0 };
   } catch {
     // fetch'in kendisi reddettiyse (bağlantı kesildi/CORS/vs.) — gerçek ağ hatası.
     return { ok: false, reason: 'network' };

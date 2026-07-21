@@ -6,7 +6,7 @@ import WaterCanvas from '@/components/WaterCanvas';
 import AddToHomeScreen from '@/components/AddToHomeScreen';
 import { PAIR_CATALOG, CRYPTO_BASES, pairKey, type PairDef, type Threshold } from '@/lib/pairs';
 import { localRepository } from '@/lib/client/storage';
-import { checkNow, enablePush, pushSupported, registerServiceWorker, sendTestPush, syncThresholds, type TestPushResult } from '@/lib/client/push';
+import { checkNow, enablePush, pushSupported, registerServiceWorker, sendTestPush, syncThresholds, type CheckNowResult, type TestPushResult } from '@/lib/client/push';
 import { useRates } from '@/lib/client/useRates';
 import { dictionaries, localePath, type AppDict, type Locale } from '@/lib/i18n';
 import { tensionOf, miniWavePath } from '@/lib/client/wave';
@@ -675,7 +675,7 @@ function SetPanel({
   // ızgara dikeyde çok yer kaplıyor ve üstteki canlı kur okumasına alan
   // bırakmıyordu (kullanıcı ekran görüntüsüyle bildirdi).
   const [testStatus, setTestStatus] = useState<'idle' | 'sending' | 'sent' | Extract<TestPushResult, { ok: false }>['reason']>('idle');
-  const [checkStatus, setCheckStatus] = useState<'idle' | 'running' | { sent: number } | 'not-enabled' | 'no-subscription' | 'not-subscribed' | 'server-error' | 'network'>('idle');
+  const [checkStatus, setCheckStatus] = useState<'idle' | 'running' | CheckNowResult>('idle');
   const [pairSearchOpen, setPairSearchOpen] = useState(false);
   const [pairQuery, setPairQuery] = useState('');
   const pairMatches = PAIR_CATALOG.filter((p) => {
@@ -1015,7 +1015,7 @@ function SetPanel({
                       await onResync();
                       res = await checkNow();
                     }
-                    setCheckStatus(res.ok ? { sent: res.sent } : res.reason);
+                    setCheckStatus(res);
                   }}
                   disabled={checkStatus === 'running'}
                   className="rounded-lg border px-3 py-1.5 text-[12px] transition-colors disabled:opacity-60"
@@ -1032,13 +1032,13 @@ function SetPanel({
                   </div>
                 )}
                 {checkStatus !== 'idle' && checkStatus !== 'running' && (
-                  <div className={`w-full text-[11.5px] leading-relaxed ${typeof checkStatus === 'object' ? 'text-water' : 'text-overflow'}`}>
-                    {typeof checkStatus === 'object' ? d.checkNowResult(checkStatus.sent)
-                      : checkStatus === 'not-enabled' ? d.checkNowNotEnabled
-                      : checkStatus === 'no-subscription' ? d.checkNowNoSub
-                      : checkStatus === 'not-subscribed' ? d.checkNowNotSubscribed
-                      : checkStatus === 'server-error' ? d.checkNowServerError
-                      : checkStatus === 'network' ? d.checkNowNetwork
+                  <div className={`w-full text-[11.5px] leading-relaxed ${checkStatus.ok ? 'text-water' : 'text-overflow'}`}>
+                    {checkStatus.ok ? d.checkNowResult(checkStatus.sent)
+                      : checkStatus.reason === 'not-enabled' ? d.checkNowNotEnabled
+                      : checkStatus.reason === 'no-subscription' ? d.checkNowNoSub
+                      : checkStatus.reason === 'not-subscribed' ? d.checkNowNotSubscribed
+                      : checkStatus.reason === 'server-error' ? `${d.checkNowServerError}${checkStatus.detail ? ` (${checkStatus.detail})` : ''}`
+                      : checkStatus.reason === 'network' ? d.checkNowNetwork
                       : d.checkNowFailed}
                   </div>
                 )}
