@@ -25,10 +25,8 @@ export async function GET(req: NextRequest) {
     const watchers = await repo.getAll();
     if (watchers.length === 0) return NextResponse.json({ ok: true, watchers: 0, sent: 0 });
 
-    // TEST/DEMO gerçek bir kur değil — bildirim testleri için ayrı işlenir,
-    // sağlayıcılardan veri çekilmez.
     const pairs = [...new Set(
-      watchers.flatMap((w) => w.thresholds.filter((t) => !t.paused && t.base !== 'TEST').map((t) => pairKey(t.base, t.quote)))
+      watchers.flatMap((w) => w.thresholds.filter((t) => !t.paused).map((t) => pairKey(t.base, t.quote)))
     )];
     const quotes = pairs.length ? await getRates(pairs) : [];
     const rateMap = new Map(quotes.map((q) => [q.pair, q.rate]));

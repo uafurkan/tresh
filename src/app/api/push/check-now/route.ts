@@ -10,9 +10,8 @@ export const maxDuration = 30;
 
 /**
  * Cron-job.org'un gerçek tetikleme sıklığından bağımsız olarak, kullanıcının
- * KENDİ eşiklerini anında kontrol edip (ör. TEST/DEMO paritesi için) push
- * göndermeyi dener — "cron çalışıyor mu, yoksa push mu bozuk" ayrımını
- * saniyeler içinde yapabilmek için.
+ * KENDİ eşiklerini anında kontrol edip push göndermeyi dener — "cron
+ * çalışıyor mu, yoksa push mu bozuk" ayrımını saniyeler içinde yapabilmek için.
  */
 export async function POST(req: NextRequest) {
   let body: { subscription?: PushSubscriptionJSON };
@@ -33,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (!watcher) return NextResponse.json({ ok: false, error: 'not-subscribed' }, { status: 404 });
 
     const pairs = [...new Set(
-      watcher.thresholds.filter((t) => !t.paused && t.base !== 'TEST').map((t) => pairKey(t.base, t.quote))
+      watcher.thresholds.filter((t) => !t.paused).map((t) => pairKey(t.base, t.quote))
     )];
     const quotes = pairs.length ? await getRates(pairs) : [];
     const rateMap = new Map(quotes.map((q) => [q.pair, q.rate]));

@@ -86,14 +86,6 @@ const CACHE_TTL_MS = 10_000;
 
 export async function getRate(base: string, quote: string): Promise<RateQuote> {
   const key = pairKey(base, quote);
-
-  // TEST/DEMO gerçek bir kur değil — bildirim testleri için salınımlı sahte
-  // değer üretir, hiçbir sağlayıcıya istek atmaz.
-  if (base === 'TEST') {
-    const rate = 50 + Math.sin(Date.now() / 4000) * 10;
-    return { pair: key, rate: Math.round(rate * 100) / 100, ts: Date.now(), source: 'test' };
-  }
-
   const hit = cache.get(key);
   if (hit && Date.now() - hit.ts < CACHE_TTL_MS && hit.source === 'cache-fresh') return hit;
   const cachedAt = (hit as any)?.fetchedAt as number | undefined;

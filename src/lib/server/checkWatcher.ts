@@ -1,6 +1,6 @@
 import type { Watcher } from './store';
 import { sendPush } from './push';
-import { pairKey, TEST_SAMPLES } from '@/lib/pairs';
+import { pairKey } from '@/lib/pairs';
 import { pushBody } from '@/lib/i18n';
 
 const OPEN_ACTION_LABEL: Record<string, string> = { en: 'Open Tresh', tr: 'Tresh’i aç' };
@@ -13,9 +13,9 @@ export interface CheckResult {
 
 /**
  * Tek bir izleyicinin eşiklerini verilen kur haritasına göre kontrol eder,
- * geçenlere (ve her zaman TEST/DEMO'ya) push gönderir. Hem cron (tüm
- * izleyiciler) hem de "şimdi kontrol et" (tek izleyici, anlık) tarafından
- * paylaşılır — mantık iki kopya halinde tutulmasın diye.
+ * geçenlere push gönderir. Hem cron (tüm izleyiciler) hem de "şimdi kontrol
+ * et" (tek izleyici, anlık) tarafından paylaşılır — mantık iki kopya halinde
+ * tutulmasın diye.
  */
 export async function checkAndNotify(w: Watcher, rateMap: Map<string, number>): Promise<CheckResult> {
   let sent = 0;
@@ -26,26 +26,6 @@ export async function checkAndNotify(w: Watcher, rateMap: Map<string, number>): 
 
   for (const t of w.thresholds) {
     if (t.paused) continue;
-
-    if (t.base === 'TEST') {
-      const counter = (w.lastRates[t.id] ?? -1) + 1;
-      const sample = TEST_SAMPLES[counter % TEST_SAMPLES.length];
-      const arrow = sample.dir === 'above' ? '▲' : '▼';
-      const alive = await sendPush(w.subscription, {
-        title: `Tresh · ${sample.key} ${arrow}`,
-        body: pushBody(locale, sample.key, sample.value.toFixed(sample.decimals), sample.dir, sample.rate.toFixed(sample.decimals)),
-        tag: `tresh-test-${t.id}-${counter}`,
-        url,
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
-        actions: [{ action: 'open', title: OPEN_ACTION_LABEL[locale] }],
-      });
-      if (!alive) { dead = true; break; }
-      sent++;
-      w.lastRates[t.id] = counter;
-      dirty = true;
-      continue;
-    }
 
     const key = pairKey(t.base, t.quote);
     const rate = rateMap.get(key);

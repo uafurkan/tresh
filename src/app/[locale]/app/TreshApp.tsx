@@ -18,8 +18,8 @@ type Screen = 'home' | 'set' | 'notifications';
 
 const cataloguePairs = PAIR_CATALOG.map((p) => pairKey(p.base, p.quote));
 // Masaüstü ayar panelinde arama çubuğunun yanında gösterilen hızlı seçim
-// pariteleri — test paritesi hariç, katalogdaki ilk 8 gerçek parite.
-const POPULAR_PAIRS = PAIR_CATALOG.filter((p) => p.base !== 'TEST').slice(0, 8);
+// pariteleri — katalogdaki ilk 8 parite.
+const POPULAR_PAIRS = PAIR_CATALOG.slice(0, 8);
 
 export default function TreshApp({ locale }: { locale: Locale }) {
   const d = dictionaries[locale].app;
@@ -51,7 +51,14 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   }, []);
 
   useEffect(() => {
-    const loaded = localRepository.load();
+    // TEST/DEMO test paritesi kaldırıldı — daha önce eklenmiş kalıntı
+    // takipler varsa (artık katalogda yok) sessizce temizle.
+    const rawLoaded = localRepository.load();
+    const loaded = rawLoaded.filter((t) => t.base !== 'TEST');
+    if (loaded.length !== rawLoaded.length) {
+      localRepository.save(loaded);
+      syncThresholds(loaded, locale);
+    }
     setThresholds(loaded);
     setSelectedId(loaded[0]?.id ?? null);
     setHydrated(true);
