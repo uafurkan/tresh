@@ -244,7 +244,12 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   // Ayar ekranındayken rakam, alttaki panelin üstünde sabit bir yerde
   // kalmalı — aksi halde panel arkasında yarı görünür/tıklanamaz hale
   // geliyordu (canlı kura dokunma kısayolu erişilemez oluyordu).
-  const readoutTop = onSetScreen ? 90 : Math.max(120, Math.min(surfaceY - 150, 420));
+  const readoutTop = onSetScreen ? 68 : Math.max(120, Math.min(surfaceY - 150, 420));
+  // Ayar ekranında panel (alt sayfa) daha az yükseklik kaplıyor ki üstteki
+  // kur okuması ile panelin kendi başlığı ("Eşik belirle") çakışmasın —
+  // küçük ekranlarda (ör. iPhone SE) 78dvh panel + 86px'lik büyük rakam
+  // panelin başlığının üstüne biniyordu.
+  const readoutFontSize = onSetScreen ? 'clamp(34px, 7vw, 60px)' : 'clamp(44px, 8vw, 86px)';
 
   const listItems = thresholds.map((t) => {
     const key = pairKey(t.base, t.quote);
@@ -301,7 +306,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
             className="num text-content-primary transition-opacity active:opacity-60"
             style={{
               pointerEvents: 'auto',
-              fontSize: 'clamp(44px, 8vw, 86px)',
+              fontSize: readoutFontSize,
               fontWeight: 400,
               letterSpacing: '-1.5px',
               lineHeight: 1,
@@ -315,7 +320,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
         ) : (
           <div
             className="num text-content-primary"
-            style={{ fontSize: 'clamp(44px, 8vw, 86px)', fontWeight: 400, letterSpacing: '-1.5px', lineHeight: 1, textShadow: '0 2px 30px rgba(5,11,20,0.9)' }}
+            style={{ fontSize: readoutFontSize, fontWeight: 400, letterSpacing: '-1.5px', lineHeight: 1, textShadow: '0 2px 30px rgba(5,11,20,0.9)' }}
           >
             {loading && displayRate == null ? '· · ·' : displayRate != null ? fmtNum(displayRate, displayDecimals, locale) : '—'}
           </div>
@@ -476,7 +481,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
           {screen === 'home' ? (
             <div className="pointer-events-auto px-4 pb-8 pt-4">{listPanel}</div>
           ) : (
-            <div className="pointer-events-auto rounded-t-[28px] px-5 pb-8 pt-5" style={{ background: 'rgba(5,11,20,0.72)', backdropFilter: 'blur(10px)', minHeight: '78dvh' }}>
+            <div className="pointer-events-auto rounded-t-[28px] px-5 pb-8 pt-5" style={{ background: 'rgba(5,11,20,0.72)', backdropFilter: 'blur(10px)', minHeight: '68dvh' }}>
               <SetPanel {...setPanelProps} />
             </div>
           )}

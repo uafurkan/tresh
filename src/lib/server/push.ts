@@ -18,6 +18,16 @@ export interface PushPayload {
   body: string;
   tag?: string;
   url?: string;
+  /** İkon (192x192 önerilir) — tüm platformlarda kullanılır. */
+  icon?: string;
+  /** Bildirim köşesindeki küçük rozet (Android/Chrome). */
+  badge?: string;
+  /** Büyük banner görseli — yalnızca Android/Chrome destekler, diğerleri yoksayar. */
+  image?: string;
+  /** Bildirim eylem düğmeleri — yalnızca Chrome/Edge/Android destekler. */
+  actions?: { action: string; title: string }[];
+  /** Kullanıcı kapatana kadar ekranda kalsın mı (yalnızca destekleyen platformlar). */
+  requireInteraction?: boolean;
 }
 
 /** Bildirimi gönderir; abonelik ölmüşse (404/410) false döner. */

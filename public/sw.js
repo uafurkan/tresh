@@ -35,20 +35,29 @@ self.addEventListener('push', (event) => {
   event.waitUntil((async () => {
     const count = (await readBadge()) + 1;
     await writeBadge(count);
-    await self.registration.showNotification(payload.title, {
+    /* image/actions/requireInteraction yalnızca Chrome/Edge/Android'de gösterilir —
+       Safari/macOS ve iOS PWA bu alanları sessizce yoksayar, hata vermez. */
+    const options = {
       body: payload.body,
       tag: payload.tag,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: payload.icon || '/icon-192.png',
+      badge: payload.badge || '/icon-192.png',
       timestamp: Date.now(),
       data: { url: payload.url },
-    });
+      renotify: true,
+      vibrate: [160, 60, 160],
+    };
+    if (payload.image) options.image = payload.image;
+    if (Array.isArray(payload.actions) && payload.actions.length) options.actions = payload.actions;
+    if (payload.requireInteraction) options.requireInteraction = true;
+    await self.registration.showNotification(payload.title, options);
   })());
 });
 
 self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || '/app';
+  event.notification.close();
+  if (event.action === 'dismiss') return;
   event.waitUntil((async () => {
     await writeBadge(0);
     const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
