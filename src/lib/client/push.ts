@@ -22,25 +22,46 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   }
 }
 
-/** İzin ister, push aboneliği oluşturur ve eşiklerle birlikte sunucuya kaydeder. */
-export async function enablePush(thresholds: Threshold[], locale = 'en'): Promise<boolean> {
-  if (!pushSupported()) return false;
+export type EnablePushResult =
+  | { ok: true }
+  | { ok: false; reason: 'unsupported' | 'missing-vapid' | 'denied' | 'dismissed' | 'subscribe-failed' | 'sync-failed' };
+
+/**
+ * İzin ister, push aboneliği oluşturur ve eşiklerle birlikte sunucuya kaydeder.
+ *
+ * Notification.requestPermission() burada, herhangi bir await'ten ÖNCE çağrılır:
+ * araya bir await girerse (ör. önce service worker register edilirse) bazı
+ * tarayıcılar (özellikle Safari/iOS) tıklamanın "kullanıcı hareketi" bağlamını
+ * kaybeder ve izin diyaloğunu hiç göstermeden sessizce reddeder.
+ */
+export async function enablePush(thresholds: Threshold[], locale = 'en'): Promise<EnablePushResult> {
+  if (!pushSupported()) return { ok: false, reason: 'unsupported' };
   const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!vapid) {
-    console.warn('NEXT_PUBLIC_VAPID_PUBLIC_KEY tanımsız — push devre dışı.');
-    return false;
+    console.warn('NEXT_PUBLIC_VAPID_PUBLIC_KEY tanımsız — Vercel env değişkenlerini kontrol edip yeniden deploy et.');
+    return { ok: false, reason: 'missing-vapid' };
   }
-  const reg = await registerServiceWorker();
-  if (!reg) return false;
+
+  if (Notification.permission === 'denied') return { ok: false, reason: 'denied' };
   const perm = await Notification.requestPermission();
-  if (perm !== 'granted') return false;
-  const sub =
-    (await reg.pushManager.getSubscription()) ??
-    (await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapid) as unknown as BufferSource,
-    }));
-  return syncSubscription(sub, thresholds, locale);
+  if (perm !== 'granted') return { ok: false, reason: perm === 'denied' ? 'denied' : 'dismissed' };
+
+  const reg = await registerServiceWorker();
+  if (!reg) return { ok: false, reason: 'subscribe-failed' };
+  let sub: PushSubscription | null;
+  try {
+    sub =
+      (await reg.pushManager.getSubscription()) ??
+      (await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapid) as unknown as BufferSource,
+      }));
+  } catch {
+    return { ok: false, reason: 'subscribe-failed' };
+  }
+  if (!sub) return { ok: false, reason: 'subscribe-failed' };
+  const synced = await syncSubscription(sub, thresholds, locale);
+  return synced ? { ok: true } : { ok: false, reason: 'sync-failed' };
 }
 
 /** Eşikler her değiştiğinde mevcut aboneliği sunucuyla eşitler. */

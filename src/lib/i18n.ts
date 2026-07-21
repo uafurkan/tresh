@@ -63,6 +63,9 @@ export interface AppDict {
   pushAria: string;
   pushSupported: string;
   pushUnsupported: string;
+  pushDenied: string;
+  pushMissingConfig: string;
+  pushFailed: string;
   bannerLabel: string;
   bannerText: (key: string, value: string, dir: 'above' | 'below', current: string) => string;
   close: string;
@@ -141,6 +144,9 @@ export const dictionaries: Record<Locale, Dict> = {
       pushAria: 'Allow push notifications',
       pushSupported: 'So we can reach you the moment the level breaks — even with the app closed.',
       pushUnsupported: 'This browser doesn’t support push; we’ll still notify you while the app is open.',
+      pushDenied: 'Notifications are blocked for this site. Allow them in your browser’s site settings, then try again.',
+      pushMissingConfig: 'Push isn’t configured on this deployment yet.',
+      pushFailed: 'Couldn’t enable push right now — try again in a moment.',
       bannerLabel: 'Threshold crossed',
       bannerText: (key, value, dir, current) =>
         dir === 'above'
@@ -216,6 +222,9 @@ export const dictionaries: Record<Locale, Dict> = {
       pushAria: 'Push bildirimlerine izin ver',
       pushSupported: 'Seviye kırıldığı an sana ulaşabilmemiz için — uygulama kapalıyken bile.',
       pushUnsupported: 'Bu tarayıcı push desteklemiyor; uygulama açıkken yine de haber veririz.',
+      pushDenied: 'Bu site için bildirimler engellenmiş. Tarayıcının site ayarlarından izin verip tekrar dene.',
+      pushMissingConfig: 'Bu deploy üzerinde push henüz yapılandırılmamış.',
+      pushFailed: 'Push şu an açılamadı — birazdan tekrar dene.',
       bannerLabel: 'Eşik geçildi',
       bannerText: (key, value, dir, current) =>
         dir === 'above'

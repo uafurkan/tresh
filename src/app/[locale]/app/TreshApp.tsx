@@ -39,6 +39,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const [newValue, setNewValue] = useState<number | null>(null);
   const [perm, setPerm] = useState(false);
   const [permBusy, setPermBusy] = useState(false);
+  const [permError, setPermError] = useState<string | null>(null);
 
   useEffect(() => {
     const loaded = localRepository.load();
@@ -163,8 +164,20 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const togglePerm = async () => {
     if (perm || permBusy) return;
     setPermBusy(true);
-    const ok = await enablePush(thresholds, locale);
-    setPerm(ok);
+    setPermError(null);
+    const res = await enablePush(thresholds, locale);
+    setPerm(res.ok);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        denied: d.pushDenied,
+        'missing-vapid': d.pushMissingConfig,
+        unsupported: d.pushUnsupported,
+        'subscribe-failed': d.pushFailed,
+        'sync-failed': d.pushFailed,
+        dismissed: '',
+      };
+      setPermError(map[res.reason] || d.pushFailed);
+    }
     setPermBusy(false);
   };
 
@@ -451,6 +464,9 @@ export default function TreshApp({ locale }: { locale: Locale }) {
             <div className="mt-1.5 text-[11.5px] leading-relaxed text-content-secondary">
               {pushSupported() ? d.pushSupported : d.pushUnsupported}
             </div>
+            {permError && (
+              <div className="mt-2 text-[11.5px] leading-relaxed text-overflow">{permError}</div>
+            )}
           </div>
         </div>
       </div>

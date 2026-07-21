@@ -42,36 +42,40 @@ export default function WaterCanvas(props: WaterCanvasProps) {
 
     const resize = () => {
       const r = canvas.getBoundingClientRect();
-      W = Math.max(1, r.width);
-      H = Math.max(1, r.height);
-      canvas.width = W * dpr;
-      canvas.height = H * dpr;
+      const nextW = Math.max(1, r.width);
+      const nextH = Math.max(1, r.height);
+      // Alt-piksel titreşimlerinde canvas'ı yeniden ayırma — kasmanın asıl kaynağı.
+      if (Math.abs(nextW - W) < 0.5 && Math.abs(nextH - H) < 0.5) return;
+      W = nextW; H = nextH;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
+    // Nokta dizisi karede bir kez hesaplanır, fill ve stroke aynı diziyi paylaşır.
+    const pts: { x: number; y: number }[] = [];
     const wave = (
       baseY: number, amp: number, freq: number, phase: number,
       fill: string | CanvasGradient, stroke: string | null
     ) => {
-      ctx.beginPath();
-      ctx.moveTo(0, H);
+      pts.length = 0;
       for (let x = 0; x <= W; x += 4) {
         const y = baseY + Math.sin(x * freq + phase) * amp + Math.sin(x * freq * 2.3 + phase * 1.5) * amp * 0.4;
-        ctx.lineTo(x, y);
+        pts.push({ x, y });
       }
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      for (const pt of pts) ctx.lineTo(pt.x, pt.y);
       ctx.lineTo(W, H);
       ctx.closePath();
       ctx.fillStyle = fill;
       ctx.fill();
       if (stroke) {
         ctx.beginPath();
-        for (let x = 0; x <= W; x += 4) {
-          const y = baseY + Math.sin(x * freq + phase) * amp + Math.sin(x * freq * 2.3 + phase * 1.5) * amp * 0.4;
-          if (x === 0) ctx.moveTo(0, y); else ctx.lineTo(x, y);
-        }
+        pts.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
         ctx.strokeStyle = stroke;
         ctx.lineWidth = 2;
         ctx.stroke();
@@ -121,10 +125,11 @@ export default function WaterCanvas(props: WaterCanvasProps) {
       const time = reduced || error ? 0 : ts / 1000;
       const speed = 1 + tension * 1.4;
       const amp = loading ? 3 : 5 + tension * 7;
-      const blur = loading ? 5 : 0;
 
       ctx.save();
-      if (blur) ctx.filter = `blur(${blur}px)`;
+      // Eskiden ctx.filter='blur(...)' kullanılıyordu — her karede tüm canvas'ı
+      // bulanıklaştırmak pahalı ve kasmaya yol açıyordu. Yükleme hissi artık
+      // düşük genlik + düşük opaklıkla veriliyor.
       wave(surfaceY + 10, amp * 0.6, 0.014, time * speed * 0.6 + 2, col(0.16), null);
       const grad = ctx.createLinearGradient(0, surfaceY, 0, H);
       grad.addColorStop(0, col(0.42));

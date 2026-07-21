@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0C1A2A"/>
+      <stop offset="1" stop-color="#04090E"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#34E3D6" stop-opacity="0.95"/>
+      <stop offset="0.45" stop-color="#17A79C" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#07332F" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="water2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1FB8AC" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#0A4A44" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="r"><rect width="64" height="64" rx="14"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="64" height="64" fill="url(#bg)"/>
+    <!-- eşik çizgisi -->
+    <line x1="6" y1="24" x2="58" y2="24" stroke="#FF9647" stroke-width="2.6"
+          stroke-linecap="round" stroke-dasharray="5 6" opacity="0.95"/>
+    <!-- arka dalga -->
+    <path d="M0 40 Q 8 35 16 40 T 32 40 T 48 40 T 64 40 V64 H0 Z" fill="url(#water2)"/>
+    <!-- ön dalga -->
+    <path d="M0 44 Q 8 38 16 44 T 32 44 T 48 44 T 64 44 V64 H0 Z" fill="url(#water)"/>
+    <path d="M0 44 Q 8 38 16 44 T 32 44 T 48 44 T 64 44" fill="none"
+          stroke="#7FF4EA" stroke-width="2.4" stroke-linecap="round"/>
+  </g>
+</svg>
