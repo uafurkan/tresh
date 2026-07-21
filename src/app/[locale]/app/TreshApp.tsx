@@ -90,20 +90,6 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     }
   }, [rates, thresholds, d]);
 
-  // ---- Su geometrisi ----
-  const span = selectedCatalog?.span ?? 1;
-  const center = selected ? selected.value : selectedRate?.rate ?? 0;
-  const min = center - span / 2;
-  const clamp01 = (v: number) => Math.max(0.06, Math.min(0.94, v));
-  const level = selectedRate ? clamp01((selectedRate.rate - min) / span) : 0.42;
-  const thrLevel = selected ? clamp01((selected.value - min) / span) : 0.62;
-  const tension = selected && selectedRate ? tensionOf(selectedRate.rate, selected.value, span) : 0;
-
-  const [surfaceY, setSurfaceY] = useState(300);
-  const onSurfaceY = useCallback((y: number) => {
-    setSurfaceY((prev) => (Math.abs(prev - y) > 0.5 ? y : prev));
-  }, []);
-
   // ---- set flow helpers ----
   const setCat = PAIR_CATALOG[newPairIdx];
   const setPairKeyStr = pairKey(setCat.base, setCat.quote);
@@ -112,6 +98,30 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const effNewValue = newValue ?? (setLive != null ? setLive + setCat.span * 0.15 * (newDir === 'above' ? 1 : -1) : null);
   const fillPct = setLive != null && effNewValue != null ? Math.max(0, Math.min(100, ((effNewValue - setMin) / setCat.span) * 100)) : 50;
   const floatTop = 100 - fillPct;
+
+  // ---- Su geometrisi ----
+  // Ayar ekranındayken (screen === 'set') su, seçili eski eşiği değil,
+  // üzerinde çalışılan pariteyi göstermeli — aksi halde "PAIR" listesinde
+  // BTC/USD seçseniz bile üstteki gösterge hâlâ eski USD/TRY eşiğini
+  // gösterip kafa karıştırıyordu.
+  const onSetScreen = screen === 'set';
+  const displayCat = onSetScreen ? setCat : selectedCatalog;
+  const displayRate = onSetScreen ? setLive : selectedRate?.rate ?? null;
+  const displayValue = onSetScreen ? effNewValue : selected?.value ?? null;
+  const displayDecimals = onSetScreen ? setCat.decimals : selected?.decimals ?? setCat.decimals;
+
+  const span = displayCat?.span ?? 1;
+  const center = displayValue ?? displayRate ?? 0;
+  const min = center - span / 2;
+  const clamp01 = (v: number) => Math.max(0.06, Math.min(0.94, v));
+  const level = displayRate != null ? clamp01((displayRate - min) / span) : 0.42;
+  const thrLevel = displayValue != null ? clamp01((displayValue - min) / span) : 0.62;
+  const tension = displayValue != null && displayRate != null ? tensionOf(displayRate, displayValue, span) : 0;
+
+  const [surfaceY, setSurfaceY] = useState(300);
+  const onSurfaceY = useCallback((y: number) => {
+    setSurfaceY((prev) => (Math.abs(prev - y) > 0.5 ? y : prev));
+  }, []);
 
   const createThreshold = () => {
     if (effNewValue == null) return;
@@ -218,15 +228,15 @@ export default function TreshApp({ locale }: { locale: Locale }) {
         style={{ top: 0, transform: `translateY(${readoutTop}px)`, willChange: 'transform' }}
       >
         <div className="num mb-1.5 text-xs uppercase tracking-[2px] text-content-secondary">
-          {selected ? pairKey(selected.base, selected.quote) : setPairKeyStr}
+          {onSetScreen ? setPairKeyStr : selected ? pairKey(selected.base, selected.quote) : setPairKeyStr}
         </div>
         <div
           className="num text-content-primary"
           style={{ fontSize: 'clamp(44px, 8vw, 86px)', fontWeight: 400, letterSpacing: '-1.5px', lineHeight: 1, textShadow: '0 2px 30px rgba(5,11,20,0.9)' }}
         >
-          {loading && !selectedRate ? '· · ·' : (selected ? selectedRate?.rate : setLive)?.toFixed(selected?.decimals ?? setCat.decimals) ?? '—'}
+          {loading && displayRate == null ? '· · ·' : displayRate != null ? displayRate.toFixed(displayDecimals) : '—'}
         </div>
-        {selected && selectedRate && (
+        {!onSetScreen && selected && selectedRate && (
           <div className="num mt-2 text-[13px] text-content-secondary">
             {d.today(
               `${selectedRate.rate - selectedRate.opening >= 0 ? '+' : ''}${(selectedRate.rate - selectedRate.opening).toFixed(selected.decimals)}`,

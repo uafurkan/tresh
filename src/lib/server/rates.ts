@@ -79,6 +79,26 @@ export async function getRate(base: string, quote: string): Promise<RateQuote> {
   const cachedAt = (hit as any)?.fetchedAt as number | undefined;
   if (hit && cachedAt && Date.now() - cachedAt < CACHE_TTL_MS) return hit;
 
+  // Yahoo (ve diğer sağlayıcılar) BTC/TRY gibi kripto↔fiat-dışı-USD çaprazlarını
+  // doğrudan desteklemiyor — BTC-USD × USD-TRY ile sentetik olarak hesaplanır.
+  if (CRYPTO_BASES.has(base) && quote !== 'USD') {
+    try {
+      const [cryptoUsd, usdQuote] = await Promise.all([getRate(base, 'USD'), getRate('USD', quote)]);
+      const q: RateQuote = {
+        pair: key,
+        rate: cryptoUsd.rate * usdQuote.rate,
+        ts: Math.min(cryptoUsd.ts, usdQuote.ts),
+        source: `synthetic(${cryptoUsd.source}×${usdQuote.source})`,
+      };
+      (q as any).fetchedAt = Date.now();
+      cache.set(key, q);
+      return q;
+    } catch (e: any) {
+      if (hit) return { ...hit, source: `${hit.source} (stale)` };
+      throw e;
+    }
+  }
+
   const errors: string[] = [];
   for (const provider of PROVIDERS) {
     try {

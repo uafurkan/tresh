@@ -14,6 +14,7 @@ export const PAIR_CATALOG: PairDef[] = [
   { base: 'GBP', quote: 'JPY', decimals: 2, span: 6 },
   { base: 'USD', quote: 'JPY', decimals: 2, span: 5 },
   { base: 'BTC', quote: 'USD', decimals: 0, span: 6000 },
+  { base: 'BTC', quote: 'TRY', decimals: 0, span: 300000 },
 ];
 
 /** Yahoo Finance'te "BASE-QUOTE" ticker biçimini kullanan kripto varlıklar. */
