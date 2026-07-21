@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Bu anahtarları Tresh (ana uygulama) target'ının Info.plist'ine ekleyin.
+  Xcode'da target > Info sekmesinden ya da doğrudan Info.plist'e yapıştırarak.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Live Activity / Dynamic Island desteği için zorunlu -->
+    <key>NSSupportsLiveActivities</key>
+    <true/>
+
+    <!-- Arka planda kur tazelemek isterseniz (opsiyonel, README'ye bakın) -->
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>app.tresh.refresh</string>
+    </array>
+</dict>
+</plist>

@@ -11,6 +11,7 @@ import { useRates } from '@/lib/client/useRates';
 import { dictionaries, localePath, type AppDict, type Locale } from '@/lib/i18n';
 import { tensionOf, miniWavePath } from '@/lib/client/wave';
 import { fmtNum, parseLocaleNumber } from '@/lib/client/format';
+import { pushTopWatch, pushWatchList } from '@/lib/client/nativeBridge';
 
 type Screen = 'home' | 'set';
 
@@ -42,6 +43,12 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     setHydrated(true);
     registerServiceWorker();
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') setPerm(true);
+    // Uygulama açılınca ikon rozetini ve service worker sayacını sıfırla.
+    try {
+      (navigator as unknown as { clearAppBadge?: () => Promise<void> }).clearAppBadge?.();
+      navigator.serviceWorker?.controller?.postMessage('badge-clear');
+      navigator.serviceWorker?.ready.then((reg) => reg.active?.postMessage('badge-clear'));
+    } catch { /* desteklenmiyor */ }
     try {
       const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
       setReduced(mq.matches);
@@ -91,6 +98,25 @@ export default function TreshApp({ locale }: { locale: Locale }) {
       prevRates.current[t.id] = cur;
     }
   }, [rates, thresholds, d, locale]);
+
+  // ---- iOS native köprü: takip listesi + en üstteki takibi Dynamic Island'a aktar ----
+  // (Safari'de no-op; yalnızca native WKWebView sarmalayıcı içinde çalışır.)
+  useEffect(() => {
+    pushWatchList(thresholds);
+  }, [thresholds]);
+
+  useEffect(() => {
+    const top = thresholds[0] ?? null;
+    if (!top) { pushTopWatch(null); return; }
+    const key = pairKey(top.base, top.quote);
+    pushTopWatch({
+      pair: key,
+      value: top.value,
+      dir: top.dir,
+      decimals: top.decimals,
+      rate: rates[key]?.rate ?? null,
+    });
+  }, [thresholds, rates]);
 
   // ---- set flow helpers ----
   const setCat = PAIR_CATALOG[newPairIdx];
