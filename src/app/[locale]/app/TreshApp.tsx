@@ -291,22 +291,26 @@ export default function TreshApp({ locale }: { locale: Locale }) {
                   <span className="mt-0.5 block text-[11px]" style={{ color: statusColor }}>{status}</span>
                 </span>
               </button>
-              <div className="flex flex-none flex-col gap-1">
+              <div className="flex flex-none flex-col gap-1.5">
                 <button
                   onClick={() => togglePause(t.id)}
                   aria-label={t.paused ? d.resume : d.mute}
                   title={t.paused ? d.resume : d.mute}
-                  className="rounded-lg px-1.5 py-0.5 text-[11px] text-content-secondary hover:bg-bg-raised"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-content-secondary transition-colors hover:bg-bg-raised hover:text-content-primary"
                 >
-                  {t.paused ? '▸' : '⏸'}
+                  {t.paused ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8V4z" /></svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zm8 0h4v16h-4z" /></svg>
+                  )}
                 </button>
                 <button
                   onClick={() => removeThreshold(t.id)}
                   aria-label={d.deleteThreshold}
                   title={d.deleteThreshold}
-                  className="rounded-lg px-1.5 py-0.5 text-[13px] text-content-secondary hover:bg-bg-raised"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-content-secondary transition-colors hover:bg-overflow/15 hover:text-overflow"
                 >
-                  ×
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
                 </button>
               </div>
             </div>
