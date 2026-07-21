@@ -241,7 +241,10 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const isEmpty = hydrated && thresholds.length === 0;
 
   // ---- render parçaları ----
-  const readoutTop = Math.max(120, Math.min(surfaceY - 150, 420));
+  // Ayar ekranındayken rakam, alttaki panelin üstünde sabit bir yerde
+  // kalmalı — aksi halde panel arkasında yarı görünür/tıklanamaz hale
+  // geliyordu (canlı kura dokunma kısayolu erişilemez oluyordu).
+  const readoutTop = onSetScreen ? 90 : Math.max(120, Math.min(surfaceY - 150, 420));
 
   const listItems = thresholds.map((t) => {
     const key = pairKey(t.base, t.quote);
@@ -292,12 +295,31 @@ export default function TreshApp({ locale }: { locale: Locale }) {
         <div className="num mb-1.5 text-xs uppercase tracking-[2px] text-content-secondary">
           {onSetScreen ? setPairKeyStr : selected ? pairKey(selected.base, selected.quote) : setPairKeyStr}
         </div>
-        <div
-          className="num text-content-primary"
-          style={{ fontSize: 'clamp(44px, 8vw, 86px)', fontWeight: 400, letterSpacing: '-1.5px', lineHeight: 1, textShadow: '0 2px 30px rgba(5,11,20,0.9)' }}
-        >
-          {loading && displayRate == null ? '· · ·' : displayRate != null ? fmtNum(displayRate, displayDecimals, locale) : '—'}
-        </div>
+        {onSetScreen && displayRate != null ? (
+          <button
+            onClick={() => setNewValue(displayRate)}
+            className="num text-content-primary transition-opacity active:opacity-60"
+            style={{
+              pointerEvents: 'auto',
+              fontSize: 'clamp(44px, 8vw, 86px)',
+              fontWeight: 400,
+              letterSpacing: '-1.5px',
+              lineHeight: 1,
+              textShadow: '0 2px 30px rgba(5,11,20,0.9)',
+            }}
+            aria-label={d.useCurrentRate}
+            title={d.useCurrentRate}
+          >
+            {fmtNum(displayRate, displayDecimals, locale)}
+          </button>
+        ) : (
+          <div
+            className="num text-content-primary"
+            style={{ fontSize: 'clamp(44px, 8vw, 86px)', fontWeight: 400, letterSpacing: '-1.5px', lineHeight: 1, textShadow: '0 2px 30px rgba(5,11,20,0.9)' }}
+          >
+            {loading && displayRate == null ? '· · ·' : displayRate != null ? fmtNum(displayRate, displayDecimals, locale) : '—'}
+          </div>
+        )}
         {!onSetScreen && selected && selectedRate && (
           <div className="num mt-2 text-[13px] text-content-secondary">
             {d.today(
@@ -427,8 +449,12 @@ export default function TreshApp({ locale }: { locale: Locale }) {
       {/* ==== mobil: full-bleed su + alt sayfa ==== */}
       <div className="md:hidden">
         <div className="fixed inset-0">{waterPanel}</div>
-        <div className="relative z-10 flex min-h-[100dvh] flex-col">
-          <header className="flex items-start justify-between px-5 pb-2 pt-5">
+        {/* pointer-events-none: bu sütun tam ekran yüksekliğinde ama çoğu
+            alanı boş — none olmazsa su panelindeki tıklanabilir öğeleri
+            (ör. canlı kura dokunma kısayolu) engelliyordu. Gerçek içerik
+            blokları kendi pointer-events-auto'sunu taşıyor. */}
+        <div className="relative z-10 flex min-h-[100dvh] flex-col pointer-events-none">
+          <header className="pointer-events-auto flex items-start justify-between px-5 pb-2 pt-5">
             {screen === 'home' ? (
               <div>
                 <div className="font-heading text-[19px] font-semibold text-content-primary">Tresh</div>
@@ -441,12 +467,16 @@ export default function TreshApp({ locale }: { locale: Locale }) {
             )}
             <HomeButton locale={locale} label={d.home} />
           </header>
-          {banner && <Banner text={banner} d={d} onClose={() => setBanner(null)} />}
+          {banner && (
+            <div className="pointer-events-auto">
+              <Banner text={banner} d={d} onClose={() => setBanner(null)} />
+            </div>
+          )}
           <div className="flex-1" />
           {screen === 'home' ? (
-            <div className="px-4 pb-8 pt-4">{listPanel}</div>
+            <div className="pointer-events-auto px-4 pb-8 pt-4">{listPanel}</div>
           ) : (
-            <div className="rounded-t-[28px] px-5 pb-8 pt-5" style={{ background: 'rgba(5,11,20,0.72)', backdropFilter: 'blur(10px)', minHeight: '78dvh' }}>
+            <div className="pointer-events-auto rounded-t-[28px] px-5 pb-8 pt-5" style={{ background: 'rgba(5,11,20,0.72)', backdropFilter: 'blur(10px)', minHeight: '78dvh' }}>
               <SetPanel {...setPanelProps} />
             </div>
           )}
@@ -583,6 +613,14 @@ function SetPanel({
     }
     if (trackRef.current) trackRef.current.setAttribute('aria-valuenow', String(value));
   }, [setMin, setCat.span, setCat.decimals, setLive, newDir, d, locale]);
+
+  // Dışarıdan (ör. üstteki canlı kur rakamına dokununca) effNewValue değişirse
+  // input/su çubuğunu senkronize et — input uncontrolled olduğundan
+  // defaultValue yalnızca mount anında uygulanır, sonraki değişiklikleri
+  // yakalamaz.
+  useEffect(() => {
+    if (effNewValue != null) applyDrag(effNewValue);
+  }, [effNewValue, applyDrag]);
 
   const valueFromY = useCallback((clientY: number) => {
     const rect = rectRef.current;

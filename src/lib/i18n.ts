@@ -88,6 +88,7 @@ export interface AppDict {
   installAndroidBody: string;
   installAndroidCta: string;
   installDismiss: string;
+  useCurrentRate: string;
 }
 
 export interface Dict {
@@ -193,6 +194,7 @@ export const dictionaries: Record<Locale, Dict> = {
       installAndroidBody: 'Add it to your home screen for quick access and reliable notifications.',
       installAndroidCta: 'Install app',
       installDismiss: 'Dismiss',
+      useCurrentRate: 'Use the current rate as your threshold',
     },
   },
   tr: {
@@ -290,6 +292,7 @@ export const dictionaries: Record<Locale, Dict> = {
       installAndroidBody: 'Hızlı erişim ve güvenilir bildirimler için ana ekranına ekle.',
       installAndroidCta: 'Uygulamayı yükle',
       installDismiss: 'Kapat',
+      useCurrentRate: 'Şu anki kuru eşik olarak kullan',
     },
   },
 };
