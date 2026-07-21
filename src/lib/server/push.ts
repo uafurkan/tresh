@@ -30,6 +30,11 @@ export interface PushPayload {
   requireInteraction?: boolean;
 }
 
+/** VAPID anahtarları Vercel env'inde tanımlı mı — teşhis amaçlı. */
+export function pushConfigured(): boolean {
+  return ensureConfigured();
+}
+
 /** Bildirimi gönderir; abonelik ölmüşse (404/410) false döner. */
 export async function sendPush(sub: PushSubscriptionJSON, payload: PushPayload): Promise<boolean> {
   if (!ensureConfigured()) {

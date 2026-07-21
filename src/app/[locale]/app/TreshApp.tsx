@@ -6,7 +6,7 @@ import WaterCanvas from '@/components/WaterCanvas';
 import AddToHomeScreen from '@/components/AddToHomeScreen';
 import { PAIR_CATALOG, CRYPTO_BASES, pairKey, type PairDef, type Threshold } from '@/lib/pairs';
 import { localRepository } from '@/lib/client/storage';
-import { enablePush, pushSupported, registerServiceWorker, syncThresholds } from '@/lib/client/push';
+import { enablePush, pushSupported, registerServiceWorker, sendTestPush, syncThresholds, type TestPushResult } from '@/lib/client/push';
 import { useRates } from '@/lib/client/useRates';
 import { dictionaries, localePath, type AppDict, type Locale } from '@/lib/i18n';
 import { tensionOf, miniWavePath } from '@/lib/client/wave';
@@ -599,6 +599,7 @@ function SetPanel({
   // Parite seçimi artık 8+ butonluk bir ızgara yerine arama çubuğu —
   // ızgara dikeyde çok yer kaplıyor ve üstteki canlı kur okumasına alan
   // bırakmıyordu (kullanıcı ekran görüntüsüyle bildirdi).
+  const [testStatus, setTestStatus] = useState<'idle' | 'sending' | 'sent' | Extract<TestPushResult, { ok: false }>['reason']>('idle');
   const [pairSearchOpen, setPairSearchOpen] = useState(false);
   const [pairQuery, setPairQuery] = useState('');
   const pairMatches = PAIR_CATALOG.filter((p) => {
@@ -912,6 +913,30 @@ function SetPanel({
             </div>
             {permError && (
               <div className="mt-2 text-[11.5px] leading-relaxed text-overflow">{permError}</div>
+            )}
+            {perm && (
+              <div className="mt-2.5">
+                <button
+                  onClick={async () => {
+                    setTestStatus('sending');
+                    const res = await sendTestPush(locale);
+                    setTestStatus(res.ok ? 'sent' : res.reason);
+                  }}
+                  disabled={testStatus === 'sending'}
+                  className="rounded-lg border px-3 py-1.5 text-[12px] transition-colors disabled:opacity-60"
+                  style={{ borderColor: 'rgba(52,227,214,0.4)', color: '#34E3D6', background: 'rgba(52,227,214,0.08)' }}
+                >
+                  {testStatus === 'sending' ? d.testPushSending : d.sendTestPush}
+                </button>
+                {testStatus !== 'idle' && testStatus !== 'sending' && (
+                  <div className={`mt-1.5 text-[11.5px] leading-relaxed ${testStatus === 'sent' ? 'text-water' : 'text-overflow'}`}>
+                    {testStatus === 'sent' ? d.testPushSent
+                      : testStatus === 'no-subscription' ? d.testPushNoSub
+                      : testStatus === 'vapid-not-configured' ? d.testPushVapidMissing
+                      : d.testPushFailed}
+                  </div>
+                )}
+              </div>
             )}
             {!perm && <AddToHomeScreen d={d} />}
           </div>

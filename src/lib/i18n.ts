@@ -76,6 +76,12 @@ export interface AppDict {
   pushDenied: string;
   pushMissingConfig: string;
   pushFailed: string;
+  sendTestPush: string;
+  testPushSending: string;
+  testPushSent: string;
+  testPushNoSub: string;
+  testPushVapidMissing: string;
+  testPushFailed: string;
   bannerLabel: string;
   bannerText: (key: string, value: string, dir: 'above' | 'below', current: string) => string;
   close: string;
@@ -175,6 +181,12 @@ export const dictionaries: Record<Locale, Dict> = {
       pushDenied: 'Notifications are blocked for this site. Allow them in your browser’s site settings, then try again.',
       pushMissingConfig: 'Push isn’t configured on this deployment yet.',
       pushFailed: 'Couldn’t enable push right now — try again in a moment.',
+      sendTestPush: 'Send a test notification',
+      testPushSending: 'Sending…',
+      testPushSent: 'Sent — close the app and check your lock screen.',
+      testPushNoSub: 'No active subscription — toggle push off and on again.',
+      testPushVapidMissing: 'Server isn’t configured for push (missing VAPID keys).',
+      testPushFailed: 'Couldn’t send — your subscription may be stale, try re-enabling push.',
       bannerLabel: 'Threshold crossed',
       bannerText: (key, value, dir, current) =>
         dir === 'above'
@@ -276,6 +288,12 @@ export const dictionaries: Record<Locale, Dict> = {
       pushDenied: 'Bu site için bildirimler engellenmiş. Tarayıcının site ayarlarından izin verip tekrar dene.',
       pushMissingConfig: 'Bu deploy üzerinde push henüz yapılandırılmamış.',
       pushFailed: 'Push şu an açılamadı — birazdan tekrar dene.',
+      sendTestPush: 'Test bildirimi gönder',
+      testPushSending: 'Gönderiliyor…',
+      testPushSent: 'Gönderildi — uygulamayı kapatıp kilit ekranını kontrol et.',
+      testPushNoSub: 'Aktif abonelik yok — push\'u kapatıp tekrar aç.',
+      testPushVapidMissing: 'Sunucu push için yapılandırılmamış (VAPID anahtarları eksik).',
+      testPushFailed: 'Gönderilemedi — aboneliğin bayat olabilir, push\'u yeniden aç.',
       bannerLabel: 'Eşik geçildi',
       bannerText: (key, value, dir, current) =>
         dir === 'above'

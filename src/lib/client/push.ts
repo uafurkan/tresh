@@ -72,6 +72,28 @@ export async function syncThresholds(thresholds: Threshold[], locale = 'en'): Pr
   if (sub) await syncSubscription(sub, thresholds, locale);
 }
 
+export type TestPushResult = { ok: true } | { ok: false; reason: 'not-enabled' | 'no-subscription' | 'vapid-not-configured' | 'send-failed' | 'network' };
+
+/** Cron'u beklemeden aboneliğin gerçekten çalışıp çalışmadığını anında dener. */
+export async function sendTestPush(locale = 'en'): Promise<TestPushResult> {
+  if (!pushSupported() || Notification.permission !== 'granted') return { ok: false, reason: 'not-enabled' };
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = await reg?.pushManager.getSubscription();
+  if (!sub) return { ok: false, reason: 'no-subscription' };
+  try {
+    const res = await fetch('/api/push/test-send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub.toJSON(), locale }),
+    });
+    if (res.status === 503) return { ok: false, reason: 'vapid-not-configured' };
+    const data = await res.json().catch(() => ({ ok: false }));
+    return data.ok ? { ok: true } : { ok: false, reason: 'send-failed' };
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+}
+
 async function syncSubscription(sub: PushSubscription, thresholds: Threshold[], locale: string): Promise<boolean> {
   try {
     const res = await fetch('/api/push/subscribe', {
