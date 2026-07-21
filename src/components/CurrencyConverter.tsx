@@ -7,11 +7,16 @@ import { dictionaries, type Locale } from '@/lib/i18n';
 
 const ALL_CODES = ['USD', ...CONVERTER_CURRENCIES.map((c) => c.code)];
 
-function fmt(n: number, maxSig = 6): string {
+// Türkçe'de virgül ondalık ayracıdır — 'en-US' formatıyla basılan "117,944"
+// bir Türk kullanıcıya "117,944" (yüz on yedi virgül dokuz yüz kırk dört)
+// gibi görünüp kuru yanlış okutuyordu. Yerelin kendi binlik/ondalık
+// ayracını kullanmak için Intl'e doğru BCP-47 etiketini veriyoruz.
+function fmt(n: number, locale: Locale, maxSig = 6): string {
   if (!Number.isFinite(n)) return '—';
   const abs = Math.abs(n);
   const maximumFractionDigits = abs >= 100 ? 2 : abs >= 1 ? 4 : 8;
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits, maximumSignificantDigits: maxSig }).format(n);
+  const intlLocale = locale === 'tr' ? 'tr-TR' : 'en-US';
+  return new Intl.NumberFormat(intlLocale, { maximumFractionDigits, maximumSignificantDigits: maxSig }).format(n);
 }
 
 /** Ana sayfada canlı döviz çevirici + BTC dahil "USD karşılığı" kur tablosu. */
@@ -93,7 +98,7 @@ export default function CurrencyConverter({ locale }: { locale: Locale }) {
 
           <div className="flex flex-1 items-center gap-2 rounded-2xl border px-3.5 py-3" style={selectStyle}>
             <div className="num min-w-0 flex-1 truncate text-lg text-content-primary">
-              {converted != null ? fmt(converted) : '···'}
+              {converted != null ? fmt(converted, locale) : '···'}
             </div>
             <select
               value={to}
@@ -117,7 +122,7 @@ export default function CurrencyConverter({ locale }: { locale: Locale }) {
               return (
                 <div key={c.code} className="flex items-center justify-between gap-2 text-sm">
                   <span className="num text-content-secondary">{c.code}</span>
-                  <span className="num text-content-primary">{v != null ? `$${fmt(v)}` : '···'}</span>
+                  <span className="num text-content-primary">{v != null ? `$${fmt(v, locale)}` : '···'}</span>
                 </div>
               );
             })}
