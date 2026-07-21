@@ -16,6 +16,23 @@ function fmt(n: number, locale: Locale): string {
   return new Intl.NumberFormat(intlLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 }
 
+// Kullanıcı hem binlik hem ondalık ayracı birlikte yazarsa (ör. Türkçe
+// biçimde "2.500,50") basit bir replace(',', '.') bunu "2.500.50" yapıp
+// yanlış ayrıştırırdı (2.5 gibi). Hangi ayracın son geçtiğine bakıp o
+// ondalık, diğeri binlik ayracı kabul edilir.
+function parseAmount(input: string): number {
+  let s = input.trim();
+  const lastComma = s.lastIndexOf(',');
+  const lastDot = s.lastIndexOf('.');
+  if (lastComma !== -1 && lastDot !== -1) {
+    if (lastComma > lastDot) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(/,/g, '');
+  } else if (lastComma !== -1) {
+    s = s.replace(',', '.');
+  }
+  return parseFloat(s);
+}
+
 /** Ana sayfada canlı döviz çevirici + BTC dahil "USD karşılığı" kur tablosu. */
 export default function CurrencyConverter({ locale }: { locale: Locale }) {
   const d = dictionaries[locale].landing;
@@ -34,7 +51,7 @@ export default function CurrencyConverter({ locale }: { locale: Locale }) {
     return map;
   }, [rates]);
 
-  const amountNum = parseFloat(amount.replace(',', '.'));
+  const amountNum = parseAmount(amount);
   const fromUsd = usdValueOf[from];
   const toUsd = usdValueOf[to];
   const converted = Number.isFinite(amountNum) && fromUsd != null && toUsd != null ? (amountNum * fromUsd) / toUsd : null;
