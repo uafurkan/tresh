@@ -1,4 +1,4 @@
-import { PAIR_CATALOG, pairKey } from '@/lib/pairs';
+import { PAIR_CATALOG, CONVERTER_PAIRS, CRYPTO_BASES, pairKey } from '@/lib/pairs';
 
 export interface RateQuote {
   pair: string;
@@ -27,7 +27,8 @@ async function fetchJson(url: string): Promise<any> {
 
 /** Yahoo Finance — anahtar gerektirmez, gerçek zamanlıya en yakın kaynak. */
 async function fromYahoo(base: string, quote: string): Promise<RateQuote> {
-  const sym = `${base}${quote}=X`;
+  // Kripto varlıklar Yahoo'da "BTC-USD" biçiminde, fiat pariteler "EURUSD=X" biçiminde.
+  const sym = CRYPTO_BASES.has(base) ? `${base}-${quote}` : `${base}${quote}=X`;
   const data = await fetchJson(
     `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1m&range=1d`
   );
@@ -94,10 +95,13 @@ export async function getRate(base: string, quote: string): Promise<RateQuote> {
   throw new Error(`All rate providers failed: ${errors.join(' | ')}`);
 }
 
+const ALLOWED_PAIRS = new Set([
+  ...PAIR_CATALOG.map((c) => pairKey(c.base, c.quote)),
+  ...CONVERTER_PAIRS,
+]);
+
 export async function getRates(pairs: string[]): Promise<RateQuote[]> {
-  const valid = pairs.filter((p) =>
-    PAIR_CATALOG.some((c) => pairKey(c.base, c.quote) === p)
-  );
+  const valid = pairs.filter((p) => ALLOWED_PAIRS.has(p));
   return Promise.all(
     valid.map((p) => {
       const [base, quote] = p.split('/');

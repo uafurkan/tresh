@@ -31,6 +31,9 @@ interface LandingDict {
   langSwitch: string;
   watchlistTitle: string;
   watchlistManage: string;
+  converterTitle: string;
+  converterSwap: string;
+  boardTitle: string;
 }
 
 export interface AppDict {
@@ -76,6 +79,12 @@ export interface AppDict {
   errorBody: string;
   reconnect: string;
   today: (diff: string, dir: 'above' | 'below', value: string) => string;
+  installIosTitle: string;
+  installIosBody: string;
+  installAndroidTitle: string;
+  installAndroidBody: string;
+  installAndroidCta: string;
+  installDismiss: string;
 }
 
 export interface Dict {
@@ -111,6 +120,9 @@ export const dictionaries: Record<Locale, Dict> = {
       langSwitch: 'Türkçe',
       watchlistTitle: 'Already watching',
       watchlistManage: 'Manage',
+      converterTitle: 'Quick convert',
+      converterSwap: 'Swap currencies',
+      boardTitle: 'Live against USD',
     },
     app: {
       home: 'Home',
@@ -164,6 +176,12 @@ export const dictionaries: Record<Locale, Dict> = {
         'Rates are paused — holding the last reading. We’ll pick up right where we left off as soon as the connection returns.',
       reconnect: 'Reconnect',
       today: (diff, dir, value) => `${diff} today · ${dir === 'above' ? 'above' : 'below'} ${value}`,
+      installIosTitle: 'Add to Home Screen for push',
+      installIosBody: 'iPhone only sends push notifications to apps added to the Home Screen. Tap Share, then “Add to Home Screen.”',
+      installAndroidTitle: 'Install Tresh',
+      installAndroidBody: 'Add it to your home screen for quick access and reliable notifications.',
+      installAndroidCta: 'Install app',
+      installDismiss: 'Dismiss',
     },
   },
   tr: {
@@ -192,6 +210,9 @@ export const dictionaries: Record<Locale, Dict> = {
       langSwitch: 'English',
       watchlistTitle: 'Zaten izlediklerin',
       watchlistManage: 'Yönet',
+      converterTitle: 'Hızlı çevirici',
+      converterSwap: 'Para birimlerini değiştir',
+      boardTitle: 'USD karşısında canlı',
     },
     app: {
       home: 'Ana sayfa',
@@ -244,6 +265,12 @@ export const dictionaries: Record<Locale, Dict> = {
       errorBody: 'Kurlar duraklatıldı — son okuma tutuluyor. Bağlantı gelir gelmez kaldığımız yerden süreceğiz.',
       reconnect: 'Yeniden bağlan',
       today: (diff, dir, value) => `${diff} bugün · ${dir === 'above' ? 'üstü' : 'altı'} ${value}`,
+      installIosTitle: 'Push için ana ekrana ekle',
+      installIosBody: 'iPhone push bildirimlerini yalnızca ana ekrana eklenmiş uygulamalara gönderir. Paylaş simgesine, sonra “Ana Ekrana Ekle”ye dokun.',
+      installAndroidTitle: 'Tresh’i yükle',
+      installAndroidBody: 'Hızlı erişim ve güvenilir bildirimler için ana ekranına ekle.',
+      installAndroidCta: 'Uygulamayı yükle',
+      installDismiss: 'Kapat',
     },
   },
 };

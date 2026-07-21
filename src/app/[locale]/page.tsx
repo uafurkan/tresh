@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import LandingWater from '@/components/LandingWater';
 import WatchlistPreview from '@/components/WatchlistPreview';
+import CurrencyConverter from '@/components/CurrencyConverter';
 import { dictionaries, localePath, type Locale } from '@/lib/i18n';
 
 export default function LandingPage({ params }: { params: { locale: Locale } }) {
@@ -53,6 +54,8 @@ export default function LandingPage({ params }: { params: { locale: Locale } }) 
             </Link>
           </div>
         </div>
+
+        <CurrencyConverter locale={locale} />
 
         <section className="grid gap-4 pb-8 md:grid-cols-3">
           {d.cards.map(([t, desc]) => (

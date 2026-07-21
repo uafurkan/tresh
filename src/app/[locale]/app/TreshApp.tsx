@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import Link from 'next/link';
 import WaterCanvas from '@/components/WaterCanvas';
-import { PAIR_CATALOG, pairKey, type Threshold } from '@/lib/pairs';
+import AddToHomeScreen from '@/components/AddToHomeScreen';
+import { PAIR_CATALOG, pairKey, type PairDef, type Threshold } from '@/lib/pairs';
 import { localRepository } from '@/lib/client/storage';
 import { enablePush, pushSupported, registerServiceWorker, syncThresholds } from '@/lib/client/push';
 import { useRates } from '@/lib/client/useRates';
@@ -112,92 +113,6 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const fillPct = setLive != null && effNewValue != null ? Math.max(0, Math.min(100, ((effNewValue - setMin) / setCat.span) * 100)) : 50;
   const floatTop = 100 - fillPct;
 
-  const trackRef = useRef<HTMLDivElement>(null);
-  const fillRef = useRef<HTMLDivElement>(null);
-  const floatRef = useRef<HTMLDivElement>(null);
-  const valueTextRef = useRef<HTMLInputElement>(null);
-  const helperTextRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
-  // Sürükleme başında ölçülür, sürükleme boyunca yeniden ölçülmez —
-  // getBoundingClientRect her pointermove'da çağrılırsa senkron layout'u
-  // zorlayıp asıl kasmaya sebep oluyordu.
-  const rectRef = useRef<{ top: number; height: number } | null>(null);
-
-  // Sürükleme sırasında DOM'a doğrudan yazar — React state'i tetiklemez,
-  // böylece her pointermove'da tüm ağacı yeniden render etmeden fareyi
-  // birebir (aynı karede) takip eder. height/top yerine transform kullanılır
-  // ki tarayıcı sadece compositing yapsın, layout'a girmesin.
-  const applyDrag = useCallback((value: number) => {
-    const clampedFill = Math.max(0, Math.min(100, ((value - setMin) / setCat.span) * 100));
-    const top = 100 - clampedFill;
-    if (fillRef.current) fillRef.current.style.height = `${clampedFill}%`;
-    if (floatRef.current) floatRef.current.style.top = `${top}%`;
-    if (valueTextRef.current && document.activeElement !== valueTextRef.current) {
-      valueTextRef.current.value = value.toFixed(setCat.decimals);
-    }
-    if (helperTextRef.current && setLive != null) {
-      const alreadyPast = newDir === 'above' ? value <= setLive : value >= setLive;
-      helperTextRef.current.textContent = d.helper(
-        setLive.toFixed(setCat.decimals),
-        newDir,
-        Math.abs(value - setLive).toFixed(setCat.decimals),
-        alreadyPast
-      );
-    }
-    if (trackRef.current) trackRef.current.setAttribute('aria-valuenow', String(value));
-  }, [setMin, setCat.span, setCat.decimals, setLive, newDir, d]);
-
-  const valueFromY = useCallback((clientY: number) => {
-    const rect = rectRef.current;
-    if (!rect || setLive == null) return null;
-    const p01 = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
-    return setMin + (1 - p01) * setCat.span;
-  }, [setLive, setMin, setCat.span]);
-
-  const onTrackMove = useCallback((clientY: number) => {
-    const el = trackRef.current;
-    if (!el || setLive == null) return null;
-    const r = el.getBoundingClientRect();
-    rectRef.current = { top: r.top, height: r.height };
-    return valueFromY(clientY);
-  }, [setLive, valueFromY]);
-
-  useEffect(() => {
-    // Pointermove saniyede 60-240 kez tetiklenebilir; React state'e her
-    // seferinde yazmak tüm ağacı yeniden render ettirip kasmaya yol açıyordu.
-    // Sürükleme boyunca DOM'a doğrudan yazıyoruz, React state'i sadece
-    // bırakıldığında (pointerup) bir kez güncelliyoruz.
-    let raf: number | null = null;
-    let pendingY: number | null = null;
-    let lastValue: number | null = null;
-    const flush = () => {
-      raf = null;
-      if (pendingY != null && dragging.current) {
-        const v = valueFromY(pendingY);
-        if (v != null) { lastValue = v; applyDrag(v); }
-      }
-    };
-    const move = (e: PointerEvent) => {
-      if (!dragging.current) return;
-      pendingY = e.clientY;
-      if (raf == null) raf = requestAnimationFrame(flush);
-    };
-    const up = () => {
-      if (!dragging.current) return;
-      dragging.current = false;
-      if (raf != null) { cancelAnimationFrame(raf); raf = null; }
-      if (lastValue != null) setNewValue(lastValue);
-      lastValue = null;
-    };
-    window.addEventListener('pointermove', move, { passive: true });
-    window.addEventListener('pointerup', up, { passive: true });
-    return () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-      if (raf != null) cancelAnimationFrame(raf);
-    };
-  }, [valueFromY, applyDrag]);
-
   const createThreshold = () => {
     if (effNewValue == null) return;
     const t: Threshold = {
@@ -224,10 +139,12 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     const res = await enablePush(thresholds, locale);
     setPerm(res.ok);
     if (!res.ok) {
+      // 'unsupported' zaten togglin altındaki temel açıklamada (pushUnsupported)
+      // gösteriliyor — burada tekrar basmak aynı cümleyi iki kez gösterirdi.
       const map: Record<string, string> = {
         denied: d.pushDenied,
         'missing-vapid': d.pushMissingConfig,
-        unsupported: d.pushUnsupported,
+        unsupported: '',
         'subscribe-failed': d.pushFailed,
         'sync-failed': d.pushFailed,
         dismissed: '',
@@ -404,176 +321,26 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     </>
   );
 
-  const setPanel = (
-    <div className="flex h-full flex-col">
-      <div className="mb-1 font-heading text-[26px] leading-tight text-content-primary">{d.setTitle}</div>
-      <div className="mb-5 text-sm leading-normal text-content-secondary">{d.setSubtitle}</div>
-
-      <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.pair}</div>
-      <div className="mb-4 grid grid-cols-3 gap-2">
-        {PAIR_CATALOG.map((p, i) => {
-          const on = i === newPairIdx;
-          return (
-            <button
-              key={pairKey(p.base, p.quote)}
-              onClick={() => { setNewPairIdx(i); setNewValue(null); }}
-              className="num rounded-xl border px-1.5 py-2.5 text-[13px] transition-all"
-              style={{
-                background: on ? 'rgba(52,227,214,0.14)' : 'rgba(11,22,34,0.5)',
-                borderColor: on ? 'rgba(52,227,214,0.5)' : 'rgba(143,165,179,0.16)',
-                color: on ? '#34E3D6' : '#8FA5B3',
-              }}
-            >
-              {p.base}/{p.quote}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.notifyWhen}</div>
-      <div className="mb-5 flex gap-2">
-        {(['above', 'below'] as const).map((dr) => {
-          const on = newDir === dr;
-          return (
-            <button
-              key={dr}
-              onClick={() => setNewDir(dr)}
-              className="flex-1 rounded-xl border p-3 text-sm transition-all"
-              style={{
-                background: on ? 'rgba(52,227,214,0.14)' : 'rgba(11,22,34,0.5)',
-                borderColor: on ? 'rgba(52,227,214,0.5)' : 'rgba(143,165,179,0.16)',
-                color: on ? '#34E3D6' : '#8FA5B3',
-              }}
-            >
-              {dr === 'above' ? d.dirAbove : d.dirBelow}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex min-h-0 flex-1 items-stretch gap-5">
-        <div
-          ref={trackRef}
-          onPointerDown={(e) => {
-            dragging.current = true;
-            const v = onTrackMove(e.clientY);
-            if (v != null) { applyDrag(v); setNewValue(v); }
-          }}
-          role="slider"
-          aria-label={d.thresholdValue}
-          aria-valuemin={setMin}
-          aria-valuemax={setMin + setCat.span}
-          aria-valuenow={effNewValue ?? undefined}
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (setLive == null || effNewValue == null) return;
-            const step = setCat.span / 100;
-            if (e.key === 'ArrowUp') setNewValue(Math.min(setMin + setCat.span, effNewValue + step));
-            if (e.key === 'ArrowDown') setNewValue(Math.max(setMin, effNewValue - step));
-          }}
-          className="relative w-[76px] flex-none cursor-ns-resize overflow-hidden rounded-[22px] border border-content-secondary/15 md:w-[92px]"
-          style={{ background: 'linear-gradient(180deg,#0B1622,#122236)', touchAction: 'none', minHeight: 180 }}
-        >
-          <div
-            ref={fillRef}
-            className="absolute inset-x-0 bottom-0"
-            style={{
-              height: `${fillPct}%`,
-              background: 'linear-gradient(180deg,rgba(52,227,214,0.28),rgba(52,227,214,0.10))',
-              borderTop: '1.5px solid rgba(52,227,214,0.7)',
-            }}
-          />
-          <div
-            ref={floatRef}
-            className="absolute left-2 right-2 flex h-[34px] items-center justify-center rounded-xl bg-water"
-            style={{ top: `${floatTop}%`, transform: 'translateY(-50%)', boxShadow: '0 8px 24px -6px rgba(52,227,214,0.7)' }}
-          >
-            <div className="h-[3px] w-[22px] rounded-sm" style={{ background: 'rgba(4,18,26,0.4)' }} />
-          </div>
-        </div>
-        <div className="flex flex-1 flex-col justify-center">
-          <div className="mb-1.5 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.threshold}</div>
-          {effNewValue != null ? (
-            <input
-              key={`${setPairKeyStr}-${newDir}`}
-              ref={valueTextRef}
-              type="text"
-              inputMode="decimal"
-              pattern="[0-9]*[.,]?[0-9]*"
-              defaultValue={effNewValue.toFixed(setCat.decimals)}
-              aria-label={d.thresholdValue}
-              className="num block w-full border-0 bg-transparent p-0 text-content-primary outline-none"
-              style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1, caretColor: '#34E3D6' }}
-              onFocus={(e) => e.currentTarget.select()}
-              onChange={(e) => {
-                const parsed = parseFloat(e.currentTarget.value.replace(',', '.'));
-                if (!Number.isNaN(parsed)) applyDrag(parsed);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') e.currentTarget.blur();
-              }}
-              onBlur={(e) => {
-                const parsed = parseFloat(e.currentTarget.value.replace(',', '.'));
-                if (!Number.isNaN(parsed)) {
-                  const clamped = Math.max(setMin, Math.min(setMin + setCat.span, parsed));
-                  setNewValue(clamped);
-                  e.currentTarget.value = clamped.toFixed(setCat.decimals);
-                } else {
-                  e.currentTarget.value = effNewValue.toFixed(setCat.decimals);
-                }
-              }}
-            />
-          ) : (
-            <div className="num text-content-primary" style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1 }}>
-              · · ·
-            </div>
-          )}
-          <div ref={helperTextRef} className="mt-2 text-[13px] leading-relaxed text-content-secondary">
-            {setLive != null && effNewValue != null
-              ? d.helper(
-                  setLive.toFixed(setCat.decimals),
-                  newDir,
-                  Math.abs(effNewValue - setLive).toFixed(setCat.decimals),
-                  newDir === 'above' ? effNewValue <= setLive : effNewValue >= setLive
-                )
-              : d.waitingLive}
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-content-secondary/15 p-3.5" style={{ background: 'rgba(11,22,34,0.55)' }}>
-            <div className="flex items-center justify-between gap-2.5">
-              <div className="text-[13px] text-content-primary">{d.pushTitle}</div>
-              <button
-                onClick={togglePerm}
-                aria-label={d.pushAria}
-                className="relative h-[26px] w-11 flex-none rounded-full border-0 transition-colors"
-                style={{ background: perm ? '#34E3D6' : 'rgba(143,165,179,0.3)', opacity: permBusy ? 0.6 : 1 }}
-              >
-                <span
-                  className="absolute top-[3px] h-5 w-5 rounded-full bg-content-primary transition-all"
-                  style={{ left: perm ? 21 : 3 }}
-                />
-              </button>
-            </div>
-            <div className="mt-1.5 text-[11.5px] leading-relaxed text-content-secondary">
-              {pushSupported() ? d.pushSupported : d.pushUnsupported}
-            </div>
-            {permError && (
-              <div className="mt-2 text-[11.5px] leading-relaxed text-overflow">{permError}</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <button
-        onClick={createThreshold}
-        disabled={effNewValue == null}
-        className="mt-4 w-full rounded-[20px] bg-water p-4 text-base font-semibold text-[#04121a] disabled:opacity-50"
-        style={{ boxShadow: '0 16px 40px -14px rgba(52,227,214,0.6)' }}
-      >
-        {d.watchThisLevel}
-      </button>
-    </div>
-  );
+  const setPanelProps = {
+    d,
+    newPairIdx,
+    onSelectPair: (i: number) => { setNewPairIdx(i); setNewValue(null); },
+    newDir,
+    onSelectDir: setNewDir,
+    setCat,
+    setPairKeyStr,
+    setLive,
+    setMin,
+    effNewValue,
+    fillPct,
+    floatTop,
+    onNewValue: setNewValue,
+    perm,
+    permBusy,
+    permError,
+    onTogglePerm: togglePerm,
+    onCreate: createThreshold,
+  };
 
   return (
     <div className="relative min-h-[100dvh] bg-bg-deep">
@@ -600,7 +367,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
             <div className="px-4 pb-8 pt-4">{listPanel}</div>
           ) : (
             <div className="rounded-t-[28px] px-5 pb-8 pt-5" style={{ background: 'rgba(5,11,20,0.72)', backdropFilter: 'blur(10px)', minHeight: '78dvh' }}>
-              {setPanel}
+              <SetPanel {...setPanelProps} />
             </div>
           )}
         </div>
@@ -655,10 +422,319 @@ export default function TreshApp({ locale }: { locale: Locale }) {
               )}
             </div>
           ) : (
-            <div className="min-h-0 flex-1">{setPanel}</div>
+            <div className="min-h-0 flex-1"><SetPanel {...setPanelProps} /></div>
           )}
         </aside>
       </div>
+    </div>
+  );
+}
+
+interface SetPanelProps {
+  d: AppDict;
+  newPairIdx: number;
+  onSelectPair: (i: number) => void;
+  newDir: 'above' | 'below';
+  onSelectDir: (dir: 'above' | 'below') => void;
+  setCat: PairDef;
+  setPairKeyStr: string;
+  setLive: number | null;
+  setMin: number;
+  effNewValue: number | null;
+  fillPct: number;
+  floatTop: number;
+  onNewValue: (v: number) => void;
+  perm: boolean;
+  permBusy: boolean;
+  permError: string | null;
+  onTogglePerm: () => void;
+  onCreate: () => void;
+}
+
+/**
+ * Eşik belirleme paneli — mobil ve masaüstü düzenlerinde iki ayrı yerde
+ * render edilir. Bilerek kendi bileşeni: sürükleme ref'leri (trackRef vb.)
+ * burada, fonksiyon bileşeni içinde tanımlanıyor ki her render konumu kendi
+ * DOM düğümlerine sahip olsun. Daha önce bu ref'ler TreshApp'in üst
+ * seviyesinde tanımlıydı ve aynı JSX ağacı iki yerde kullanıldığından, ikinci
+ * (görünmeyen) kopya ref'i ele geçiriyordu — sürükleme sırasındaki tüm
+ * imperative DOM güncellemeleri görünmeyen kopyaya gidiyor, kullanıcının
+ * gördüğü çubuk hiç hareket etmiyordu (özellikle dokunmatikte fark ediliyordu).
+ */
+function SetPanel({
+  d, newPairIdx, onSelectPair, newDir, onSelectDir, setCat, setPairKeyStr, setLive, setMin,
+  effNewValue, fillPct, floatTop, onNewValue, perm, permBusy, permError, onTogglePerm, onCreate,
+}: SetPanelProps) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const fillRef = useRef<HTMLDivElement>(null);
+  const floatRef = useRef<HTMLDivElement>(null);
+  const valueTextRef = useRef<HTMLInputElement>(null);
+  const helperTextRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  // Sürükleme başında ölçülür, sürükleme boyunca yeniden ölçülmez —
+  // getBoundingClientRect her pointermove'da çağrılırsa senkron layout'u
+  // zorlayıp asıl kasmaya sebep oluyordu.
+  const rectRef = useRef<{ top: number; height: number } | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const pendingYRef = useRef<number | null>(null);
+  const lastValueRef = useRef<number | null>(null);
+
+  // Sürükleme sırasında DOM'a doğrudan yazar — React state'i tetiklemez,
+  // böylece her pointermove'da tüm ağacı yeniden render etmeden fareyi
+  // birebir (aynı karede) takip eder.
+  const applyDrag = useCallback((value: number) => {
+    const clampedFill = Math.max(0, Math.min(100, ((value - setMin) / setCat.span) * 100));
+    const top = 100 - clampedFill;
+    if (fillRef.current) fillRef.current.style.height = `${clampedFill}%`;
+    if (floatRef.current) floatRef.current.style.top = `${top}%`;
+    if (valueTextRef.current && document.activeElement !== valueTextRef.current) {
+      valueTextRef.current.value = value.toFixed(setCat.decimals);
+    }
+    if (helperTextRef.current && setLive != null) {
+      const alreadyPast = newDir === 'above' ? value <= setLive : value >= setLive;
+      helperTextRef.current.textContent = d.helper(
+        setLive.toFixed(setCat.decimals),
+        newDir,
+        Math.abs(value - setLive).toFixed(setCat.decimals),
+        alreadyPast
+      );
+    }
+    if (trackRef.current) trackRef.current.setAttribute('aria-valuenow', String(value));
+  }, [setMin, setCat.span, setCat.decimals, setLive, newDir, d]);
+
+  const valueFromY = useCallback((clientY: number) => {
+    const rect = rectRef.current;
+    if (!rect || setLive == null) return null;
+    const p01 = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    return setMin + (1 - p01) * setCat.span;
+  }, [setLive, setMin, setCat.span]);
+
+  const onTrackMove = useCallback((clientY: number) => {
+    const el = trackRef.current;
+    if (!el || setLive == null) return null;
+    const r = el.getBoundingClientRect();
+    rectRef.current = { top: r.top, height: r.height };
+    return valueFromY(clientY);
+  }, [setLive, valueFromY]);
+
+  // Sürükleme dinleyicileri element üzerinde, Pointer Capture ile kuruluyor —
+  // window'a bağlı pasif dinleyiciler iOS Safari'de dokunmatik sürüklemeyi
+  // sayfa kaydırması sanıp gesture'ı iptal edebiliyordu. setPointerCapture,
+  // parmak track'in dışına çıksa bile olayların bu elemente gelmeye devam
+  // etmesini garanti eder.
+  const flushDrag = useCallback(() => {
+    rafRef.current = null;
+    if (pendingYRef.current != null && dragging.current) {
+      const v = valueFromY(pendingYRef.current);
+      if (v != null) { lastValueRef.current = v; applyDrag(v); }
+    }
+  }, [valueFromY, applyDrag]);
+
+  const beginDrag = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    // Sayısal girişte odak varsa kapat — açık kalırsa applyDrag, kullanıcı
+    // yazıyor sanıp okunuşu güncellemeyi atlıyor ve rakam donmuş görünüyordu.
+    if (valueTextRef.current && document.activeElement === valueTextRef.current) {
+      valueTextRef.current.blur();
+    }
+    try { trackRef.current?.setPointerCapture(e.pointerId); } catch { /* geçersiz pointerId — yoksayılabilir */ }
+    dragging.current = true;
+    const v = onTrackMove(e.clientY);
+    if (v != null) { lastValueRef.current = v; applyDrag(v); onNewValue(v); }
+  }, [onTrackMove, applyDrag, onNewValue]);
+
+  const moveDrag = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragging.current) return;
+    pendingYRef.current = e.clientY;
+    if (rafRef.current == null) rafRef.current = requestAnimationFrame(flushDrag);
+  }, [flushDrag]);
+
+  const endDrag = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragging.current) return;
+    // Bekleyen bir rAF flush'ı varsa (son pointermove henüz işlenmemiş),
+    // iptal etmeden önce senkron olarak uygula — yoksa pointerup çok hızlı
+    // gelirse (hızlı bir dokunuş/bırakma) son hareket kaybolup sürüklemenin
+    // başlangıç değerine geri dönebiliyordu.
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      flushDrag();
+    }
+    dragging.current = false;
+    try { trackRef.current?.releasePointerCapture(e.pointerId); } catch { /* zaten serbest bırakılmış olabilir */ }
+    if (lastValueRef.current != null) onNewValue(lastValueRef.current);
+    lastValueRef.current = null;
+  }, [onNewValue, flushDrag]);
+
+  useEffect(() => () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); }, []);
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="mb-1 font-heading text-[26px] leading-tight text-content-primary">{d.setTitle}</div>
+      <div className="mb-5 text-sm leading-normal text-content-secondary">{d.setSubtitle}</div>
+
+      <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.pair}</div>
+      <div className="mb-4 grid grid-cols-3 gap-2">
+        {PAIR_CATALOG.map((p, i) => {
+          const on = i === newPairIdx;
+          return (
+            <button
+              key={pairKey(p.base, p.quote)}
+              onClick={() => onSelectPair(i)}
+              className="num rounded-xl border px-1.5 py-2.5 text-[13px] transition-all"
+              style={{
+                background: on ? 'rgba(52,227,214,0.14)' : 'rgba(11,22,34,0.5)',
+                borderColor: on ? 'rgba(52,227,214,0.5)' : 'rgba(143,165,179,0.16)',
+                color: on ? '#34E3D6' : '#8FA5B3',
+              }}
+            >
+              {p.base}/{p.quote}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.notifyWhen}</div>
+      <div className="mb-5 flex gap-2">
+        {(['above', 'below'] as const).map((dr) => {
+          const on = newDir === dr;
+          return (
+            <button
+              key={dr}
+              onClick={() => onSelectDir(dr)}
+              className="flex-1 rounded-xl border p-3 text-sm transition-all"
+              style={{
+                background: on ? 'rgba(52,227,214,0.14)' : 'rgba(11,22,34,0.5)',
+                borderColor: on ? 'rgba(52,227,214,0.5)' : 'rgba(143,165,179,0.16)',
+                color: on ? '#34E3D6' : '#8FA5B3',
+              }}
+            >
+              {dr === 'above' ? d.dirAbove : d.dirBelow}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex min-h-0 flex-1 items-stretch gap-5">
+        <div
+          ref={trackRef}
+          onPointerDown={beginDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          role="slider"
+          aria-label={d.thresholdValue}
+          aria-valuemin={setMin}
+          aria-valuemax={setMin + setCat.span}
+          aria-valuenow={effNewValue ?? undefined}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (setLive == null || effNewValue == null) return;
+            const step = setCat.span / 100;
+            if (e.key === 'ArrowUp') onNewValue(Math.min(setMin + setCat.span, effNewValue + step));
+            if (e.key === 'ArrowDown') onNewValue(Math.max(setMin, effNewValue - step));
+          }}
+          className="relative w-[76px] flex-none cursor-ns-resize overflow-hidden rounded-[22px] border border-content-secondary/15 md:w-[92px]"
+          style={{ background: 'linear-gradient(180deg,#0B1622,#122236)', touchAction: 'none', minHeight: 180 }}
+        >
+          <div
+            ref={fillRef}
+            className="absolute inset-x-0 bottom-0"
+            style={{
+              height: `${fillPct}%`,
+              background: 'linear-gradient(180deg,rgba(52,227,214,0.28),rgba(52,227,214,0.10))',
+              borderTop: '1.5px solid rgba(52,227,214,0.7)',
+            }}
+          />
+          <div
+            ref={floatRef}
+            className="absolute left-2 right-2 flex h-[34px] items-center justify-center rounded-xl bg-water"
+            style={{ top: `${floatTop}%`, transform: 'translateY(-50%)', boxShadow: '0 8px 24px -6px rgba(52,227,214,0.7)' }}
+          >
+            <div className="h-[3px] w-[22px] rounded-sm" style={{ background: 'rgba(4,18,26,0.4)' }} />
+          </div>
+        </div>
+        <div className="flex flex-1 flex-col justify-center">
+          <div className="mb-1.5 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.threshold}</div>
+          {effNewValue != null ? (
+            <input
+              key={`${setPairKeyStr}-${newDir}`}
+              ref={valueTextRef}
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
+              defaultValue={effNewValue.toFixed(setCat.decimals)}
+              aria-label={d.thresholdValue}
+              className="num block w-full border-0 bg-transparent p-0 text-content-primary outline-none"
+              style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1, caretColor: '#34E3D6' }}
+              onFocus={(e) => e.currentTarget.select()}
+              onChange={(e) => {
+                const parsed = parseFloat(e.currentTarget.value.replace(',', '.'));
+                if (!Number.isNaN(parsed)) applyDrag(parsed);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur();
+              }}
+              onBlur={(e) => {
+                const parsed = parseFloat(e.currentTarget.value.replace(',', '.'));
+                if (!Number.isNaN(parsed)) {
+                  const clamped = Math.max(setMin, Math.min(setMin + setCat.span, parsed));
+                  onNewValue(clamped);
+                  e.currentTarget.value = clamped.toFixed(setCat.decimals);
+                } else {
+                  e.currentTarget.value = effNewValue.toFixed(setCat.decimals);
+                }
+              }}
+            />
+          ) : (
+            <div className="num text-content-primary" style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1 }}>
+              · · ·
+            </div>
+          )}
+          <div ref={helperTextRef} className="mt-2 text-[13px] leading-relaxed text-content-secondary">
+            {setLive != null && effNewValue != null
+              ? d.helper(
+                  setLive.toFixed(setCat.decimals),
+                  newDir,
+                  Math.abs(effNewValue - setLive).toFixed(setCat.decimals),
+                  newDir === 'above' ? effNewValue <= setLive : effNewValue >= setLive
+                )
+              : d.waitingLive}
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-content-secondary/15 p-3.5" style={{ background: 'rgba(11,22,34,0.55)' }}>
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="text-[13px] text-content-primary">{d.pushTitle}</div>
+              <button
+                onClick={onTogglePerm}
+                aria-label={d.pushAria}
+                className="relative h-[26px] w-11 flex-none rounded-full border-0 transition-colors"
+                style={{ background: perm ? '#34E3D6' : 'rgba(143,165,179,0.3)', opacity: permBusy ? 0.6 : 1 }}
+              >
+                <span
+                  className="absolute top-[3px] h-5 w-5 rounded-full bg-content-primary transition-all"
+                  style={{ left: perm ? 21 : 3 }}
+                />
+              </button>
+            </div>
+            <div className="mt-1.5 text-[11.5px] leading-relaxed text-content-secondary">
+              {pushSupported() ? d.pushSupported : d.pushUnsupported}
+            </div>
+            {permError && (
+              <div className="mt-2 text-[11.5px] leading-relaxed text-overflow">{permError}</div>
+            )}
+            {!perm && <AddToHomeScreen d={d} />}
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={onCreate}
+        disabled={effNewValue == null}
+        className="mt-4 w-full rounded-[20px] bg-water p-4 text-base font-semibold text-[#04121a] disabled:opacity-50"
+        style={{ boxShadow: '0 16px 40px -14px rgba(52,227,214,0.6)' }}
+      >
+        {d.watchThisLevel}
+      </button>
     </div>
   );
 }
