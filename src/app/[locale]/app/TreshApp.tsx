@@ -717,7 +717,6 @@ function SetPanel({
           placeholder={d.pairSearchPlaceholder}
           onFocus={(e) => { setPairSearchOpen(true); setPairQuery(''); e.currentTarget.select(); }}
           onChange={(e) => setPairQuery(e.currentTarget.value)}
-          onBlur={() => window.setTimeout(() => setPairSearchOpen(false), 120)}
           className="num w-full rounded-xl border px-3.5 py-3 text-[15px] outline-none transition-all"
           style={{
             background: 'rgba(11,22,34,0.5)',
@@ -727,29 +726,37 @@ function SetPanel({
           }}
         />
         {pairSearchOpen && (
-          <div
-            className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 max-h-[220px] overflow-y-auto rounded-xl border"
-            style={{ background: '#0B1622', borderColor: 'rgba(143,165,179,0.2)', boxShadow: '0 20px 50px -18px rgba(0,0,0,0.8)' }}
-          >
-            {pairMatches.length === 0 ? (
-              <div className="px-3.5 py-3 text-[13px] text-content-secondary">{d.pairNoMatch}</div>
-            ) : (
-              pairMatches.map((p) => {
-                const i = PAIR_CATALOG.indexOf(p);
-                const on = i === newPairIdx;
-                return (
-                  <button
-                    key={pairKey(p.base, p.quote)}
-                    onPointerDown={() => { onSelectPair(i); setPairSearchOpen(false); }}
-                    className="num block w-full px-3.5 py-2.5 text-left text-[14px] transition-colors"
-                    style={{ color: on ? '#34E3D6' : '#EAF3F6', background: on ? 'rgba(52,227,214,0.1)' : 'transparent' }}
-                  >
-                    {p.base}/{p.quote}
-                  </button>
-                );
-              })
-            )}
-          </div>
+          <>
+            {/* Dışarı dokununca listeyi kapatan tam ekran görünmez katman —
+                inputun onBlur'una güvenmiyoruz: dokunmatikte blur, listedeki
+                bir öğeye dokunma olayından ÖNCE tetiklenip seçimi iptal
+                ediyordu (kaydırma da bu yüzden çalışmıyordu — ilk dokunuş
+                anında liste kapanıyordu). */}
+            <div className="fixed inset-0 z-10" onClick={() => setPairSearchOpen(false)} />
+            <div
+              className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 max-h-[240px] overflow-y-auto rounded-xl border"
+              style={{ background: '#0B1622', borderColor: 'rgba(143,165,179,0.2)', boxShadow: '0 20px 50px -18px rgba(0,0,0,0.8)', WebkitOverflowScrolling: 'touch' }}
+            >
+              {pairMatches.length === 0 ? (
+                <div className="px-3.5 py-3 text-[13px] text-content-secondary">{d.pairNoMatch}</div>
+              ) : (
+                pairMatches.map((p) => {
+                  const i = PAIR_CATALOG.indexOf(p);
+                  const on = i === newPairIdx;
+                  return (
+                    <button
+                      key={pairKey(p.base, p.quote)}
+                      onClick={() => { onSelectPair(i); setPairSearchOpen(false); }}
+                      className="num block w-full px-3.5 py-3 text-left text-[14px] transition-colors"
+                      style={{ color: on ? '#34E3D6' : '#EAF3F6', background: on ? 'rgba(52,227,214,0.1)' : 'transparent' }}
+                    >
+                      {p.base}/{p.quote}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </>
         )}
       </div>
 
