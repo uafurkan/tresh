@@ -509,11 +509,16 @@ export default function TreshApp({ locale }: { locale: Locale }) {
               ref={valueTextRef}
               type="text"
               inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
               defaultValue={effNewValue.toFixed(setCat.decimals)}
               aria-label={d.thresholdValue}
               className="num block w-full border-0 bg-transparent p-0 text-content-primary outline-none"
               style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1, caretColor: '#34E3D6' }}
               onFocus={(e) => e.currentTarget.select()}
+              onChange={(e) => {
+                const parsed = parseFloat(e.currentTarget.value.replace(',', '.'));
+                if (!Number.isNaN(parsed)) applyDrag(parsed);
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') e.currentTarget.blur();
               }}
