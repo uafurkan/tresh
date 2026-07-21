@@ -96,7 +96,11 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const setPairKeyStr = pairKey(setCat.base, setCat.quote);
   const setLive = rates[setPairKeyStr]?.rate ?? null;
   const setMin = (setLive ?? 0) - setCat.span / 2;
-  const effNewValue = newValue ?? (setLive != null ? setLive + setCat.span * 0.15 * (newDir === 'above' ? 1 : -1) : null);
+  // Varsayılan eşik, görsel su aralığının (span) sabit bir yüzdesi yerine
+  // canlı kurun %1.5'i kadar uzakta başlar — böylece USD/TRY gibi düşük
+  // değerli paritelerde de BTC/TRY gibi yüksek değerlilerde de orantılı,
+  // mantıklı bir başlangıç noktası olur (span sadece su görselinin ölçeği).
+  const effNewValue = newValue ?? (setLive != null ? setLive * (1 + 0.015 * (newDir === 'above' ? 1 : -1)) : null);
   const fillPct = setLive != null && effNewValue != null ? Math.max(0, Math.min(100, ((effNewValue - setMin) / setCat.span) * 100)) : 50;
   const floatTop = 100 - fillPct;
 
