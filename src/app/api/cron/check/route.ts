@@ -14,8 +14,9 @@ export const maxDuration = 60;
  * eşik geçişlerini tespit et, geçenlere Web Push gönder.
  */
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const auth = req.headers.get('authorization');
+  const secret = process.env.CRON_SECRET?.trim();
+  // Kopyala-yapıştırdan kalan görünmez satır sonu/boşluk 401'e yol açabiliyordu — iki tarafı da normalize et.
+  const auth = req.headers.get('authorization')?.trim();
   if (secret && auth !== `Bearer ${secret}`) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
