@@ -4,34 +4,14 @@ import { useMemo, useState } from 'react';
 import { useRates } from '@/lib/client/useRates';
 import { CONVERTER_CURRENCIES, CONVERTER_PAIRS } from '@/lib/pairs';
 import { dictionaries, type Locale } from '@/lib/i18n';
+import { fmtNum, parseLocaleNumber } from '@/lib/client/format';
 
 const ALL_CODES = ['USD', ...CONVERTER_CURRENCIES.map((c) => c.code)];
 
 // iOS'un Hesap Makinesi para birimi çeviricisinde olduğu gibi: her zaman
-// 2 ondalık basamak, tutarlı gruplu binlik ayracı — büyüklüğe göre değişen
-// kural yok. Yerel (tr-TR / en-US) doğru ayracı otomatik seçiyor.
-function fmt(n: number, locale: Locale): string {
-  if (!Number.isFinite(n)) return '—';
-  const intlLocale = locale === 'tr' ? 'tr-TR' : 'en-US';
-  return new Intl.NumberFormat(intlLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-}
-
-// Kullanıcı hem binlik hem ondalık ayracı birlikte yazarsa (ör. Türkçe
-// biçimde "2.500,50") basit bir replace(',', '.') bunu "2.500.50" yapıp
-// yanlış ayrıştırırdı (2.5 gibi). Hangi ayracın son geçtiğine bakıp o
-// ondalık, diğeri binlik ayracı kabul edilir.
-function parseAmount(input: string): number {
-  let s = input.trim();
-  const lastComma = s.lastIndexOf(',');
-  const lastDot = s.lastIndexOf('.');
-  if (lastComma !== -1 && lastDot !== -1) {
-    if (lastComma > lastDot) s = s.replace(/\./g, '').replace(',', '.');
-    else s = s.replace(/,/g, '');
-  } else if (lastComma !== -1) {
-    s = s.replace(',', '.');
-  }
-  return parseFloat(s);
-}
+// 2 ondalık basamak, tutarlı gruplu binlik ayracı.
+const fmt = (n: number, locale: Locale) => fmtNum(n, 2, locale);
+const parseAmount = parseLocaleNumber;
 
 /** Ana sayfada canlı döviz çevirici + BTC dahil "USD karşılığı" kur tablosu. */
 export default function CurrencyConverter({ locale }: { locale: Locale }) {

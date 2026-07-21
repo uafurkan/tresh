@@ -10,6 +10,7 @@ import { enablePush, pushSupported, registerServiceWorker, syncThresholds } from
 import { useRates } from '@/lib/client/useRates';
 import { dictionaries, localePath, type AppDict, type Locale } from '@/lib/i18n';
 import { tensionOf, miniWavePath } from '@/lib/client/wave';
+import { fmtNum, parseLocaleNumber } from '@/lib/client/format';
 
 type Screen = 'home' | 'set';
 
@@ -81,14 +82,14 @@ export default function TreshApp({ locale }: { locale: Locale }) {
       if (prev != null) {
         const crossed = t.dir === 'above' ? prev < t.value && cur >= t.value : prev > t.value && cur <= t.value;
         if (crossed) {
-          setBanner(d.bannerText(key, t.value.toFixed(t.decimals), t.dir, cur.toFixed(t.decimals)));
+          setBanner(d.bannerText(key, fmtNum(t.value, t.decimals, locale), t.dir, fmtNum(cur, t.decimals, locale)));
           setOverflowTick((n) => n + 1);
           window.setTimeout(() => setBanner(null), 6000);
         }
       }
       prevRates.current[t.id] = cur;
     }
-  }, [rates, thresholds, d]);
+  }, [rates, thresholds, d, locale]);
 
   // ---- set flow helpers ----
   const setCat = PAIR_CATALOG[newPairIdx];
@@ -234,14 +235,14 @@ export default function TreshApp({ locale }: { locale: Locale }) {
           className="num text-content-primary"
           style={{ fontSize: 'clamp(44px, 8vw, 86px)', fontWeight: 400, letterSpacing: '-1.5px', lineHeight: 1, textShadow: '0 2px 30px rgba(5,11,20,0.9)' }}
         >
-          {loading && displayRate == null ? '· · ·' : displayRate != null ? displayRate.toFixed(displayDecimals) : '—'}
+          {loading && displayRate == null ? '· · ·' : displayRate != null ? fmtNum(displayRate, displayDecimals, locale) : '—'}
         </div>
         {!onSetScreen && selected && selectedRate && (
           <div className="num mt-2 text-[13px] text-content-secondary">
             {d.today(
-              `${selectedRate.rate - selectedRate.opening >= 0 ? '+' : ''}${(selectedRate.rate - selectedRate.opening).toFixed(selected.decimals)}`,
+              `${selectedRate.rate - selectedRate.opening >= 0 ? '+' : ''}${fmtNum(selectedRate.rate - selectedRate.opening, selected.decimals, locale)}`,
               selected.dir,
-              selected.value.toFixed(selected.decimals)
+              fmtNum(selected.value, selected.decimals, locale)
             )}
           </div>
         )}
@@ -292,12 +293,12 @@ export default function TreshApp({ locale }: { locale: Locale }) {
                 <span className="min-w-0 flex-1">
                   <span className="num block text-sm tracking-wide text-content-primary">{key}</span>
                   <span className="mt-0.5 block text-xs text-content-secondary">
-                    {t.dir === 'above' ? d.above : d.below} {t.value.toFixed(t.decimals)}
-                    {!t.paused && dist != null ? d.away(dist.toFixed(t.decimals)) : ''}
+                    {t.dir === 'above' ? d.above : d.below} {fmtNum(t.value, t.decimals, locale)}
+                    {!t.paused && dist != null ? d.away(fmtNum(dist, t.decimals, locale)) : ''}
                   </span>
                 </span>
                 <span className="flex-none text-right">
-                  <span className="num block text-sm" style={{ color }}>{live?.toFixed(t.decimals) ?? '—'}</span>
+                  <span className="num block text-sm" style={{ color }}>{live != null ? fmtNum(live, t.decimals, locale) : '—'}</span>
                   <span className="mt-0.5 block text-[11px]" style={{ color: statusColor }}>{status}</span>
                 </span>
               </button>
@@ -339,6 +340,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
 
   const setPanelProps = {
     d,
+    locale,
     newPairIdx,
     onSelectPair: (i: number) => { setNewPairIdx(i); setNewValue(null); },
     newDir,
@@ -448,6 +450,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
 
 interface SetPanelProps {
   d: AppDict;
+  locale: Locale;
   newPairIdx: number;
   onSelectPair: (i: number) => void;
   newDir: 'above' | 'below';
@@ -478,7 +481,7 @@ interface SetPanelProps {
  * gördüğü çubuk hiç hareket etmiyordu (özellikle dokunmatikte fark ediliyordu).
  */
 function SetPanel({
-  d, newPairIdx, onSelectPair, newDir, onSelectDir, setCat, setPairKeyStr, setLive, setMin,
+  d, locale, newPairIdx, onSelectPair, newDir, onSelectDir, setCat, setPairKeyStr, setLive, setMin,
   effNewValue, fillPct, floatTop, onNewValue, perm, permBusy, permError, onTogglePerm, onCreate,
 }: SetPanelProps) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -504,19 +507,19 @@ function SetPanel({
     if (fillRef.current) fillRef.current.style.height = `${clampedFill}%`;
     if (floatRef.current) floatRef.current.style.top = `${top}%`;
     if (valueTextRef.current && document.activeElement !== valueTextRef.current) {
-      valueTextRef.current.value = value.toFixed(setCat.decimals);
+      valueTextRef.current.value = fmtNum(value, setCat.decimals, locale);
     }
     if (helperTextRef.current && setLive != null) {
       const alreadyPast = newDir === 'above' ? value <= setLive : value >= setLive;
       helperTextRef.current.textContent = d.helper(
-        setLive.toFixed(setCat.decimals),
+        fmtNum(setLive, setCat.decimals, locale),
         newDir,
-        Math.abs(value - setLive).toFixed(setCat.decimals),
+        fmtNum(Math.abs(value - setLive), setCat.decimals, locale),
         alreadyPast
       );
     }
     if (trackRef.current) trackRef.current.setAttribute('aria-valuenow', String(value));
-  }, [setMin, setCat.span, setCat.decimals, setLive, newDir, d]);
+  }, [setMin, setCat.span, setCat.decimals, setLive, newDir, d, locale]);
 
   const valueFromY = useCallback((clientY: number) => {
     const rect = rectRef.current;
@@ -677,27 +680,27 @@ function SetPanel({
               ref={valueTextRef}
               type="text"
               inputMode="decimal"
-              pattern="[0-9]*[.,]?[0-9]*"
-              defaultValue={effNewValue.toFixed(setCat.decimals)}
+              pattern="[0-9.,]*"
+              defaultValue={fmtNum(effNewValue, setCat.decimals, locale)}
               aria-label={d.thresholdValue}
               className="num block w-full border-0 bg-transparent p-0 text-content-primary outline-none"
               style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1, caretColor: '#34E3D6' }}
               onFocus={(e) => e.currentTarget.select()}
               onChange={(e) => {
-                const parsed = parseFloat(e.currentTarget.value.replace(',', '.'));
+                const parsed = parseLocaleNumber(e.currentTarget.value);
                 if (!Number.isNaN(parsed)) applyDrag(parsed);
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') e.currentTarget.blur();
               }}
               onBlur={(e) => {
-                const parsed = parseFloat(e.currentTarget.value.replace(',', '.'));
+                const parsed = parseLocaleNumber(e.currentTarget.value);
                 if (!Number.isNaN(parsed)) {
                   const clamped = Math.max(setMin, Math.min(setMin + setCat.span, parsed));
                   onNewValue(clamped);
-                  e.currentTarget.value = clamped.toFixed(setCat.decimals);
+                  e.currentTarget.value = fmtNum(clamped, setCat.decimals, locale);
                 } else {
-                  e.currentTarget.value = effNewValue.toFixed(setCat.decimals);
+                  e.currentTarget.value = fmtNum(effNewValue, setCat.decimals, locale);
                 }
               }}
             />
@@ -709,9 +712,9 @@ function SetPanel({
           <div ref={helperTextRef} className="mt-2 text-[13px] leading-relaxed text-content-secondary">
             {setLive != null && effNewValue != null
               ? d.helper(
-                  setLive.toFixed(setCat.decimals),
+                  fmtNum(setLive, setCat.decimals, locale),
                   newDir,
-                  Math.abs(effNewValue - setLive).toFixed(setCat.decimals),
+                  fmtNum(Math.abs(effNewValue - setLive), setCat.decimals, locale),
                   newDir === 'above' ? effNewValue <= setLive : effNewValue >= setLive
                 )
               : d.waitingLive}
