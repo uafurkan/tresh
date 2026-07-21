@@ -18,6 +18,13 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   margin: 0;
   font-family: var(--font-body), sans-serif;

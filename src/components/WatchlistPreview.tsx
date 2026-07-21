@@ -30,7 +30,7 @@ export default function WatchlistPreview({ locale }: { locale: Locale }) {
           {d.watchlistManage} →
         </Link>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+      <div className="scrollbar-none flex gap-3 overflow-x-auto pb-1">
         {thresholds.slice(0, 6).map((t) => {
           const key = pairKey(t.base, t.quote);
           const cat = PAIR_CATALOG.find((p) => p.base === t.base && p.quote === t.quote);
