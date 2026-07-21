@@ -22,9 +22,12 @@ subscriber's language.
   The client polls every 15 s; the server keeps a 10 s cache.
 - **Web Push** — VAPID + `public/sw.js`. Subscription + thresholds (+ locale) are stored
   server-side via `POST /api/push/subscribe`.
-- **Vercel Cron** — `vercel.json` hits `/api/cron/check` every minute: rates are fetched,
-  threshold crossings detected, and push notifications sent in the background
-  (protected by `CRON_SECRET`).
+- **Background checks** — `/api/cron/check` fetches rates, detects threshold crossings
+  and sends push notifications (protected by `CRON_SECRET`). On Vercel **Pro** set the
+  cron in `vercel.json` to `* * * * *`; on the **Hobby** plan Vercel crons are limited
+  to daily, so keep the daily cron as a safety net and add a free external pinger
+  (e.g. cron-job.org) that calls the endpoint every minute with an
+  `Authorization: Bearer <CRON_SECRET>` header.
 - **Repository abstraction** — subscriptions persist in Upstash Redis when its REST env
   vars are set, otherwise in memory (`src/lib/server/store.ts`). The client copy of
   thresholds lives in `localStorage` (`src/lib/client/storage.ts`) — the interfaces are
@@ -56,7 +59,7 @@ pnpm dev              # http://localhost:3000
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fuafurkan%2Ftresh&env=VAPID_PUBLIC_KEY,VAPID_PRIVATE_KEY,NEXT_PUBLIC_VAPID_PUBLIC_KEY,CRON_SECRET&project-name=tresh)
 
 1. Connect the repo to Vercel and enter the env vars in the dashboard.
-2. The cron in `vercel.json` is set up automatically (checks every minute).
+2. The daily cron in `vercel.json` is set up automatically. For minute-level alerts on the Hobby plan, point cron-job.org (free) at `https://<your-domain>/api/cron/check` every minute with header `Authorization: Bearer <CRON_SECRET>`; on Pro, just change the schedule to `* * * * *`.
 3. Add `UPSTASH_REDIS_REST_URL/TOKEN` for end-to-end push — the in-memory store is
    not shared across serverless instances.
 
