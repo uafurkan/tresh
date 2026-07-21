@@ -82,6 +82,10 @@ export interface AppDict {
   testPushNoSub: string;
   testPushVapidMissing: string;
   testPushFailed: string;
+  checkNow: string;
+  checkNowRunning: string;
+  checkNowResult: (n: number) => string;
+  checkNowFailed: string;
   bannerLabel: string;
   bannerText: (key: string, value: string, dir: 'above' | 'below', current: string) => string;
   close: string;
@@ -187,6 +191,10 @@ export const dictionaries: Record<Locale, Dict> = {
       testPushNoSub: 'No active subscription — toggle push off and on again.',
       testPushVapidMissing: 'Server isn’t configured for push (missing VAPID keys).',
       testPushFailed: 'Couldn’t send — your subscription may be stale, try re-enabling push.',
+      checkNow: 'Check my thresholds now',
+      checkNowRunning: 'Checking…',
+      checkNowResult: (n) => (n > 0 ? `Sent ${n} notification${n === 1 ? '' : 's'} — check your lock screen.` : 'Checked — nothing crossed right now.'),
+      checkNowFailed: 'Couldn’t run the check — try re-enabling push.',
       bannerLabel: 'Threshold crossed',
       bannerText: (key, value, dir, current) =>
         dir === 'above'
@@ -294,6 +302,10 @@ export const dictionaries: Record<Locale, Dict> = {
       testPushNoSub: 'Aktif abonelik yok — push\'u kapatıp tekrar aç.',
       testPushVapidMissing: 'Sunucu push için yapılandırılmamış (VAPID anahtarları eksik).',
       testPushFailed: 'Gönderilemedi — aboneliğin bayat olabilir, push\'u yeniden aç.',
+      checkNow: 'Eşiklerimi şimdi kontrol et',
+      checkNowRunning: 'Kontrol ediliyor…',
+      checkNowResult: (n) => (n > 0 ? `${n} bildirim gönderildi — kilit ekranına bak.` : 'Kontrol edildi — şu an geçen bir eşik yok.'),
+      checkNowFailed: 'Kontrol çalıştırılamadı — push\'u yeniden açmayı dene.',
       bannerLabel: 'Eşik geçildi',
       bannerText: (key, value, dir, current) =>
         dir === 'above'

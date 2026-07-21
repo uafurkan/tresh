@@ -94,6 +94,28 @@ export async function sendTestPush(locale = 'en'): Promise<TestPushResult> {
   }
 }
 
+export type CheckNowResult = { ok: true; sent: number } | { ok: false; reason: 'not-enabled' | 'no-subscription' | 'not-subscribed' | 'network' };
+
+/** Cron'un tetiklenmesini beklemeden, kullanıcının kendi eşiklerini (ör. TEST/DEMO) anında kontrol ettirir. */
+export async function checkNow(): Promise<CheckNowResult> {
+  if (!pushSupported() || Notification.permission !== 'granted') return { ok: false, reason: 'not-enabled' };
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = await reg?.pushManager.getSubscription();
+  if (!sub) return { ok: false, reason: 'no-subscription' };
+  try {
+    const res = await fetch('/api/push/check-now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub.toJSON() }),
+    });
+    if (res.status === 404) return { ok: false, reason: 'not-subscribed' };
+    const data = await res.json().catch(() => ({ ok: false }));
+    return data.ok ? { ok: true, sent: data.sent ?? 0 } : { ok: false, reason: 'network' };
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+}
+
 async function syncSubscription(sub: PushSubscription, thresholds: Threshold[], locale: string): Promise<boolean> {
   try {
     const res = await fetch('/api/push/subscribe', {
