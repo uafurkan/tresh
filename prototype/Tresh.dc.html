@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Martian+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #06090e; -webkit-font-smoothing: antialiased; }
+  @keyframes treshBannerIn { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes treshMenuIn { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes treshRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;background:radial-gradient(120% 90% at 50% 0%, #0b1622 0%, #06090e 70%);font-family:'Hanken Grotesk',sans-serif;">
+  <div style="position:relative;width:414px;height:868px;border-radius:54px;padding:12px;background:linear-gradient(160deg,#1a2836,#0a121c);box-shadow:0 40px 120px -30px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.06);">
+    <div style="position:relative;width:390px;height:844px;border-radius:44px;overflow:hidden;background:#04090E;">
+
+      <canvas ref="{{ setCanvas }}" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
+
+      <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(140% 55% at 50% 118%, rgba(5,11,20,0) 30%, rgba(5,11,20,0.85) 100%), linear-gradient(180deg, rgba(5,11,20,0.55) 0%, rgba(5,11,20,0) 22%);"></div>
+
+      <!-- status bar -->
+      <div style="position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:20;">
+        <span style="font-family:'Martian Mono',monospace;font-size:15px;font-weight:500;color:#E8F1F5;letter-spacing:0.5px;">9:41</span>
+        <div style="display:flex;gap:7px;align-items:center;color:#E8F1F5;opacity:0.85;">
+          <span style="font-family:'Martian Mono',monospace;font-size:11px;letter-spacing:1px;">LTE</span>
+          <div style="width:22px;height:11px;border:1px solid rgba(232,241,245,0.6);border-radius:3px;position:relative;"><div style="position:absolute;inset:1.5px;right:5px;background:#E8F1F5;border-radius:1px;"></div></div>
+        </div>
+      </div>
+
+      <!-- top bar -->
+      <div style="position:absolute;top:54px;left:0;right:0;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;z-index:20;">
+        <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:1px;">
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-size:19px;font-weight:600;color:#E8F1F5;letter-spacing:0.2px;">Tresh</span>
+            <span style="font-size:11px;color:#8FA5B3;letter-spacing:0.3px;">{{ activeCountLabel }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isSet }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ goHome }}" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:6px 2px;color:#8FA5B3;font-family:'Hanken Grotesk',sans-serif;font-size:14px;">
+            <span style="font-size:18px;line-height:1;">‹</span> Back
+          </button>
+        </sc-if>
+        <button onClick="{{ toggleMenu }}" style="width:34px;height:34px;border-radius:12px;border:1px solid rgba(143,165,179,0.22);background:rgba(11,22,34,0.5);backdrop-filter:blur(8px);color:#8FA5B3;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:1px;">···</button>
+      </div>
+
+      <!-- overflow banner -->
+      <sc-if value="{{ banner }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;top:108px;left:16px;right:16px;z-index:30;animation:treshBannerIn 480ms cubic-bezier(0.22,1,0.36,1);">
+          <div style="border-radius:18px;padding:14px 16px;background:rgba(18,34,54,0.86);backdrop-filter:blur(14px);border:1px solid rgba(255,150,74,0.42);box-shadow:0 20px 50px -18px rgba(0,0,0,0.8);display:flex;gap:12px;align-items:flex-start;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#FF9647;margin-top:6px;flex:none;box-shadow:0 0 14px 2px rgba(255,150,74,0.6);"></div>
+            <div style="flex:1;">
+              <div style="font-size:12px;color:#8FA5B3;letter-spacing:0.4px;margin-bottom:3px;">Threshold crossed</div>
+              <div style="font-size:14px;color:#E8F1F5;line-height:1.4;">{{ banner }}</div>
+            </div>
+            <button onClick="{{ dismissBanner }}" style="background:none;border:none;color:#8FA5B3;cursor:pointer;font-size:16px;padding:2px 4px;">×</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===== HOME ===== -->
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div style="position:absolute;inset:0;z-index:15;pointer-events:none;">
+
+          <sc-if value="{{ isError }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:118px;left:16px;right:16px;pointer-events:auto;">
+              <div style="border-radius:18px;padding:16px;background:rgba(11,22,34,0.7);backdrop-filter:blur(10px);border:1px solid rgba(143,165,179,0.22);">
+                <div style="font-size:14px;color:#E8F1F5;margin-bottom:2px;">Signal lost</div>
+                <div style="font-size:13px;color:#8FA5B3;line-height:1.5;margin-bottom:12px;">Rates paused — last reading held. We'll resume the moment the tide comes back in.</div>
+                <button onClick="{{ clearError }}" style="background:rgba(52,227,214,0.14);border:1px solid rgba(52,227,214,0.4);color:#34E3D6;border-radius:12px;padding:8px 16px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;cursor:pointer;">Reconnect</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- anchored rate readout -->
+          <div ref="{{ setRateEl }}" style="position:absolute;top:0;left:0;right:0;text-align:center;will-change:transform;">
+            <div style="font-family:'Martian Mono',monospace;font-size:12px;letter-spacing:2px;color:#8FA5B3;text-transform:uppercase;margin-bottom:6px;">{{ pairLabel }}</div>
+            <div style="font-family:'Martian Mono',monospace;font-variant-numeric:tabular-nums;font-size:54px;font-weight:400;letter-spacing:-1.5px;line-height:1;color:#E8F1F5;text-shadow:0 2px 30px rgba(5,11,20,0.9);">{{ rateStr }}</div>
+            <div style="margin-top:8px;font-size:13px;color:#8FA5B3;font-variant-numeric:tabular-nums;">{{ deltaStr }} · {{ dirLabel }} {{ thresholdStr }}</div>
+          </div>
+        </div>
+
+        <!-- lower sheet: thresholds + CTA -->
+        <div style="position:absolute;left:0;right:0;bottom:0;z-index:16;padding:18px 16px 30px;">
+          <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="text-align:center;padding:22px 18px 8px;">
+              <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:21px;color:#E8F1F5;margin-bottom:8px;line-height:1.3;">Still water.</div>
+              <div style="font-size:14px;color:#8FA5B3;line-height:1.5;max-width:260px;margin:0 auto 4px;">Set your first threshold and we'll watch the level for you — even while you're away.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hasThresholds }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+              <sc-for list="{{ items }}" as="item" hint-placeholder-count="2">
+                <button onClick="{{ item.select }}" style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:18px;background:{{ item.bg }};border:1px solid {{ item.border }};opacity:{{ item.opacity }};transition:all 220ms cubic-bezier(0.22,1,0.36,1);">
+                  <svg width="60" height="26" viewBox="0 0 60 26" style="flex:none;overflow:visible;">
+                    <path d="{{ item.wavePath }}" fill="none" stroke="{{ item.color }}" stroke-width="2" stroke-linecap="round"></path>
+                    <line x1="0" y1="{{ item.markY }}" x2="60" y2="{{ item.markY }}" stroke="{{ item.color }}" stroke-width="1" stroke-dasharray="2 3" opacity="0.5"></line>
+                  </svg>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-family:'Martian Mono',monospace;font-size:14px;color:#E8F1F5;letter-spacing:0.5px;">{{ item.pair }}</div>
+                    <div style="font-size:12px;color:#8FA5B3;margin-top:2px;">{{ item.sub }}</div>
+                  </div>
+                  <div style="text-align:right;flex:none;">
+                    <div style="font-family:'Martian Mono',monospace;font-variant-numeric:tabular-nums;font-size:14px;color:{{ item.color }};">{{ item.rate }}</div>
+                    <div style="font-size:11px;color:{{ item.statusColor }};margin-top:2px;">{{ item.status }}</div>
+                  </div>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <button onClick="{{ goSet }}" style="width:100%;padding:17px;border-radius:20px;border:none;cursor:pointer;background:#34E3D6;color:#04121a;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:600;letter-spacing:0.2px;box-shadow:0 16px 40px -14px rgba(52,227,214,0.6);">Set a threshold</button>
+        </div>
+      </sc-if>
+
+      <!-- ===== SET THRESHOLD ===== -->
+      <sc-if value="{{ isSet }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;top:102px;z-index:16;padding:8px 22px 24px;display:flex;flex-direction:column;">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:26px;color:#E8F1F5;line-height:1.15;margin-bottom:4px;">Where's your line?</div>
+          <div style="font-size:14px;color:#8FA5B3;line-height:1.4;margin-bottom:20px;">Drag the float to the level you care about.</div>
+
+          <!-- pair segmented -->
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8FA5B3;margin-bottom:8px;">Pair</div>
+          <div style="display:flex;gap:8px;margin-bottom:18px;">
+            <sc-for list="{{ pairOptions }}" as="p" hint-placeholder-count="3">
+              <button onClick="{{ p.pick }}" style="flex:1;padding:10px 6px;border-radius:14px;cursor:pointer;font-family:'Martian Mono',monospace;font-size:13px;background:{{ p.bg }};border:1px solid {{ p.border }};color:{{ p.fg }};transition:all 200ms ease;">{{ p.label }}</button>
+            </sc-for>
+          </div>
+
+          <!-- direction -->
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8FA5B3;margin-bottom:8px;">Alert me when it</div>
+          <div style="display:flex;gap:8px;margin-bottom:22px;">
+            <button onClick="{{ pickAbove }}" style="flex:1;padding:12px;border-radius:14px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;background:{{ aboveBg }};border:1px solid {{ aboveBorder }};color:{{ aboveFg }};transition:all 200ms ease;">Rises above</button>
+            <button onClick="{{ pickBelow }}" style="flex:1;padding:12px;border-radius:14px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:14px;background:{{ belowBg }};border:1px solid {{ belowBorder }};color:{{ belowFg }};transition:all 200ms ease;">Falls below</button>
+          </div>
+
+          <!-- vertical float slider -->
+          <div style="display:flex;gap:20px;align-items:stretch;flex:1;min-height:0;">
+            <div ref="{{ setTrackEl }}" onPointerDown="{{ trackDown }}" style="position:relative;width:76px;flex:none;border-radius:22px;background:linear-gradient(180deg,#0B1622,#122236);border:1px solid rgba(143,165,179,0.16);cursor:ns-resize;overflow:hidden;touch-action:none;">
+              <div style="position:absolute;left:0;right:0;bottom:0;height:{{ fillPct }}%;background:linear-gradient(180deg,rgba(52,227,214,0.28),rgba(52,227,214,0.10));border-top:1.5px solid rgba(52,227,214,0.7);transition:height 60ms linear;"></div>
+              <div style="position:absolute;left:8px;right:8px;top:{{ floatTop }}%;transform:translateY(-50%);height:34px;border-radius:12px;background:#34E3D6;box-shadow:0 8px 24px -6px rgba(52,227,214,0.7);display:flex;align-items:center;justify-content:center;transition:top 60ms linear;">
+                <div style="width:22px;height:3px;border-radius:2px;background:rgba(4,18,26,0.4);"></div>
+              </div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+              <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8FA5B3;margin-bottom:6px;">Threshold</div>
+              <div style="font-family:'Martian Mono',monospace;font-variant-numeric:tabular-nums;font-size:44px;font-weight:500;color:#E8F1F5;line-height:1;">{{ newValueStr }}</div>
+              <div style="font-size:13px;color:#8FA5B3;margin-top:8px;line-height:1.5;">Currently at {{ newCurrentStr }}. {{ newDistanceStr }}</div>
+
+              <div style="margin-top:20px;border-radius:16px;padding:13px 14px;background:rgba(11,22,34,0.55);border:1px solid rgba(143,165,179,0.16);">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                  <div style="font-size:13px;color:#E8F1F5;">Push notifications</div>
+                  <button onClick="{{ togglePerm }}" style="width:44px;height:26px;border-radius:13px;border:none;cursor:pointer;background:{{ permBg }};position:relative;transition:background 200ms ease;">
+                    <div style="position:absolute;top:3px;left:{{ permKnob }};width:20px;height:20px;border-radius:50%;background:#E8F1F5;transition:left 200ms cubic-bezier(0.22,1,0.36,1);"></div>
+                  </button>
+                </div>
+                <div style="font-size:11.5px;color:#8FA5B3;line-height:1.5;margin-top:6px;">So we can reach you the moment the level breaks — even with the app closed.</div>
+              </div>
+            </div>
+          </div>
+
+          <button onClick="{{ createThreshold }}" style="width:100%;margin-top:18px;padding:17px;border-radius:20px;border:none;cursor:pointer;background:#34E3D6;color:#04121a;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:600;box-shadow:0 16px 40px -14px rgba(52,227,214,0.6);">Watch this level</button>
+        </div>
+      </sc-if>
+
+      <!-- prototype menu -->
+      <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:40;" onClick="{{ toggleMenu }}">
+          <div style="position:absolute;top:96px;right:18px;width:210px;border-radius:18px;padding:6px;background:rgba(11,22,34,0.94);backdrop-filter:blur(16px);border:1px solid rgba(143,165,179,0.2);box-shadow:0 24px 60px -20px rgba(0,0,0,0.9);animation:treshMenuIn 180ms ease;" onClick="{{ stop }}">
+            <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#5f7585;padding:8px 12px 6px;">Prototype states</div>
+            <button onClick="{{ simulateCross }}" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:#E8F1F5;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;padding:10px 12px;border-radius:12px;" style-hover="background:rgba(52,227,214,0.12);">Simulate a crossing</button>
+            <button onClick="{{ toggleError }}" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:#E8F1F5;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;padding:10px 12px;border-radius:12px;" style-hover="background:rgba(52,227,214,0.12);">{{ errorLabel }}</button>
+            <button onClick="{{ toggleReduced }}" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:#E8F1F5;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;padding:10px 12px;border-radius:12px;" style-hover="background:rgba(52,227,214,0.12);">{{ reducedLabel }}</button>
+            <button onClick="{{ clearAll }}" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:#8FA5B3;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;padding:10px 12px;border-radius:12px;" style-hover="background:rgba(52,227,214,0.12);">Clear all (empty state)</button>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const catalog = [
+      { base:'USD', quote:'TRY', decimals:2, min:34.40, max:35.60, threshold:35.00, dir:'above', current:34.82 },
+      { base:'EUR', quote:'USD', decimals:4, min:1.0700, max:1.0980, threshold:1.0850, dir:'below', current:1.0872 },
+      { base:'GBP', quote:'JPY', decimals:2, min:191.0, max:197.0, threshold:195.00, dir:'above', current:193.40 },
+    ];
+    this.catalog = catalog;
+    const thresholds = [
+      { id:'t1', ...catalog[0], opening:catalog[0].current, paused:false },
+      { id:'t2', ...catalog[1], opening:catalog[1].current, paused:false },
+      { id:'t3', ...catalog[2], opening:catalog[2].current, paused:true },
+    ];
+    this.state = {
+      screen:'home', thresholds, selectedId:'t1',
+      rateTick:0, menuOpen:false, error:false, reduced:false, loading:true, banner:null,
+      newPairIdx:0, newDir:'above', newValue:catalog[0].threshold, perm:false,
+    };
+    // instance animation values
+    this.dLevel = null; this.dTension = 0; this.overflow = null; this.crossX = 0.5;
+    this.setCanvas = (el)=>{ if(el){ this.canvas=el; this._initCanvas(); } };
+    this.setRateEl = (el)=>{ this.rateEl=el; };
+    this.setTrackEl = (el)=>{ this.trackEl=el; };
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) this.state.reduced = true; } catch(e){}
+    }
+  }
+
+  get sel(){ return this.state.thresholds.find(t=>t.id===this.state.selectedId) || this.state.thresholds[0]; }
+
+  componentDidMount(){
+    this._raf = requestAnimationFrame(this._loop);
+    this._walk = setInterval(()=>this._step(), 850);
+    this._loadT = setTimeout(()=>this.setState({loading:false}), 1700);
+  }
+  componentWillUnmount(){
+    cancelAnimationFrame(this._raf); clearInterval(this._walk); clearTimeout(this._loadT);
+  }
+
+  _initCanvas(){
+    const c=this.canvas; const dpr=Math.min(window.devicePixelRatio||1,2);
+    c.width=390*dpr; c.height=844*dpr; this.ctx=c.getContext('2d'); this.ctx.scale(dpr,dpr); this.dpr=dpr;
+  }
+
+  _step(){
+    if (this.state.error) return;
+    const t=this.sel; if(!t) return;
+    const vol=(t.max-t.min)*0.028;
+    let cur=t.current + (Math.random()-0.5)*2*vol;
+    // gentle drift toward threshold so crossings happen naturally
+    cur += (t.threshold-cur)*0.02;
+    cur=Math.max(t.min+0.01, Math.min(t.max-0.01, cur));
+    this._commit(t, cur);
+  }
+
+  _commit(t, cur){
+    const prev=t.current;
+    const crossed = t.dir==='above' ? (prev<t.threshold && cur>=t.threshold)
+                                    : (prev>t.threshold && cur<=t.threshold);
+    const thresholds=this.state.thresholds.map(x=>x.id===t.id?{...x,current:cur}:x);
+    const patch={thresholds, rateTick:this.state.rateTick+1};
+    if(crossed && !t.paused){
+      this.overflow={t0:performance.now()};
+      patch.banner=`${t.base}/${t.quote} crossed ${t.threshold.toFixed(t.decimals)} — now at ${cur.toFixed(t.decimals)}.`;
+      clearTimeout(this._bannerT); this._bannerT=setTimeout(()=>this.setState({banner:null}), 6000);
+    }
+    this.setState(patch);
+  }
+
+  _tension(t, rate){
+    const range=(t.max-t.min)*0.5;
+    return Math.max(0, Math.min(1, 1 - Math.abs(rate-t.threshold)/range));
+  }
+
+  _loop = (ts)=>{
+    this._raf=requestAnimationFrame(this._loop);
+    const ctx=this.ctx; if(!ctx){ return; }
+    const t=this.sel; if(!t){ return; }
+    const W=390,H=844;
+    const reduced=this.state.reduced, error=this.state.error, loading=this.state.loading;
+    const level=(t.current-t.min)/(t.max-t.min);
+    const thrLevel=(t.threshold-t.min)/(t.max-t.min);
+    if(this.dLevel==null) this.dLevel=level;
+    this.dLevel += (level-this.dLevel)*0.06;
+    const targetTension=this._tension(t,t.current);
+    this.dTension += (targetTension-this.dTension)*0.05;
+    const tension=this.dTension;
+
+    const surfaceY = H*(1-this.dLevel);
+    const thrY = H*(1-thrLevel);
+
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#04090E'; ctx.fillRect(0,0,W,H);
+
+    // colors
+    const dull=[34,118,126], vivid=[56,231,217], amber=[255,150,74];
+    let cr=dull.map((d,i)=>d+(vivid[i]-d)*tension);
+    let ovAmt=0;
+    if(this.overflow){
+      const el=(performance.now()-this.overflow.t0)/1000;
+      if(el>2.8){ this.overflow=null; }
+      else { ovAmt = el<0.35 ? el/0.35 : Math.max(0,1-(el-0.35)/2.45); ovAmt=Math.max(0,Math.min(1,ovAmt)); }
+    }
+    if(ovAmt>0){ cr=cr.map((v,i)=>v+(amber[i]-v)*ovAmt); }
+    if(error){ const g=cr[0]*0.3+cr[1]*0.59+cr[2]*0.11; cr=cr.map(v=>v*0.4+g*0.6*0.5); }
+    const col=(a)=>`rgba(${cr[0]|0},${cr[1]|0},${cr[2]|0},${a})`;
+
+    const time = (reduced||error) ? 0 : ts/1000;
+    const speed = 1 + tension*1.4;
+    const amp = (loading? 3 : (5 + tension*7)) ;
+    const blur = loading ? 5 : 0;
+
+    ctx.save();
+    if(blur){ ctx.filter=`blur(${blur}px)`; }
+
+    // deeper parallax layer
+    this._wave(ctx, W,H, surfaceY+10, amp*0.6, 0.014, time*speed*0.6+2, col(0.16), null);
+    // main water body
+    const grad=ctx.createLinearGradient(0,surfaceY,0,H);
+    grad.addColorStop(0, col(0.42));
+    grad.addColorStop(0.5, `rgba(${(cr[0]*0.5)|0},${(cr[1]*0.5)|0},${(cr[2]*0.55)|0},0.5)`);
+    grad.addColorStop(1, 'rgba(6,16,26,0.85)');
+    this._wave(ctx, W,H, surfaceY, amp, 0.021, time*speed, grad, col(loading?0.4:0.95));
+    ctx.restore();
+
+    // threshold line
+    ctx.save();
+    ctx.setLineDash([2,7]); ctx.lineWidth=1.5;
+    ctx.strokeStyle = ovAmt>0.2 ? `rgba(255,150,74,${0.5+ovAmt*0.4})` : 'rgba(232,241,245,0.32)';
+    ctx.beginPath(); ctx.moveTo(0,thrY); ctx.lineTo(W,thrY); ctx.stroke();
+    ctx.restore();
+
+    // overflow ripple ring
+    if(this.overflow){
+      const el=(performance.now()-this.overflow.t0)/1000;
+      const cx=W*this.crossX, cy=thrY;
+      const drawRing=(delay)=>{
+        const e=el-delay; if(e<0||e>0.9) return;
+        const r=20+e*260; const a=Math.max(0,(1-e/0.9))*0.5;
+        ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(255,150,74,${a})`; ctx.lineWidth=2.5*(1-e); ctx.stroke();
+      };
+      if(!reduced){ drawRing(0); drawRing(0.18); }
+    }
+
+    ctx.restore && ctx.restore;
+
+    // anchor rate readout near surface
+    if(this.rateEl){
+      const y=Math.max(150, Math.min(360, surfaceY-150));
+      this.rateEl.style.transform=`translateY(${y}px)`;
+    }
+  }
+
+  _wave(ctx,W,H,baseY,amp,freq,phase,fill,stroke){
+    ctx.beginPath();
+    ctx.moveTo(0,H);
+    let firstY=baseY;
+    for(let x=0;x<=W;x+=4){
+      const y=baseY + Math.sin(x*freq+phase)*amp + Math.sin(x*freq*2.3+phase*1.5)*amp*0.4;
+      if(x===0){ firstY=y; ctx.lineTo(0,y); } else ctx.lineTo(x,y);
+    }
+    ctx.lineTo(W,H); ctx.closePath();
+    ctx.fillStyle=fill; ctx.fill();
+    if(stroke){
+      ctx.beginPath();
+      for(let x=0;x<=W;x+=4){
+        const y=baseY + Math.sin(x*freq+phase)*amp + Math.sin(x*freq*2.3+phase*1.5)*amp*0.4;
+        if(x===0) ctx.moveTo(0,y); else ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle=stroke; ctx.lineWidth=2; ctx.stroke();
+    }
+  }
+
+  _fmt(v,d){ return v.toFixed(d); }
+
+  _miniWave(t){
+    const w=60,h=26,parts=[]; const lvl=(t.current-t.min)/(t.max-t.min);
+    const midY = h*(1-lvl)*0.7+h*0.15;
+    for(let x=0;x<=w;x+=4){
+      const y=midY+Math.sin(x*0.28)*2.2;
+      parts.push((x===0?'M':'L')+x+' '+y.toFixed(1));
+    }
+    return { path:parts.join(' '), markY:(h*(1-(t.threshold-t.min)/(t.max-t.min))*0.7+h*0.15).toFixed(1) };
+  }
+
+  // ---- handlers ----
+  goSet = ()=>{ const c=this.catalog[this.state.newPairIdx]; this.setState({screen:'set', newValue:c.threshold, newDir:c.dir}); };
+  goHome = ()=> this.setState({screen:'home'});
+  toggleMenu = ()=> this.setState(s=>({menuOpen:!s.menuOpen}));
+  stop = (e)=> e && e.stopPropagation();
+  dismissBanner = ()=> this.setState({banner:null});
+  clearError = ()=> this.setState({error:false});
+  toggleError = ()=> this.setState(s=>({error:!s.error,menuOpen:false}));
+  toggleReduced = ()=> this.setState(s=>({reduced:!s.reduced,menuOpen:false}));
+  clearAll = ()=> this.setState({thresholds:[],menuOpen:false});
+  simulateCross = ()=>{
+    this.setState({menuOpen:false});
+    let t=this.sel;
+    if(!t){ return; }
+    const target = t.dir==='above' ? t.threshold+ (t.max-t.threshold)*0.35 : t.threshold-(t.threshold-t.min)*0.35;
+    // ensure prev is on the near side
+    const nudge = this.state.thresholds.map(x=>x.id===t.id?{...x,current: t.dir==='above'?t.threshold-0.02:t.threshold+0.02}:x);
+    this.setState({thresholds:nudge},()=>{ this._commit(this.sel, target); });
+  };
+  selectItem = (id)=> this.setState({selectedId:id});
+
+  // set-flow handlers
+  pickPair = (i)=>{ const c=this.catalog[i]; this.setState({newPairIdx:i,newValue:c.threshold,newDir:c.dir}); };
+  pickAbove = ()=> this.setState({newDir:'above'});
+  pickBelow = ()=> this.setState({newDir:'below'});
+  togglePerm = ()=> this.setState(s=>({perm:!s.perm}));
+  trackDown = (e)=>{ this._dragging=true; this._trackMove(e); window.addEventListener('pointermove',this._trackMove); window.addEventListener('pointerup',this._trackUp); };
+  _trackMove = (e)=>{ if(!this._dragging||!this.trackEl) return; const r=this.trackEl.getBoundingClientRect(); let p=(e.clientY-r.top)/r.height; p=Math.max(0,Math.min(1,p)); const c=this.catalog[this.state.newPairIdx]; const v=c.min+(1-p)*(c.max-c.min); this.setState({newValue:v}); };
+  _trackUp = ()=>{ this._dragging=false; window.removeEventListener('pointermove',this._trackMove); window.removeEventListener('pointerup',this._trackUp); };
+  createThreshold = ()=>{
+    const c=this.catalog[this.state.newPairIdx];
+    const id='t'+Date.now();
+    const nt={ id, base:c.base, quote:c.quote, decimals:c.decimals, min:c.min, max:c.max,
+      threshold:+this.state.newValue.toFixed(c.decimals), dir:this.state.newDir, current:c.current, opening:c.current, paused:false };
+    this.setState(s=>({thresholds:[...s.thresholds, nt], selectedId:id, screen:'home'}));
+  };
+
+  renderVals(){
+    const s=this.state; const t=this.sel;
+    const dirLabel = t ? (t.dir==='above'?'above':'below') : 'above';
+    const rateStr = t ? this._fmt(t.current,t.decimals) : '—';
+    const delta = t ? (t.current - t.opening) : 0;
+    const deltaStr = t ? `${delta>=0?'+':''}${delta.toFixed(t.decimals)} today` : '';
+    const items = s.thresholds.map(it=>{
+      const mw=this._miniWave(it);
+      const tens=this._tension(it,it.current);
+      const dist=Math.abs(it.current-it.threshold);
+      let color, status, statusColor;
+      if(it.paused){ color='#5f7585'; status='Paused'; statusColor='#5f7585'; }
+      else {
+        const dull=[46,164,160], vivid=[56,231,217];
+        color=`rgb(${dull.map((d,i)=>Math.round(d+(vivid[i]-d)*tens)).join(',')})`;
+        status = tens>0.72 ? 'Approaching' : (tens>0.4?'Watching':'Calm');
+        statusColor = tens>0.72 ? '#FF9647' : '#8FA5B3';
+      }
+      const selected = it.id===s.selectedId;
+      return {
+        id:it.id, pair:`${it.base}/${it.quote}`, wavePath:mw.path, markY:mw.markY,
+        color, status, statusColor,
+        rate:this._fmt(it.current,it.decimals),
+        sub:`${it.dir==='above'?'Above':'Below'} ${it.threshold.toFixed(it.decimals)}${it.paused?'':` · ${dist.toFixed(it.decimals)} away`}`,
+        opacity: it.paused?0.55:1,
+        bg: selected?'rgba(18,34,54,0.9)':'rgba(11,22,34,0.6)',
+        border: selected?'rgba(52,227,214,0.4)':'rgba(143,165,179,0.14)',
+        select: ()=>this.selectItem(it.id),
+      };
+    });
+
+    // set flow
+    const c=this.catalog[s.newPairIdx];
+    const fillPct = ((s.newValue-c.min)/(c.max-c.min))*100;
+    const floatTop = (1-(s.newValue-c.min)/(c.max-c.min))*100;
+    const newDist = s.newValue - c.current;
+    const newDistanceStr = s.newDir==='above'
+      ? (s.newValue>c.current ? `${(s.newValue-c.current).toFixed(c.decimals)} to climb.` : `Already above.`)
+      : (s.newValue<c.current ? `${(c.current-s.newValue).toFixed(c.decimals)} to fall.` : `Already below.`);
+    const pairOptions = this.catalog.map((p,i)=>({
+      label:`${p.base}/${p.quote}`,
+      pick:()=>this.pickPair(i),
+      bg: i===s.newPairIdx?'rgba(52,227,214,0.14)':'rgba(11,22,34,0.5)',
+      border: i===s.newPairIdx?'rgba(52,227,214,0.5)':'rgba(143,165,179,0.16)',
+      fg: i===s.newPairIdx?'#34E3D6':'#8FA5B3',
+    }));
+    const activeCount=s.thresholds.filter(x=>!x.paused).length;
+
+    return {
+      isHome: s.screen==='home', isSet: s.screen==='set',
+      menuOpen: s.menuOpen, isError: s.error, banner: s.banner,
+      isEmpty: s.thresholds.length===0, hasThresholds: s.thresholds.length>0,
+      activeCountLabel: `${activeCount} level${activeCount===1?'':'s'} watched`,
+      pairLabel: t?`${t.base}/${t.quote}`:'—',
+      rateStr, deltaStr, dirLabel, thresholdStr: t?t.threshold.toFixed(t.decimals):'',
+      items,
+      // set
+      pairOptions,
+      aboveBg: s.newDir==='above'?'rgba(52,227,214,0.14)':'rgba(11,22,34,0.5)',
+      aboveBorder: s.newDir==='above'?'rgba(52,227,214,0.5)':'rgba(143,165,179,0.16)',
+      aboveFg: s.newDir==='above'?'#34E3D6':'#8FA5B3',
+      belowBg: s.newDir==='below'?'rgba(52,227,214,0.14)':'rgba(11,22,34,0.5)',
+      belowBorder: s.newDir==='below'?'rgba(52,227,214,0.5)':'rgba(143,165,179,0.16)',
+      belowFg: s.newDir==='below'?'#34E3D6':'#8FA5B3',
+      fillPct: Math.max(0,Math.min(100,fillPct)), floatTop: Math.max(0,Math.min(100,floatTop)),
+      newValueStr: this._fmt(s.newValue,c.decimals), newCurrentStr: this._fmt(c.current,c.decimals),
+      newDistanceStr,
+      permBg: s.perm?'#34E3D6':'rgba(143,165,179,0.3)', permKnob: s.perm?'21px':'3px',
+      // handlers
+      setCanvas:this.setCanvas, setRateEl:this.setRateEl, setTrackEl:this.setTrackEl,
+      goSet:this.goSet, goHome:this.goHome, toggleMenu:this.toggleMenu, stop:this.stop,
+      dismissBanner:this.dismissBanner, clearError:this.clearError,
+      simulateCross:this.simulateCross, toggleError:this.toggleError, toggleReduced:this.toggleReduced, clearAll:this.clearAll,
+      errorLabel: s.error?'Restore signal':'Simulate signal loss',
+      reducedLabel: s.reduced?'Motion: reduced ✓':'Reduce motion',
+      pickAbove:this.pickAbove, pickBelow:this.pickBelow, togglePerm:this.togglePerm,
+      trackDown:this.trackDown, createThreshold:this.createThreshold,
+    };
+  }
+}
+</script>
+</body>
+</html>

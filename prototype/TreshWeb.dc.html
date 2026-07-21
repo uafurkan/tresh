@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Martian+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #06090e; -webkit-font-smoothing: antialiased; }
+  @keyframes twBannerIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes twMenuIn { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:36px;background:radial-gradient(120% 90% at 50% -10%, #0b1622 0%, #06090e 68%);font-family:'Hanken Grotesk',sans-serif;">
+  <div style="position:relative;width:1440px;height:900px;border-radius:20px;overflow:hidden;background:#04090E;box-shadow:0 60px 160px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05);border:1px solid rgba(143,165,179,0.12);">
+
+    <!-- browser chrome -->
+    <div style="height:44px;display:flex;align-items:center;gap:16px;padding:0 18px;background:#0a121c;border-bottom:1px solid rgba(143,165,179,0.1);">
+      <div style="display:flex;gap:8px;">
+        <div style="width:12px;height:12px;border-radius:50%;background:#ff5f57;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#febc2e;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#28c840;"></div>
+      </div>
+      <div style="flex:1;max-width:420px;height:28px;border-radius:9px;background:#122236;display:flex;align-items:center;padding:0 14px;gap:8px;">
+        <div style="width:11px;height:11px;border-radius:3px;border:1.5px solid #34E3D6;"></div>
+        <span style="font-family:'Martian Mono',monospace;font-size:12px;color:#8FA5B3;">tresh.app</span>
+      </div>
+    </div>
+
+    <div style="position:relative;width:1440px;height:856px;display:flex;">
+
+      <!-- ===== LEFT: hero water panel ===== -->
+      <div style="position:relative;width:900px;height:856px;overflow:hidden;">
+        <canvas ref="{{ setCanvas }}" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
+        <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 60% at 50% 120%, rgba(5,11,20,0) 40%, rgba(5,11,20,0.8) 100%), linear-gradient(90deg, rgba(5,11,20,0) 80%, rgba(5,11,20,0.5) 100%);"></div>
+
+        <div style="position:absolute;top:40px;left:48px;z-index:15;">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:600;color:#E8F1F5;letter-spacing:0.3px;">Tresh</div>
+          <div style="font-size:14px;color:#8FA5B3;margin-top:2px;letter-spacing:0.3px;">{{ activeCountLabel }}</div>
+        </div>
+
+        <sc-if value="{{ isError }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:104px;left:48px;right:48px;z-index:16;">
+            <div style="border-radius:18px;padding:18px 20px;background:rgba(11,22,34,0.72);backdrop-filter:blur(10px);border:1px solid rgba(143,165,179,0.22);max-width:420px;">
+              <div style="font-size:15px;color:#E8F1F5;margin-bottom:3px;">Signal lost</div>
+              <div style="font-size:13.5px;color:#8FA5B3;line-height:1.5;margin-bottom:14px;">Rates paused — last reading held. We'll resume the moment the tide comes back in.</div>
+              <button onClick="{{ clearError }}" style="background:rgba(52,227,214,0.14);border:1px solid rgba(52,227,214,0.4);color:#34E3D6;border-radius:12px;padding:9px 18px;font-family:'Hanken Grotesk',sans-serif;font-size:13.5px;cursor:pointer;">Reconnect</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- anchored rate readout -->
+        <div ref="{{ setRateEl }}" style="position:absolute;top:0;left:0;width:900px;text-align:center;will-change:transform;z-index:15;">
+          <div style="font-family:'Martian Mono',monospace;font-size:14px;letter-spacing:3px;color:#8FA5B3;text-transform:uppercase;margin-bottom:10px;">{{ pairLabel }}</div>
+          <div style="font-family:'Martian Mono',monospace;font-variant-numeric:tabular-nums;font-size:86px;font-weight:400;letter-spacing:-2px;line-height:0.95;color:#E8F1F5;text-shadow:0 4px 50px rgba(5,11,20,0.9);">{{ rateStr }}</div>
+          <div style="margin-top:14px;font-size:15px;color:#8FA5B3;font-variant-numeric:tabular-nums;letter-spacing:0.3px;">{{ deltaStr }} · watching {{ dirLabel }} {{ thresholdStr }}</div>
+        </div>
+      </div>
+
+      <!-- ===== RIGHT: rail ===== -->
+      <div style="position:relative;width:540px;height:856px;background:linear-gradient(180deg,#0B1622,#081019);border-left:1px solid rgba(143,165,179,0.12);padding:36px 40px;display:flex;flex-direction:column;">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;">
+          <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+            <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:24px;color:#E8F1F5;">Your levels</div>
+          </sc-if>
+          <sc-if value="{{ isSet }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ goList }}" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;color:#8FA5B3;font-family:'Hanken Grotesk',sans-serif;font-size:15px;padding:0;">
+              <span style="font-size:20px;line-height:1;">‹</span> Back
+            </button>
+          </sc-if>
+          <button onClick="{{ toggleMenu }}" style="width:38px;height:38px;border-radius:12px;border:1px solid rgba(143,165,179,0.22);background:rgba(18,34,54,0.5);color:#8FA5B3;cursor:pointer;font-size:17px;letter-spacing:1px;">···</button>
+        </div>
+
+        <!-- LIST MODE -->
+        <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;">
+            <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 20px;">
+                <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:26px;color:#E8F1F5;margin-bottom:10px;">Still water.</div>
+                <div style="font-size:15px;color:#8FA5B3;line-height:1.55;max-width:300px;">Set your first threshold and we'll watch the level for you — even while you're away.</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ hasThresholds }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:12px;overflow-y:auto;">
+                <sc-for list="{{ items }}" as="item" hint-placeholder-count="3">
+                  <button onClick="{{ item.select }}" style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:18px;padding:18px;border-radius:20px;background:{{ item.bg }};border:1px solid {{ item.border }};opacity:{{ item.opacity }};transition:all 240ms cubic-bezier(0.22,1,0.36,1);">
+                    <svg width="104" height="46" viewBox="0 0 104 46" style="flex:none;overflow:visible;">
+                      <path d="{{ item.wavePath }}" fill="none" stroke="{{ item.color }}" stroke-width="2.5" stroke-linecap="round"></path>
+                      <line x1="0" y1="{{ item.markY }}" x2="104" y2="{{ item.markY }}" stroke="{{ item.color }}" stroke-width="1" stroke-dasharray="2 4" opacity="0.5"></line>
+                    </svg>
+                    <div style="flex:1;min-width:0;">
+                      <div style="font-family:'Martian Mono',monospace;font-size:17px;color:#E8F1F5;letter-spacing:0.5px;">{{ item.pair }}</div>
+                      <div style="font-size:13px;color:#8FA5B3;margin-top:4px;">{{ item.sub }}</div>
+                    </div>
+                    <div style="text-align:right;flex:none;">
+                      <div style="font-family:'Martian Mono',monospace;font-variant-numeric:tabular-nums;font-size:18px;color:{{ item.color }};">{{ item.rate }}</div>
+                      <div style="font-size:12px;color:{{ item.statusColor }};margin-top:3px;">{{ item.status }}</div>
+                    </div>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <div style="flex:1;"></div>
+            <button onClick="{{ goSet }}" style="width:100%;margin-top:20px;padding:18px;border-radius:20px;border:none;cursor:pointer;background:#34E3D6;color:#04121a;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:600;letter-spacing:0.2px;box-shadow:0 18px 44px -16px rgba(52,227,214,0.6);">Set a threshold</button>
+          </div>
+        </sc-if>
+
+        <!-- SET MODE -->
+        <sc-if value="{{ isSet }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;">
+            <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:24px;color:#E8F1F5;line-height:1.15;margin-bottom:4px;">Where's your line?</div>
+            <div style="font-size:14px;color:#8FA5B3;margin-bottom:22px;">Drag the float to the level you care about.</div>
+
+            <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8FA5B3;margin-bottom:9px;">Pair</div>
+            <div style="display:flex;gap:9px;margin-bottom:20px;">
+              <sc-for list="{{ pairOptions }}" as="p" hint-placeholder-count="3">
+                <button onClick="{{ p.pick }}" style="flex:1;padding:12px 6px;border-radius:14px;cursor:pointer;font-family:'Martian Mono',monospace;font-size:14px;background:{{ p.bg }};border:1px solid {{ p.border }};color:{{ p.fg }};transition:all 200ms ease;">{{ p.label }}</button>
+              </sc-for>
+            </div>
+
+            <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8FA5B3;margin-bottom:9px;">Alert me when it</div>
+            <div style="display:flex;gap:9px;margin-bottom:24px;">
+              <button onClick="{{ pickAbove }}" style="flex:1;padding:13px;border-radius:14px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;background:{{ aboveBg }};border:1px solid {{ aboveBorder }};color:{{ aboveFg }};transition:all 200ms ease;">Rises above</button>
+              <button onClick="{{ pickBelow }}" style="flex:1;padding:13px;border-radius:14px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:15px;background:{{ belowBg }};border:1px solid {{ belowBorder }};color:{{ belowFg }};transition:all 200ms ease;">Falls below</button>
+            </div>
+
+            <div style="display:flex;gap:24px;flex:1;min-height:0;">
+              <div ref="{{ setTrackEl }}" onPointerDown="{{ trackDown }}" style="position:relative;width:92px;flex:none;border-radius:24px;background:linear-gradient(180deg,#0B1622,#122236);border:1px solid rgba(143,165,179,0.16);cursor:ns-resize;overflow:hidden;touch-action:none;">
+                <div style="position:absolute;left:0;right:0;bottom:0;height:{{ fillPct }}%;background:linear-gradient(180deg,rgba(52,227,214,0.28),rgba(52,227,214,0.10));border-top:1.5px solid rgba(52,227,214,0.7);transition:height 60ms linear;"></div>
+                <div style="position:absolute;left:9px;right:9px;top:{{ floatTop }}%;transform:translateY(-50%);height:38px;border-radius:13px;background:#34E3D6;box-shadow:0 8px 24px -6px rgba(52,227,214,0.7);display:flex;align-items:center;justify-content:center;transition:top 60ms linear;">
+                  <div style="width:26px;height:3px;border-radius:2px;background:rgba(4,18,26,0.4);"></div>
+                </div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+                <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8FA5B3;margin-bottom:8px;">Threshold</div>
+                <div style="font-family:'Martian Mono',monospace;font-variant-numeric:tabular-nums;font-size:52px;font-weight:500;color:#E8F1F5;line-height:1;">{{ newValueStr }}</div>
+                <div style="font-size:14px;color:#8FA5B3;margin-top:10px;line-height:1.5;">Currently at {{ newCurrentStr }}. {{ newDistanceStr }}</div>
+
+                <div style="margin-top:22px;border-radius:16px;padding:15px 16px;background:rgba(18,34,54,0.5);border:1px solid rgba(143,165,179,0.16);">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                    <div style="font-size:14px;color:#E8F1F5;">Push notifications</div>
+                    <button onClick="{{ togglePerm }}" style="width:46px;height:27px;border-radius:14px;border:none;cursor:pointer;background:{{ permBg }};position:relative;transition:background 200ms ease;">
+                      <div style="position:absolute;top:3px;left:{{ permKnob }};width:21px;height:21px;border-radius:50%;background:#E8F1F5;transition:left 200ms cubic-bezier(0.22,1,0.36,1);"></div>
+                    </button>
+                  </div>
+                  <div style="font-size:12px;color:#8FA5B3;line-height:1.5;margin-top:7px;">So we can reach you the moment the level breaks — even with the tab closed.</div>
+                </div>
+              </div>
+            </div>
+
+            <button onClick="{{ createThreshold }}" style="width:100%;margin-top:20px;padding:18px;border-radius:20px;border:none;cursor:pointer;background:#34E3D6;color:#04121a;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:600;box-shadow:0 18px 44px -16px rgba(52,227,214,0.6);">Watch this level</button>
+          </div>
+        </sc-if>
+
+      </div>
+
+      <!-- overflow toast -->
+      <sc-if value="{{ banner }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;top:24px;left:50%;transform:translateX(-50%);z-index:30;animation:twBannerIn 480ms cubic-bezier(0.22,1,0.36,1);">
+          <div style="border-radius:18px;padding:16px 20px;background:rgba(18,34,54,0.9);backdrop-filter:blur(14px);border:1px solid rgba(255,150,74,0.42);box-shadow:0 24px 60px -20px rgba(0,0,0,0.85);display:flex;gap:14px;align-items:center;min-width:380px;">
+            <div style="width:9px;height:9px;border-radius:50%;background:#FF9647;flex:none;box-shadow:0 0 16px 3px rgba(255,150,74,0.6);"></div>
+            <div style="flex:1;">
+              <div style="font-size:12px;color:#8FA5B3;letter-spacing:0.4px;margin-bottom:2px;">Threshold crossed</div>
+              <div style="font-size:14.5px;color:#E8F1F5;">{{ banner }}</div>
+            </div>
+            <button onClick="{{ dismissBanner }}" style="background:none;border:none;color:#8FA5B3;cursor:pointer;font-size:18px;padding:2px 4px;">×</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- prototype menu -->
+      <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:40;" onClick="{{ toggleMenu }}">
+          <div style="position:absolute;top:96px;right:40px;width:230px;border-radius:18px;padding:6px;background:rgba(11,22,34,0.95);backdrop-filter:blur(16px);border:1px solid rgba(143,165,179,0.2);box-shadow:0 24px 60px -20px rgba(0,0,0,0.9);animation:twMenuIn 180ms ease;" onClick="{{ stop }}">
+            <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#5f7585;padding:8px 12px 6px;">Prototype states</div>
+            <button onClick="{{ simulateCross }}" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:#E8F1F5;font-family:'Hanken Grotesk',sans-serif;font-size:14px;padding:11px 12px;border-radius:12px;" style-hover="background:rgba(52,227,214,0.12);">Simulate a crossing</button>
+            <button onClick="{{ toggleError }}" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:#E8F1F5;font-family:'Hanken Grotesk',sans-serif;font-size:14px;padding:11px 12px;border-radius:12px;" style-hover="background:rgba(52,227,214,0.12);">{{ errorLabel }}</button>
+            <button onClick="{{ toggleReduced }}" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:#E8F1F5;font-family:'Hanken Grotesk',sans-serif;font-size:14px;padding:11px 12px;border-radius:12px;" style-hover="background:rgba(52,227,214,0.12);">{{ reducedLabel }}</button>
+            <button onClick="{{ clearAll }}" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:#8FA5B3;font-family:'Hanken Grotesk',sans-serif;font-size:14px;padding:11px 12px;border-radius:12px;" style-hover="background:rgba(52,227,214,0.12);">Clear all (empty state)</button>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const catalog = [
+      { base:'USD', quote:'TRY', decimals:2, min:34.40, max:35.60, threshold:35.00, dir:'above', current:34.82 },
+      { base:'EUR', quote:'USD', decimals:4, min:1.0700, max:1.0980, threshold:1.0850, dir:'below', current:1.0872 },
+      { base:'GBP', quote:'JPY', decimals:2, min:191.0, max:197.0, threshold:195.00, dir:'above', current:193.40 },
+    ];
+    this.catalog = catalog;
+    const thresholds = [
+      { id:'t1', ...catalog[0], opening:catalog[0].current, paused:false },
+      { id:'t2', ...catalog[1], opening:catalog[1].current, paused:false },
+      { id:'t3', ...catalog[2], opening:catalog[2].current, paused:true },
+    ];
+    this.W=900; this.H=856;
+    this.state = {
+      screen:'list', thresholds, selectedId:'t1',
+      rateTick:0, menuOpen:false, error:false, reduced:false, loading:true, banner:null,
+      newPairIdx:0, newDir:'above', newValue:catalog[0].threshold, perm:false,
+    };
+    this.dLevel=null; this.dTension=0; this.overflow=null; this.crossX=0.5;
+    this.setCanvas=(el)=>{ if(el){ this.canvas=el; this._initCanvas(); } };
+    this.setRateEl=(el)=>{ this.rateEl=el; };
+    this.setTrackEl=(el)=>{ this.trackEl=el; };
+    if (typeof window!=='undefined' && window.matchMedia){ try{ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) this.state.reduced=true; }catch(e){} }
+  }
+  get sel(){ return this.state.thresholds.find(t=>t.id===this.state.selectedId) || this.state.thresholds[0]; }
+  componentDidMount(){
+    this._raf=requestAnimationFrame(this._loop);
+    this._walk=setInterval(()=>this._step(),850);
+    this._loadT=setTimeout(()=>this.setState({loading:false}),1700);
+  }
+  componentWillUnmount(){ cancelAnimationFrame(this._raf); clearInterval(this._walk); clearTimeout(this._loadT); }
+  _initCanvas(){ const c=this.canvas; const dpr=Math.min(window.devicePixelRatio||1,2); c.width=this.W*dpr; c.height=this.H*dpr; this.ctx=c.getContext('2d'); this.ctx.scale(dpr,dpr); }
+  _step(){ if(this.state.error) return; const t=this.sel; if(!t) return; const vol=(t.max-t.min)*0.028; let cur=t.current+(Math.random()-0.5)*2*vol; cur+=(t.threshold-cur)*0.02; cur=Math.max(t.min+0.01,Math.min(t.max-0.01,cur)); this._commit(t,cur); }
+  _commit(t,cur){
+    const prev=t.current;
+    const crossed=t.dir==='above'?(prev<t.threshold&&cur>=t.threshold):(prev>t.threshold&&cur<=t.threshold);
+    const thresholds=this.state.thresholds.map(x=>x.id===t.id?{...x,current:cur}:x);
+    const patch={thresholds,rateTick:this.state.rateTick+1};
+    if(crossed&&!t.paused){
+      this.overflow={t0:performance.now()};
+      patch.banner=`${t.base}/${t.quote} crossed ${t.threshold.toFixed(t.decimals)} — now at ${cur.toFixed(t.decimals)}.`;
+      clearTimeout(this._bannerT); this._bannerT=setTimeout(()=>this.setState({banner:null}),6000);
+    }
+    this.setState(patch);
+  }
+  _tension(t,rate){ const range=(t.max-t.min)*0.5; return Math.max(0,Math.min(1,1-Math.abs(rate-t.threshold)/range)); }
+  _loop=(ts)=>{
+    this._raf=requestAnimationFrame(this._loop);
+    const ctx=this.ctx; if(!ctx) return; const t=this.sel; if(!t) return;
+    const W=this.W,H=this.H;
+    const reduced=this.state.reduced,error=this.state.error,loading=this.state.loading;
+    const level=(t.current-t.min)/(t.max-t.min);
+    const thrLevel=(t.threshold-t.min)/(t.max-t.min);
+    if(this.dLevel==null) this.dLevel=level;
+    this.dLevel+=(level-this.dLevel)*0.06;
+    this.dTension+=(this._tension(t,t.current)-this.dTension)*0.05;
+    const tension=this.dTension;
+    const surfaceY=H*(1-this.dLevel), thrY=H*(1-thrLevel);
+    ctx.clearRect(0,0,W,H); ctx.fillStyle='#04090E'; ctx.fillRect(0,0,W,H);
+    const dull=[34,118,126],vivid=[56,231,217],amber=[255,150,74];
+    let cr=dull.map((d,i)=>d+(vivid[i]-d)*tension);
+    let ovAmt=0;
+    if(this.overflow){ const el=(performance.now()-this.overflow.t0)/1000; if(el>2.8){ this.overflow=null; } else { ovAmt=el<0.35?el/0.35:Math.max(0,1-(el-0.35)/2.45); ovAmt=Math.max(0,Math.min(1,ovAmt)); } }
+    if(ovAmt>0){ cr=cr.map((v,i)=>v+(amber[i]-v)*ovAmt); }
+    if(error){ const g=cr[0]*0.3+cr[1]*0.59+cr[2]*0.11; cr=cr.map(v=>v*0.4+g*0.3); }
+    const col=(a)=>`rgba(${cr[0]|0},${cr[1]|0},${cr[2]|0},${a})`;
+    const time=(reduced||error)?0:ts/1000;
+    const speed=1+tension*1.4;
+    const amp=loading?4:(6+tension*9);
+    const blur=loading?6:0;
+    ctx.save(); if(blur){ ctx.filter=`blur(${blur}px)`; }
+    // deep parallax layers for depth
+    this._wave(ctx,W,H,surfaceY+26,amp*0.5,0.007,time*speed*0.4+5,col(0.09),null);
+    this._wave(ctx,W,H,surfaceY+13,amp*0.72,0.011,time*speed*0.68+2,col(0.17),null);
+    // main body with crest glow
+    const grad=ctx.createLinearGradient(0,surfaceY-24,0,H);
+    grad.addColorStop(0,col(0.5));
+    grad.addColorStop(0.45,`rgba(${(cr[0]*0.5)|0},${(cr[1]*0.5)|0},${(cr[2]*0.58)|0},0.55)`);
+    grad.addColorStop(1,'rgba(5,13,22,0.9)');
+    ctx.save(); if(!loading){ ctx.shadowColor=col(0.55); ctx.shadowBlur=20; }
+    this._wave(ctx,W,H,surfaceY,amp,0.015,time*speed,grad,col(loading?0.4:0.98));
+    ctx.restore();
+    ctx.restore();
+    // caustic light shafts descending from the surface
+    if(!loading&&!error){
+      ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.beginPath();
+      ctx.moveTo(0,surfaceY); for(let x=0;x<=W;x+=6){ const y=surfaceY+Math.sin(x*0.015+time*speed)*amp+Math.sin(x*0.015*2.3+time*speed*1.5)*amp*0.4; ctx.lineTo(x,y); } ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.clip();
+      for(let i=0;i<6;i++){
+        const px=((i*181+time*22*speed)%(W+140))-70; const sway=Math.sin(time*0.7+i*1.3)*16;
+        const lg=ctx.createLinearGradient(px+sway,surfaceY,px+sway+30,surfaceY+220);
+        lg.addColorStop(0,col(0.11)); lg.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=lg; ctx.fillRect(px+sway,surfaceY,34,240);
+      }
+      ctx.restore();
+    }
+    // foam / specular crest highlights
+    if(!loading){
+      ctx.save();
+      for(let x=0;x<=W;x+=48){
+        const y=surfaceY+Math.sin(x*0.015+time*speed)*amp+Math.sin(x*0.015*2.3+time*speed*1.5)*amp*0.4;
+        const s2=Math.max(0,Math.sin(x*0.021+time*1.7));
+        ctx.globalAlpha=(0.35+0.5*s2)*(reduced?0.6:1);
+        ctx.fillStyle=col(0.95); const r=1+s2*1.8;
+        ctx.beginPath(); ctx.arc(x,y-1.5,r,0,Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.save(); ctx.setLineDash([2,8]); ctx.lineWidth=1.5;
+    ctx.strokeStyle=ovAmt>0.2?`rgba(255,150,74,${0.5+ovAmt*0.4})`:'rgba(232,241,245,0.3)';
+    ctx.beginPath(); ctx.moveTo(0,thrY); ctx.lineTo(W,thrY); ctx.stroke(); ctx.restore();
+    const gg=ctx.createRadialGradient(W*0.5,surfaceY,0,W*0.5,surfaceY,W*0.75); gg.addColorStop(0,col(0.13)); gg.addColorStop(1,'rgba(0,0,0,0)'); ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=gg; ctx.fillRect(0,0,W,H); ctx.restore();
+    if(this.overflow){
+      const el=(performance.now()-this.overflow.t0)/1000; const cx=W*this.crossX, cy=thrY;
+      const ring=(delay)=>{ const e=el-delay; if(e<0||e>0.9) return; const r=24+e*340; const a=Math.max(0,(1-e/0.9))*0.5; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.strokeStyle=`rgba(255,150,74,${a})`; ctx.lineWidth=3*(1-e); ctx.stroke(); };
+      if(!reduced){ ring(0); ring(0.18); }
+    }
+    if(this.rateEl){ const y=Math.max(150,Math.min(430,surfaceY-190)); this.rateEl.style.transform=`translateY(${y}px)`; }
+  }
+  _wave(ctx,W,H,baseY,amp,freq,phase,fill,stroke){
+    ctx.beginPath(); ctx.moveTo(0,H);
+    for(let x=0;x<=W;x+=4){ const y=baseY+Math.sin(x*freq+phase)*amp+Math.sin(x*freq*2.3+phase*1.5)*amp*0.4; ctx.lineTo(x,y); }
+    ctx.lineTo(W,H); ctx.closePath(); ctx.fillStyle=fill; ctx.fill();
+    if(stroke){ ctx.beginPath(); for(let x=0;x<=W;x+=4){ const y=baseY+Math.sin(x*freq+phase)*amp+Math.sin(x*freq*2.3+phase*1.5)*amp*0.4; if(x===0) ctx.moveTo(0,y); else ctx.lineTo(x,y); } ctx.strokeStyle=stroke; ctx.lineWidth=2.5; ctx.stroke(); }
+  }
+  _fmt(v,d){ return v.toFixed(d); }
+  _miniWave(t){
+    const w=104,h=46; const lvl=(t.current-t.min)/(t.max-t.min); const midY=h*(1-lvl)*0.7+h*0.15; const parts=[];
+    for(let x=0;x<=w;x+=4){ const y=midY+Math.sin(x*0.2)*3; parts.push((x===0?'M':'L')+x+' '+y.toFixed(1)); }
+    return { path:parts.join(' '), markY:(h*(1-(t.threshold-t.min)/(t.max-t.min))*0.7+h*0.15).toFixed(1) };
+  }
+  goSet=()=>{ const c=this.catalog[this.state.newPairIdx]; this.setState({screen:'set',newValue:c.threshold,newDir:c.dir}); };
+  goList=()=> this.setState({screen:'list'});
+  toggleMenu=()=> this.setState(s=>({menuOpen:!s.menuOpen}));
+  stop=(e)=> e&&e.stopPropagation();
+  dismissBanner=()=> this.setState({banner:null});
+  clearError=()=> this.setState({error:false});
+  toggleError=()=> this.setState(s=>({error:!s.error,menuOpen:false}));
+  toggleReduced=()=> this.setState(s=>({reduced:!s.reduced,menuOpen:false}));
+  clearAll=()=> this.setState({thresholds:[],menuOpen:false});
+  simulateCross=()=>{
+    this.setState({menuOpen:false}); const t=this.sel; if(!t) return;
+    const target=t.dir==='above'?t.threshold+(t.max-t.threshold)*0.35:t.threshold-(t.threshold-t.min)*0.35;
+    const nudge=this.state.thresholds.map(x=>x.id===t.id?{...x,current:t.dir==='above'?t.threshold-0.02:t.threshold+0.02}:x);
+    this.setState({thresholds:nudge},()=>{ this._commit(this.sel,target); });
+  };
+  selectItem=(id)=> this.setState({selectedId:id});
+  pickPair=(i)=>{ const c=this.catalog[i]; this.setState({newPairIdx:i,newValue:c.threshold,newDir:c.dir}); };
+  pickAbove=()=> this.setState({newDir:'above'});
+  pickBelow=()=> this.setState({newDir:'below'});
+  togglePerm=()=> this.setState(s=>({perm:!s.perm}));
+  trackDown=(e)=>{ this._dragging=true; this._trackMove(e); window.addEventListener('pointermove',this._trackMove); window.addEventListener('pointerup',this._trackUp); };
+  _trackMove=(e)=>{ if(!this._dragging||!this.trackEl) return; const r=this.trackEl.getBoundingClientRect(); let p=(e.clientY-r.top)/r.height; p=Math.max(0,Math.min(1,p)); const c=this.catalog[this.state.newPairIdx]; const v=c.min+(1-p)*(c.max-c.min); this.setState({newValue:v}); };
+  _trackUp=()=>{ this._dragging=false; window.removeEventListener('pointermove',this._trackMove); window.removeEventListener('pointerup',this._trackUp); };
+  createThreshold=()=>{
+    const c=this.catalog[this.state.newPairIdx]; const id='t'+Date.now();
+    const nt={ id,base:c.base,quote:c.quote,decimals:c.decimals,min:c.min,max:c.max,threshold:+this.state.newValue.toFixed(c.decimals),dir:this.state.newDir,current:c.current,opening:c.current,paused:false };
+    this.setState(s=>({thresholds:[...s.thresholds,nt],selectedId:id,screen:'list'}));
+  };
+  renderVals(){
+    const s=this.state; const t=this.sel;
+    const dirLabel=t?(t.dir==='above'?'above':'below'):'above';
+    const rateStr=t?this._fmt(t.current,t.decimals):'—';
+    const delta=t?(t.current-t.opening):0;
+    const deltaStr=t?`${delta>=0?'+':''}${delta.toFixed(t.decimals)} today`:'';
+    const items=s.thresholds.map(it=>{
+      const mw=this._miniWave(it); const tens=this._tension(it,it.current); const dist=Math.abs(it.current-it.threshold);
+      let color,status,statusColor;
+      if(it.paused){ color='#5f7585'; status='Paused'; statusColor='#5f7585'; }
+      else { const dull=[46,164,160],vivid=[56,231,217]; color=`rgb(${dull.map((d,i)=>Math.round(d+(vivid[i]-d)*tens)).join(',')})`; status=tens>0.72?'Approaching':(tens>0.4?'Watching':'Calm'); statusColor=tens>0.72?'#FF9647':'#8FA5B3'; }
+      const selected=it.id===s.selectedId;
+      return { id:it.id, pair:`${it.base}/${it.quote}`, wavePath:mw.path, markY:mw.markY, color, status, statusColor,
+        rate:this._fmt(it.current,it.decimals),
+        sub:`${it.dir==='above'?'Above':'Below'} ${it.threshold.toFixed(it.decimals)}${it.paused?'':` · ${dist.toFixed(it.decimals)} away`}`,
+        opacity:it.paused?0.55:1,
+        bg:selected?'rgba(18,34,54,0.9)':'rgba(11,22,34,0.55)',
+        border:selected?'rgba(52,227,214,0.4)':'rgba(143,165,179,0.14)',
+        select:()=>this.selectItem(it.id) };
+    });
+    const c=this.catalog[s.newPairIdx];
+    const fillPct=((s.newValue-c.min)/(c.max-c.min))*100;
+    const floatTop=(1-(s.newValue-c.min)/(c.max-c.min))*100;
+    const newDistanceStr=s.newDir==='above'
+      ?(s.newValue>c.current?`${(s.newValue-c.current).toFixed(c.decimals)} to climb.`:`Already above.`)
+      :(s.newValue<c.current?`${(c.current-s.newValue).toFixed(c.decimals)} to fall.`:`Already below.`);
+    const pairOptions=this.catalog.map((p,i)=>({ label:`${p.base}/${p.quote}`, pick:()=>this.pickPair(i),
+      bg:i===s.newPairIdx?'rgba(52,227,214,0.14)':'rgba(11,22,34,0.5)',
+      border:i===s.newPairIdx?'rgba(52,227,214,0.5)':'rgba(143,165,179,0.16)',
+      fg:i===s.newPairIdx?'#34E3D6':'#8FA5B3' }));
+    const activeCount=s.thresholds.filter(x=>!x.paused).length;
+    return {
+      isList:s.screen==='list', isSet:s.screen==='set',
+      menuOpen:s.menuOpen, isError:s.error, banner:s.banner,
+      isEmpty:s.thresholds.length===0, hasThresholds:s.thresholds.length>0,
+      activeCountLabel:`${activeCount} level${activeCount===1?'':'s'} watched · live`,
+      pairLabel:t?`${t.base}/${t.quote}`:'—',
+      rateStr, deltaStr, dirLabel, thresholdStr:t?t.threshold.toFixed(t.decimals):'',
+      items, pairOptions,
+      aboveBg:s.newDir==='above'?'rgba(52,227,214,0.14)':'rgba(11,22,34,0.5)',
+      aboveBorder:s.newDir==='above'?'rgba(52,227,214,0.5)':'rgba(143,165,179,0.16)',
+      aboveFg:s.newDir==='above'?'#34E3D6':'#8FA5B3',
+      belowBg:s.newDir==='below'?'rgba(52,227,214,0.14)':'rgba(11,22,34,0.5)',
+      belowBorder:s.newDir==='below'?'rgba(52,227,214,0.5)':'rgba(143,165,179,0.16)',
+      belowFg:s.newDir==='below'?'#34E3D6':'#8FA5B3',
+      fillPct:Math.max(0,Math.min(100,fillPct)), floatTop:Math.max(0,Math.min(100,floatTop)),
+      newValueStr:this._fmt(s.newValue,c.decimals), newCurrentStr:this._fmt(c.current,c.decimals), newDistanceStr,
+      permBg:s.perm?'#34E3D6':'rgba(143,165,179,0.3)', permKnob:s.perm?'22px':'3px',
+      setCanvas:this.setCanvas, setRateEl:this.setRateEl, setTrackEl:this.setTrackEl,
+      goSet:this.goSet, goList:this.goList, toggleMenu:this.toggleMenu, stop:this.stop,
+      dismissBanner:this.dismissBanner, clearError:this.clearError,
+      simulateCross:this.simulateCross, toggleError:this.toggleError, toggleReduced:this.toggleReduced, clearAll:this.clearAll,
+      errorLabel:s.error?'Restore signal':'Simulate signal loss',
+      reducedLabel:s.reduced?'Motion: reduced ✓':'Reduce motion',
+      pickAbove:this.pickAbove, pickBelow:this.pickBelow, togglePerm:this.togglePerm,
+      trackDown:this.trackDown, createThreshold:this.createThreshold,
+    };
+  }
+}
+</script>
+</body>
+</html>
