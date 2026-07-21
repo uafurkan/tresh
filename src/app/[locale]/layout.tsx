@@ -43,6 +43,10 @@ export function generateMetadata({ params }: { params: { locale: string } }): Me
       languages: { en: '/', tr: '/tr', 'x-default': '/' },
     },
     manifest: '/manifest.webmanifest',
+    other: {
+      'msapplication-config': '/browserconfig.xml',
+      'msapplication-TileColor': '#04090E',
+    },
     openGraph: {
       type: 'website',
       locale: m.ogLocale,
