@@ -57,9 +57,9 @@ async function fromOpenErApi(base: string, quote: string): Promise<RateQuote> {
   return { pair: pairKey(base, quote), rate, ts: (data.time_last_update_unix ?? Math.floor(Date.now() / 1000)) * 1000, source: 'open.er-api' };
 }
 
-/** frankfurter.app (ECB) — son çare yedek. */
+/** frankfurter.dev (ECB) — son çare yedek. */
 async function fromFrankfurter(base: string, quote: string): Promise<RateQuote> {
-  const data = await fetchJson(`https://api.frankfurter.app/latest?from=${base}&to=${quote}`);
+  const data = await fetchJson(`https://api.frankfurter.dev/v1/latest?base=${base}&symbols=${quote}`);
   const rate = Number(data?.rates?.[quote]);
   if (!Number.isFinite(rate)) throw new Error('frankfurter: no price');
   return { pair: pairKey(base, quote), rate, ts: Date.now(), source: 'frankfurter' };
