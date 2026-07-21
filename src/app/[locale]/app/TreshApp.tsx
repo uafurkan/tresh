@@ -1,12 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import WaterCanvas from '@/components/WaterCanvas';
 import { PAIR_CATALOG, pairKey, type Threshold } from '@/lib/pairs';
 import { localRepository } from '@/lib/client/storage';
 import { enablePush, pushSupported, registerServiceWorker, syncThresholds } from '@/lib/client/push';
 import { useRates } from '@/lib/client/useRates';
-import { dictionaries, type AppDict, type Locale } from '@/lib/i18n';
+import { dictionaries, localePath, type AppDict, type Locale } from '@/lib/i18n';
 
 type Screen = 'home' | 'set';
 
@@ -516,6 +517,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
                 <span className="text-lg leading-none">‹</span> {d.back}
               </button>
             )}
+            <HomeButton locale={locale} label={d.home} />
           </header>
           {banner && <Banner text={banner} d={d} onClose={() => setBanner(null)} />}
           <div className="flex-1" />
@@ -536,6 +538,9 @@ export default function TreshApp({ locale }: { locale: Locale }) {
           <div className="absolute left-12 top-10 z-10">
             <div className="font-heading text-[28px] font-semibold tracking-wide text-content-primary">Tresh</div>
             <div className="mt-0.5 text-sm text-content-secondary">{d.levelsWatched(activeCount)}</div>
+          </div>
+          <div className="absolute right-12 top-10 z-10">
+            <HomeButton locale={locale} label={d.home} />
           </div>
           {banner && (
             <div className="absolute left-1/2 top-6 z-30 -translate-x-1/2">
@@ -580,6 +585,40 @@ export default function TreshApp({ locale }: { locale: Locale }) {
         </aside>
       </div>
     </div>
+  );
+}
+
+function HomeButton({ locale, label }: { locale: Locale; label: string }) {
+  return (
+    <Link
+      href={localePath(locale, '/')}
+      aria-label={label}
+      title={label}
+      className="group flex h-10 w-10 items-center justify-center rounded-full border transition-colors"
+      style={{
+        borderColor: 'rgba(143,165,179,0.22)',
+        background: 'rgba(11,22,34,0.55)',
+        backdropFilter: 'blur(8px)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(52,227,214,0.5)';
+        e.currentTarget.style.background = 'rgba(52,227,214,0.12)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(143,165,179,0.22)';
+        e.currentTarget.style.background = 'rgba(11,22,34,0.55)';
+      }}
+    >
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" className="text-content-secondary transition-colors group-hover:text-water">
+        <path
+          d="M4 11.5 12 4l8 7.5M6.5 9.8V19a1 1 0 0 0 1 1H10a1 1 0 0 0 1-1v-3.5a1 1 0 0 1 1-1h0a1 1 0 0 1 1 1V19a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1V9.8"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </Link>
   );
 }
 

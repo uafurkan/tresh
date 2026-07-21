@@ -32,6 +32,7 @@ interface LandingDict {
 }
 
 export interface AppDict {
+  home: string;
   levelsWatched: (n: number) => string;
   back: string;
   yourLevels: string;
@@ -108,6 +109,7 @@ export const dictionaries: Record<Locale, Dict> = {
       langSwitch: 'Türkçe',
     },
     app: {
+      home: 'Home',
       levelsWatched: (n) => `${n} level${n === 1 ? '' : 's'} watched`,
       back: 'Back',
       yourLevels: 'Your levels',
@@ -186,6 +188,7 @@ export const dictionaries: Record<Locale, Dict> = {
       langSwitch: 'English',
     },
     app: {
+      home: 'Ana sayfa',
       levelsWatched: (n) => `${n} seviye izleniyor`,
       back: 'Geri',
       yourLevels: 'Seviyelerin',
