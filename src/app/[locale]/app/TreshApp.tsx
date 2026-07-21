@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import Link from 'next/link';
 import WaterCanvas from '@/components/WaterCanvas';
 import AddToHomeScreen from '@/components/AddToHomeScreen';
-import { PAIR_CATALOG, pairKey, type PairDef, type Threshold } from '@/lib/pairs';
+import { PAIR_CATALOG, CRYPTO_BASES, pairKey, type PairDef, type Threshold } from '@/lib/pairs';
 import { localRepository } from '@/lib/client/storage';
 import { enablePush, pushSupported, registerServiceWorker, syncThresholds } from '@/lib/client/push';
 import { useRates } from '@/lib/client/useRates';
@@ -96,11 +96,14 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const setPairKeyStr = pairKey(setCat.base, setCat.quote);
   const setLive = rates[setPairKeyStr]?.rate ?? null;
   const setMin = (setLive ?? 0) - setCat.span / 2;
-  // Varsayılan eşik, görsel su aralığının (span) sabit bir yüzdesi yerine
-  // canlı kurun %1.5'i kadar uzakta başlar — böylece USD/TRY gibi düşük
-  // değerli paritelerde de BTC/TRY gibi yüksek değerlilerde de orantılı,
-  // mantıklı bir başlangıç noktası olur (span sadece su görselinin ölçeği).
-  const effNewValue = newValue ?? (setLive != null ? setLive * (1 + 0.015 * (newDir === 'above' ? 1 : -1)) : null);
+  // Varsayılan eşik: kripto paritelerde (BTC/TRY, BTC/USD) canlı kurun
+  // %1.5'i kadar uzakta başlar — yüksek değerli olduklarından orantılı bir
+  // sıçrama mantıklı. Fiat kurlarda ise (USD/TRY gibi) en küçük anlamlı
+  // birim kadar uzakta başlar — ör. 47,19 için üstü 47,20, altı 47,18.
+  const defaultOffset = CRYPTO_BASES.has(setCat.base)
+    ? (setLive ?? 0) * 0.015
+    : Math.pow(10, -setCat.decimals);
+  const effNewValue = newValue ?? (setLive != null ? setLive + defaultOffset * (newDir === 'above' ? 1 : -1) : null);
   const fillPct = setLive != null && effNewValue != null ? Math.max(0, Math.min(100, ((effNewValue - setMin) / setCat.span) * 100)) : 50;
   const floatTop = 100 - fillPct;
 
