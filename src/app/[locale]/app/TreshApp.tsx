@@ -57,8 +57,12 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     const loaded = rawLoaded.filter((t) => t.base !== 'TEST');
     if (loaded.length !== rawLoaded.length) {
       localRepository.save(loaded);
-      syncThresholds(loaded, locale);
     }
+    // Dil, /app <-> /tr/app rotası değişince burada yeniden mount olur —
+    // sunucudaki izleyici kaydına güncel dili her açılışta gönder ki bildirim
+    // metinleri (title/body) kullanıcının SON seçtiği dilde kalsın, ilk
+    // eklendiği dilde takılı kalmasın.
+    if (loaded.length > 0) syncThresholds(loaded, locale);
     setThresholds(loaded);
     setSelectedId(loaded[0]?.id ?? null);
     setHydrated(true);
