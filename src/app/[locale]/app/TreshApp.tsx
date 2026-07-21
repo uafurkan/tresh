@@ -149,7 +149,9 @@ export default function TreshApp({ locale }: { locale: Locale }) {
         'sync-failed': d.pushFailed,
         dismissed: '',
       };
-      setPermError(map[res.reason] || d.pushFailed);
+      // '' boş string JS'te falsy olduğu için '||' burada yanlışlıkla
+      // fallback'e düşüyordu — anahtarın map'te olup olmadığını ayrıca kontrol et.
+      setPermError(res.reason in map ? map[res.reason] : d.pushFailed);
     }
     setPermBusy(false);
   };
