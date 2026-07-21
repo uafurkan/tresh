@@ -84,10 +84,19 @@ declare global {
   var __treshRepo: Repository | undefined;
 }
 
+/** Kopyala-yapıştırdan kalan görünmez boşluk/satır sonu ya da yanlışlıkla
+ * dahil olmuş çevreleyen tırnaklar Upstash'ten "401 Unauthorized" olarak
+ * geri dönüyordu (CRON_SECRET'ta daha önce yaşanan aynı sınıf hata). */
+function cleanEnv(v: string | undefined): string | undefined {
+  const trimmed = v?.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.replace(/^['"]|['"]$/g, '');
+}
+
 export function getRepository(): Repository {
   if (!globalThis.__treshRepo) {
-    const url = process.env.UPSTASH_REDIS_REST_URL;
-    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+    const url = cleanEnv(process.env.UPSTASH_REDIS_REST_URL);
+    const token = cleanEnv(process.env.UPSTASH_REDIS_REST_TOKEN);
     globalThis.__treshRepo = url && token ? new UpstashRepository(url, token) : new MemoryRepository();
   }
   return globalThis.__treshRepo;
