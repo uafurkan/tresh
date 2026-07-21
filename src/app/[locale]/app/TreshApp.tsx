@@ -30,6 +30,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const [newPairIdx, setNewPairIdx] = useState(0);
   const [newDir, setNewDir] = useState<'above' | 'below'>('above');
   const [newValue, setNewValue] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [perm, setPerm] = useState(false);
   const [permBusy, setPermBusy] = useState(false);
   const [permError, setPermError] = useState<string | null>(null);
@@ -131,23 +132,50 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     setSurfaceY((prev) => (Math.abs(prev - y) > 0.5 ? y : prev));
   }, []);
 
-  const createThreshold = () => {
+  const submitThreshold = () => {
     if (effNewValue == null) return;
-    const t: Threshold = {
-      id: 't' + Date.now(),
-      base: setCat.base,
-      quote: setCat.quote,
-      decimals: setCat.decimals,
-      value: +effNewValue.toFixed(setCat.decimals),
-      dir: newDir,
-      paused: false,
-      createdAt: Date.now(),
-    };
-    const next = [...thresholds, t];
-    persist(next);
-    setSelectedId(t.id);
+    const value = +effNewValue.toFixed(setCat.decimals);
+    if (editingId) {
+      persist(thresholds.map((t) => (
+        t.id === editingId
+          ? { ...t, base: setCat.base, quote: setCat.quote, decimals: setCat.decimals, value, dir: newDir }
+          : t
+      )));
+      setSelectedId(editingId);
+    } else {
+      const t: Threshold = {
+        id: 't' + Date.now(),
+        base: setCat.base,
+        quote: setCat.quote,
+        decimals: setCat.decimals,
+        value,
+        dir: newDir,
+        paused: false,
+        createdAt: Date.now(),
+      };
+      persist([...thresholds, t]);
+      setSelectedId(t.id);
+    }
     setScreen('home');
     setNewValue(null);
+    setEditingId(null);
+  };
+
+  const openEdit = (t: Threshold) => {
+    const idx = PAIR_CATALOG.findIndex((p) => p.base === t.base && p.quote === t.quote);
+    if (idx === -1) return;
+    setNewPairIdx(idx);
+    setNewDir(t.dir);
+    setNewValue(t.value);
+    setEditingId(t.id);
+    setSelectedId(t.id);
+    setScreen('set');
+  };
+
+  const startAdd = () => {
+    setEditingId(null);
+    setNewValue(null);
+    setScreen('set');
   };
 
   const togglePerm = async () => {
@@ -292,7 +320,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
                 opacity: t.paused ? 0.55 : 1,
               }}
             >
-              <button onClick={() => setSelectedId(t.id)} className="flex min-w-0 flex-1 items-center gap-3.5 text-left">
+              <button onClick={() => openEdit(t)} className="flex min-w-0 flex-1 items-center gap-3.5 text-left">
                 <svg width="60" height="26" viewBox="0 0 60 26" className="flex-none overflow-visible">
                   <path d={miniWavePath(lvl, 60, 26)} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" />
                   <line x1="0" y1={(26 * (1 - markLvl) * 0.7 + 26 * 0.15).toFixed(1)} x2="60" y2={(26 * (1 - markLvl) * 0.7 + 26 * 0.15).toFixed(1)} stroke={color} strokeWidth="1" strokeDasharray="2 3" opacity="0.5" />
@@ -336,7 +364,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
         </div>
       )}
       <button
-        onClick={() => { setScreen('set'); setNewValue(null); }}
+        onClick={startAdd}
         className="w-full rounded-[20px] bg-water p-4 text-base font-semibold text-[#04121a]"
         style={{ boxShadow: '0 16px 40px -14px rgba(52,227,214,0.6)' }}
       >
@@ -348,6 +376,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const setPanelProps = {
     d,
     locale,
+    isEditing: editingId != null,
     newPairIdx,
     onSelectPair: (i: number) => { setNewPairIdx(i); setNewValue(null); },
     newDir,
@@ -364,7 +393,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     permBusy,
     permError,
     onTogglePerm: togglePerm,
-    onCreate: createThreshold,
+    onCreate: submitThreshold,
   };
 
   return (
@@ -380,7 +409,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
                 <div className="text-[11px] text-content-secondary">{d.levelsWatched(activeCount)}</div>
               </div>
             ) : (
-              <button onClick={() => setScreen('home')} className="flex items-center gap-2 py-1 text-sm text-content-secondary">
+              <button onClick={() => { setScreen('home'); setEditingId(null); }} className="flex items-center gap-2 py-1 text-sm text-content-secondary">
                 <span className="text-lg leading-none">‹</span> {d.back}
               </button>
             )}
@@ -423,7 +452,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
             {screen === 'home' ? (
               <h1 className="font-heading text-2xl text-content-primary">{d.yourLevels}</h1>
             ) : (
-              <button onClick={() => setScreen('home')} className="flex items-center gap-2 text-[15px] text-content-secondary">
+              <button onClick={() => { setScreen('home'); setEditingId(null); }} className="flex items-center gap-2 text-[15px] text-content-secondary">
                 <span className="text-xl leading-none">‹</span> {d.back}
               </button>
             )}
@@ -438,7 +467,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
               ) : listPanel}</div>
               {isEmpty && (
                 <button
-                  onClick={() => { setScreen('set'); setNewValue(null); }}
+                  onClick={startAdd}
                   className="mt-5 w-full rounded-[20px] bg-water p-4 text-base font-semibold text-[#04121a]"
                   style={{ boxShadow: '0 18px 44px -16px rgba(52,227,214,0.6)' }}
                 >
@@ -458,6 +487,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
 interface SetPanelProps {
   d: AppDict;
   locale: Locale;
+  isEditing: boolean;
   newPairIdx: number;
   onSelectPair: (i: number) => void;
   newDir: 'above' | 'below';
@@ -488,7 +518,7 @@ interface SetPanelProps {
  * gördüğü çubuk hiç hareket etmiyordu (özellikle dokunmatikte fark ediliyordu).
  */
 function SetPanel({
-  d, locale, newPairIdx, onSelectPair, newDir, onSelectDir, setCat, setPairKeyStr, setLive, setMin,
+  d, locale, isEditing, newPairIdx, onSelectPair, newDir, onSelectDir, setCat, setPairKeyStr, setLive, setMin,
   effNewValue, fillPct, floatTop, onNewValue, perm, permBusy, permError, onTogglePerm, onCreate,
 }: SetPanelProps) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -596,7 +626,7 @@ function SetPanel({
   return (
     <div className="flex h-full flex-col">
       <div className="mb-1 font-heading text-[26px] leading-tight text-content-primary">{d.setTitle}</div>
-      <div className="mb-5 text-sm leading-normal text-content-secondary">{d.setSubtitle}</div>
+      <div className="mb-5 text-sm leading-normal text-content-secondary">{isEditing ? d.editSubtitle : d.setSubtitle}</div>
 
       <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.pair}</div>
       <div className="mb-4 grid grid-cols-3 gap-2">
@@ -759,7 +789,7 @@ function SetPanel({
         className="mt-4 w-full rounded-[20px] bg-water p-4 text-base font-semibold text-[#04121a] disabled:opacity-50"
         style={{ boxShadow: '0 16px 40px -14px rgba(52,227,214,0.6)' }}
       >
-        {d.watchThisLevel}
+        {isEditing ? d.updateLevel : d.watchThisLevel}
       </button>
     </div>
   );

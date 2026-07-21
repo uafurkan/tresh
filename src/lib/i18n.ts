@@ -45,6 +45,8 @@ export interface AppDict {
   emptyBody: string;
   setThreshold: string;
   watchThisLevel: string;
+  updateLevel: string;
+  editSubtitle: string;
   statusMuted: string;
   statusApproaching: string;
   statusWatching: string;
@@ -134,6 +136,8 @@ export const dictionaries: Record<Locale, Dict> = {
       emptyBody: 'Set your first threshold; we’ll watch the level for you — even while you’re away.',
       setThreshold: 'Set a threshold',
       watchThisLevel: 'Watch this level',
+      updateLevel: 'Save changes',
+      editSubtitle: 'Adjust the pair, direction, or level — updates apply immediately.',
       statusMuted: 'Muted',
       statusApproaching: 'Approaching',
       statusWatching: 'Watching',
@@ -230,6 +234,8 @@ export const dictionaries: Record<Locale, Dict> = {
       emptyBody: 'İlk eşiğini kur; seviyeyi senin yerine biz izleyelim — sen uzaktayken bile.',
       setThreshold: 'Eşik belirle',
       watchThisLevel: 'Bu seviyeyi izle',
+      updateLevel: 'Değişiklikleri kaydet',
+      editSubtitle: 'Pariteyi, yönü veya seviyeyi değiştir — güncelleme hemen uygulanır.',
       statusMuted: 'Susturuldu',
       statusApproaching: 'Yaklaşıyor',
       statusWatching: 'İzleniyor',
