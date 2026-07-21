@@ -132,13 +132,30 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   }, [setLive, setMin, setCat.span]);
 
   useEffect(() => {
-    const move = (e: PointerEvent) => { if (dragging.current) onTrackMove(e.clientY); };
-    const up = () => { dragging.current = false; };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
+    // Pointermove saniyede 60-240 kez tetiklenebilir; her olayda setNewValue
+    // çağırmak her seferinde tüm ağacı yeniden render ettirip kasmaya yol
+    // açıyordu. Son konumu ref'te tutup karede en fazla bir kez uyguluyoruz.
+    let raf: number | null = null;
+    let pendingY: number | null = null;
+    const flush = () => {
+      raf = null;
+      if (pendingY != null && dragging.current) onTrackMove(pendingY);
+    };
+    const move = (e: PointerEvent) => {
+      if (!dragging.current) return;
+      pendingY = e.clientY;
+      if (raf == null) raf = requestAnimationFrame(flush);
+    };
+    const up = () => {
+      dragging.current = false;
+      if (raf != null) { cancelAnimationFrame(raf); raf = null; }
+    };
+    window.addEventListener('pointermove', move, { passive: true });
+    window.addEventListener('pointerup', up, { passive: true });
     return () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      if (raf != null) cancelAnimationFrame(raf);
     };
   }, [onTrackMove]);
 
