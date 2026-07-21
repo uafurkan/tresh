@@ -250,6 +250,9 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   // küçük ekranlarda (ör. iPhone SE) 78dvh panel + 86px'lik büyük rakam
   // panelin başlığının üstüne biniyordu.
   const readoutFontSize = onSetScreen ? 'clamp(34px, 7vw, 60px)' : 'clamp(44px, 8vw, 86px)';
+  // Büyük okuma için tasarlanan 30px'lik gölge bulanıklığı, ayar ekranındaki
+  // küçük fontta rakamları okunmaz bir lekeye dönüştürüyordu — orana göre azalt.
+  const readoutTextShadow = onSetScreen ? '0 1px 14px rgba(5,11,20,0.9)' : '0 2px 30px rgba(5,11,20,0.9)';
 
   const listItems = thresholds.map((t) => {
     const key = pairKey(t.base, t.quote);
@@ -310,7 +313,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
               fontWeight: 400,
               letterSpacing: '-1.5px',
               lineHeight: 1,
-              textShadow: '0 2px 30px rgba(5,11,20,0.9)',
+              textShadow: readoutTextShadow,
             }}
             aria-label={d.useCurrentRate}
             title={d.useCurrentRate}
@@ -320,7 +323,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
         ) : (
           <div
             className="num text-content-primary"
-            style={{ fontSize: readoutFontSize, fontWeight: 400, letterSpacing: '-1.5px', lineHeight: 1, textShadow: '0 2px 30px rgba(5,11,20,0.9)' }}
+            style={{ fontSize: readoutFontSize, fontWeight: 400, letterSpacing: '-1.5px', lineHeight: 1, textShadow: readoutTextShadow }}
           >
             {loading && displayRate == null ? '· · ·' : displayRate != null ? fmtNum(displayRate, displayDecimals, locale) : '—'}
           </div>
