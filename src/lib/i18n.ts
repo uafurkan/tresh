@@ -29,6 +29,8 @@ interface LandingDict {
   cta: string;
   cards: [string, string][];
   langSwitch: string;
+  watchlistTitle: string;
+  watchlistManage: string;
 }
 
 export interface AppDict {
@@ -107,6 +109,8 @@ export const dictionaries: Record<Locale, Dict> = {
         ['Even when closed', 'Web Push keeps watching the level while the tab is closed — and reaches you.'],
       ],
       langSwitch: 'Türkçe',
+      watchlistTitle: 'Already watching',
+      watchlistManage: 'Manage',
     },
     app: {
       home: 'Home',
@@ -186,6 +190,8 @@ export const dictionaries: Record<Locale, Dict> = {
         ['Kapalıyken bile', 'Web Push sayesinde sekme kapalıyken de seviye izlenir, sana ulaşırız.'],
       ],
       langSwitch: 'English',
+      watchlistTitle: 'Zaten izlediklerin',
+      watchlistManage: 'Yönet',
     },
     app: {
       home: 'Ana sayfa',

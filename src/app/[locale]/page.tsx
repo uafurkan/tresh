@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import LandingWater from '@/components/LandingWater';
+import WatchlistPreview from '@/components/WatchlistPreview';
 import { dictionaries, localePath, type Locale } from '@/lib/i18n';
 
 export default function LandingPage({ params }: { params: { locale: Locale } }) {
@@ -37,6 +38,7 @@ export default function LandingPage({ params }: { params: { locale: Locale } }) 
         </header>
 
         <div className="flex flex-1 flex-col justify-center py-16">
+          <WatchlistPreview locale={locale} />
           <h1 className="max-w-xl font-heading text-4xl font-semibold leading-tight text-content-primary md:text-5xl">
             {d.h1}
           </h1>

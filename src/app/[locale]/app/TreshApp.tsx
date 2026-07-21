@@ -8,21 +8,11 @@ import { localRepository } from '@/lib/client/storage';
 import { enablePush, pushSupported, registerServiceWorker, syncThresholds } from '@/lib/client/push';
 import { useRates } from '@/lib/client/useRates';
 import { dictionaries, localePath, type AppDict, type Locale } from '@/lib/i18n';
+import { tensionOf, miniWavePath } from '@/lib/client/wave';
 
 type Screen = 'home' | 'set';
 
 const cataloguePairs = PAIR_CATALOG.map((p) => pairKey(p.base, p.quote));
-
-function tensionOf(rate: number, value: number, span: number): number {
-  return Math.max(0, Math.min(1, 1 - Math.abs(rate - value) / (span * 0.5)));
-}
-
-function miniWavePath(level: number, w: number, h: number): string {
-  const midY = h * (1 - level) * 0.7 + h * 0.15;
-  const parts: string[] = [];
-  for (let x = 0; x <= w; x += 4) parts.push(`${x === 0 ? 'M' : 'L'}${x} ${(midY + Math.sin(x * 0.28) * 2.2).toFixed(1)}`);
-  return parts.join(' ');
-}
 
 export default function TreshApp({ locale }: { locale: Locale }) {
   const d = dictionaries[locale].app;
