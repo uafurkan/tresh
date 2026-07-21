@@ -7,17 +7,13 @@ import { dictionaries, type Locale } from '@/lib/i18n';
 
 const ALL_CODES = ['USD', ...CONVERTER_CURRENCIES.map((c) => c.code)];
 
-// Büyük tutarlarda ondalık gürültü — 2500 USD'lik bir çevrimde "117.981,42"
-// yerine sade "117.981" istiyoruz. Ama 1'e yakın kur değerlerini (EUR≈1.14,
-// GBP≈1.34, CHF≈1.23) da 0 ondalığa yuvarlarsak hepsi "$1" olup anlamsızlaşır
-// — bu yüzden basamak sayısı büyüklüğe göre kademeli. Yerel (tr-TR / en-US)
-// doğru binlik/ondalık ayracını otomatik seçiyor.
+// iOS'un Hesap Makinesi para birimi çeviricisinde olduğu gibi: her zaman
+// 2 ondalık basamak, tutarlı gruplu binlik ayracı — büyüklüğe göre değişen
+// kural yok. Yerel (tr-TR / en-US) doğru ayracı otomatik seçiyor.
 function fmt(n: number, locale: Locale): string {
   if (!Number.isFinite(n)) return '—';
   const intlLocale = locale === 'tr' ? 'tr-TR' : 'en-US';
-  const abs = Math.abs(n);
-  const decimals = abs >= 100 ? 0 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : 6;
-  return new Intl.NumberFormat(intlLocale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
+  return new Intl.NumberFormat(intlLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 }
 
 /** Ana sayfada canlı döviz çevirici + BTC dahil "USD karşılığı" kur tablosu. */
