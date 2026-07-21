@@ -128,10 +128,15 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const valueTextRef = useRef<HTMLDivElement>(null);
   const helperTextRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
+  // Sürükleme başında ölçülür, sürükleme boyunca yeniden ölçülmez —
+  // getBoundingClientRect her pointermove'da çağrılırsa senkron layout'u
+  // zorlayıp asıl kasmaya sebep oluyordu.
+  const rectRef = useRef<{ top: number; height: number } | null>(null);
 
   // Sürükleme sırasında DOM'a doğrudan yazar — React state'i tetiklemez,
   // böylece her pointermove'da tüm ağacı yeniden render etmeden fareyi
-  // birebir (aynı karede) takip eder.
+  // birebir (aynı karede) takip eder. height/top yerine transform kullanılır
+  // ki tarayıcı sadece compositing yapsın, layout'a girmesin.
   const applyDrag = useCallback((value: number) => {
     const clampedFill = Math.max(0, Math.min(100, ((value - setMin) / setCat.span) * 100));
     const top = 100 - clampedFill;
@@ -150,13 +155,20 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     if (trackRef.current) trackRef.current.setAttribute('aria-valuenow', String(value));
   }, [setMin, setCat.span, setCat.decimals, setLive, newDir, d]);
 
+  const valueFromY = useCallback((clientY: number) => {
+    const rect = rectRef.current;
+    if (!rect || setLive == null) return null;
+    const p01 = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    return setMin + (1 - p01) * setCat.span;
+  }, [setLive, setMin, setCat.span]);
+
   const onTrackMove = useCallback((clientY: number) => {
     const el = trackRef.current;
     if (!el || setLive == null) return null;
     const r = el.getBoundingClientRect();
-    const p01 = Math.max(0, Math.min(1, (clientY - r.top) / r.height));
-    return setMin + (1 - p01) * setCat.span;
-  }, [setLive, setMin, setCat.span]);
+    rectRef.current = { top: r.top, height: r.height };
+    return valueFromY(clientY);
+  }, [setLive, valueFromY]);
 
   useEffect(() => {
     // Pointermove saniyede 60-240 kez tetiklenebilir; React state'e her
@@ -169,7 +181,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     const flush = () => {
       raf = null;
       if (pendingY != null && dragging.current) {
-        const v = onTrackMove(pendingY);
+        const v = valueFromY(pendingY);
         if (v != null) { lastValue = v; applyDrag(v); }
       }
     };
@@ -192,7 +204,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
       window.removeEventListener('pointerup', up);
       if (raf != null) cancelAnimationFrame(raf);
     };
-  }, [onTrackMove, applyDrag]);
+  }, [valueFromY, applyDrag]);
 
   const createThreshold = () => {
     if (effNewValue == null) return;
