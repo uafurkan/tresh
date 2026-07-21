@@ -510,6 +510,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     permError,
     onTogglePerm: togglePerm,
     onCreate: submitThreshold,
+    onResync: () => syncThresholds(thresholds, locale),
   };
 
   return (
@@ -639,6 +640,7 @@ interface SetPanelProps {
   permError: string | null;
   onTogglePerm: () => void;
   onCreate: () => void;
+  onResync: () => Promise<void>;
 }
 
 /**
@@ -653,7 +655,7 @@ interface SetPanelProps {
  */
 function SetPanel({
   d, locale, isEditing, newPairIdx, onSelectPair, newDir, onSelectDir, setCat, setPairKeyStr, setLive, setMin,
-  effNewValue, fillPct, floatTop, onNewValue, perm, permBusy, permError, onTogglePerm, onCreate,
+  effNewValue, fillPct, floatTop, onNewValue, perm, permBusy, permError, onTogglePerm, onCreate, onResync,
 }: SetPanelProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
@@ -1005,7 +1007,14 @@ function SetPanel({
                 <button
                   onClick={async () => {
                     setCheckStatus('running');
-                    const res = await checkNow();
+                    let res = await checkNow();
+                    // Sunucudaki bellek-içi depo (Upstash yapılandırılmamışsa)
+                    // istekler arasında sıfırlanabiliyor — abonelik "bulunamadı"
+                    // dönerse önce yeniden kaydedip bir kez daha dene.
+                    if (!res.ok && res.reason === 'not-subscribed') {
+                      await onResync();
+                      res = await checkNow();
+                    }
                     setCheckStatus(res.ok ? { sent: res.sent } : res.reason);
                   }}
                   disabled={checkStatus === 'running'}
