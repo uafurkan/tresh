@@ -12,8 +12,9 @@ import { dictionaries, localePath, type AppDict, type Locale } from '@/lib/i18n'
 import { tensionOf, miniWavePath } from '@/lib/client/wave';
 import { fmtNum, parseLocaleNumber } from '@/lib/client/format';
 import { pushTopWatch, pushWatchList } from '@/lib/client/nativeBridge';
+import { clearNotifLog, logNotifLocal, readNotifLog, type NotifLogEntry } from '@/lib/client/notifLog';
 
-type Screen = 'home' | 'set';
+type Screen = 'home' | 'set' | 'notifications';
 
 const cataloguePairs = PAIR_CATALOG.map((p) => pairKey(p.base, p.quote));
 // Masaüstü ayar panelinde arama çubuğunun yanında gösterilen hızlı seçim
@@ -38,6 +39,16 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const [perm, setPerm] = useState(false);
   const [permBusy, setPermBusy] = useState(false);
   const [permError, setPermError] = useState<string | null>(null);
+  const [notifLog, setNotifLog] = useState<NotifLogEntry[]>([]);
+
+  const openNotifications = useCallback(() => {
+    setScreen('notifications');
+    readNotifLog().then(setNotifLog);
+  }, []);
+  const clearAllNotifications = useCallback(() => {
+    clearNotifLog();
+    setNotifLog([]);
+  }, []);
 
   useEffect(() => {
     const loaded = localRepository.load();
@@ -46,6 +57,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     setHydrated(true);
     registerServiceWorker();
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') setPerm(true);
+    readNotifLog().then(setNotifLog);
     // Uygulama açılınca ikon rozetini ve service worker sayacını sıfırla.
     try {
       (navigator as unknown as { clearAppBadge?: () => Promise<void> }).clearAppBadge?.();
@@ -93,9 +105,12 @@ export default function TreshApp({ locale }: { locale: Locale }) {
       if (prev != null) {
         const crossed = t.dir === 'above' ? prev < t.value && cur >= t.value : prev > t.value && cur <= t.value;
         if (crossed) {
-          setBanner(d.bannerText(key, fmtNum(t.value, t.decimals, locale), t.dir, fmtNum(cur, t.decimals, locale)));
+          const text = d.bannerText(key, fmtNum(t.value, t.decimals, locale), t.dir, fmtNum(cur, t.decimals, locale));
+          setBanner(text);
           setOverflowTick((n) => n + 1);
           window.setTimeout(() => setBanner(null), 6000);
+          logNotifLocal({ title: `Tresh · ${key}`, body: text, ts: Date.now(), url: locale === 'tr' ? '/tr/app' : '/app' });
+          setNotifLog((prev) => [{ id: `local-${Date.now()}`, title: `Tresh · ${key}`, body: text, ts: Date.now() }, ...prev].slice(0, 60));
         }
       }
       prevRates.current[t.id] = cur;
@@ -426,6 +441,54 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     </>
   );
 
+  const relTime = (ts: number) => {
+    const diffMin = Math.max(0, Math.round((Date.now() - ts) / 60000));
+    if (diffMin < 1) return d.justNow;
+    if (diffMin < 60) return d.minutesAgo(diffMin);
+    const diffH = Math.round(diffMin / 60);
+    if (diffH < 24) return d.hoursAgo(diffH);
+    return d.daysAgo(Math.round(diffH / 24));
+  };
+
+  const notifPanel = (
+    <>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="font-heading text-[19px] font-semibold text-content-primary">{d.notifTitle}</div>
+        {notifLog.length > 0 && (
+          <button
+            onClick={clearAllNotifications}
+            className="rounded-lg border px-3 py-1.5 text-[12px] transition-colors"
+            style={{ borderColor: 'rgba(255,150,74,0.4)', color: '#FF9647', background: 'rgba(255,150,74,0.08)' }}
+          >
+            {d.clearAll}
+          </button>
+        )}
+      </div>
+      {notifLog.length === 0 ? (
+        <div className="rise-in px-1 pb-2 pt-4 text-center">
+          <div className="mb-2 font-heading text-[20px] leading-snug text-content-primary">{d.notifEmpty}</div>
+          <div className="mx-auto max-w-[280px] text-sm leading-relaxed text-content-secondary">{d.notifEmptyBody}</div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {notifLog.map((n) => (
+            <div
+              key={n.id}
+              className="rounded-2xl border p-3.5"
+              style={{ background: 'rgba(11,22,34,0.6)', borderColor: 'rgba(143,165,179,0.14)' }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-sm text-content-primary">{n.title}</span>
+                <span className="flex-none text-[11px] text-content-secondary">{relTime(n.ts)}</span>
+              </div>
+              <div className="mt-1 text-[13px] leading-relaxed text-content-secondary">{n.body}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+
   const setPanelProps = {
     d,
     locale,
@@ -470,7 +533,10 @@ export default function TreshApp({ locale }: { locale: Locale }) {
                 <span className="text-lg leading-none">‹</span> {d.back}
               </button>
             )}
-            <HomeButton locale={locale} label={d.home} />
+            <div className="flex items-center gap-2">
+              <NotifBell label={d.notifications} onClick={openNotifications} count={notifLog.length} />
+              <HomeButton locale={locale} label={d.home} />
+            </div>
           </header>
           {banner && (
             <div className="pointer-events-auto">
@@ -480,6 +546,10 @@ export default function TreshApp({ locale }: { locale: Locale }) {
           <div className="flex-1" />
           {screen === 'home' ? (
             <div className="pointer-events-auto px-4 pb-8 pt-4">{listPanel}</div>
+          ) : screen === 'notifications' ? (
+            <div className="pointer-events-auto rounded-t-[28px] px-5 pb-8 pt-5" style={{ background: 'rgba(5,11,20,0.72)', backdropFilter: 'blur(10px)', minHeight: '72dvh' }}>
+              {notifPanel}
+            </div>
           ) : (
             <div className="pointer-events-auto rounded-t-[28px] px-5 pb-8 pt-5" style={{ background: 'rgba(5,11,20,0.72)', backdropFilter: 'blur(10px)', minHeight: '72dvh' }}>
               <SetPanel {...setPanelProps} />
@@ -496,7 +566,8 @@ export default function TreshApp({ locale }: { locale: Locale }) {
             <div className="font-heading text-[28px] font-semibold tracking-wide text-content-primary">Tresh</div>
             <div className="mt-0.5 text-sm text-content-secondary">{d.levelsWatched(activeCount)}</div>
           </div>
-          <div className="absolute right-12 top-10 z-10">
+          <div className="absolute right-12 top-10 z-10 flex items-center gap-2.5">
+            <NotifBell label={d.notifications} onClick={openNotifications} count={notifLog.length} />
             <HomeButton locale={locale} label={d.home} />
           </div>
           {banner && (
@@ -536,6 +607,8 @@ export default function TreshApp({ locale }: { locale: Locale }) {
                 </button>
               )}
             </div>
+          ) : screen === 'notifications' ? (
+            <div className="min-h-0 flex-1 overflow-y-auto">{notifPanel}</div>
           ) : (
             <div className="min-h-0 flex-1"><SetPanel {...setPanelProps} /></div>
           )}
@@ -1004,6 +1077,47 @@ function HomeButton({ locale, label }: { locale: Locale; label: string }) {
         />
       </svg>
     </Link>
+  );
+}
+
+function NotifBell({ label, onClick, count }: { label: string; onClick: () => void; count: number }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="group relative flex h-10 w-10 items-center justify-center rounded-full border transition-colors"
+      style={{
+        borderColor: 'rgba(143,165,179,0.22)',
+        background: 'rgba(11,22,34,0.55)',
+        backdropFilter: 'blur(8px)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(52,227,214,0.5)';
+        e.currentTarget.style.background = 'rgba(52,227,214,0.12)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(143,165,179,0.22)';
+        e.currentTarget.style.background = 'rgba(11,22,34,0.55)';
+      }}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-content-secondary transition-colors group-hover:text-water">
+        <path
+          d="M18 16v-5a6 6 0 1 0-12 0v5l-1.6 2.4A1 1 0 0 0 5.24 20h13.52a1 1 0 0 0 .84-1.6L18 16Z"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path d="M10 21a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      </svg>
+      {count > 0 && (
+        <span
+          className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full"
+          style={{ background: '#FF9647', boxShadow: '0 0 0 2px rgba(11,22,34,0.9)' }}
+        />
+      )}
+    </button>
   );
 }
 

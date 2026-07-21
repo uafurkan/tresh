@@ -86,6 +86,15 @@ export interface AppDict {
   checkNowRunning: string;
   checkNowResult: (n: number) => string;
   checkNowFailed: string;
+  notifications: string;
+  notifTitle: string;
+  notifEmpty: string;
+  notifEmptyBody: string;
+  clearAll: string;
+  justNow: string;
+  minutesAgo: (n: number) => string;
+  hoursAgo: (n: number) => string;
+  daysAgo: (n: number) => string;
   bannerLabel: string;
   bannerText: (key: string, value: string, dir: 'above' | 'below', current: string) => string;
   close: string;
@@ -195,6 +204,15 @@ export const dictionaries: Record<Locale, Dict> = {
       checkNowRunning: 'Checking…',
       checkNowResult: (n) => (n > 0 ? `Sent ${n} notification${n === 1 ? '' : 's'} — check your lock screen.` : 'Checked — nothing crossed right now.'),
       checkNowFailed: 'Couldn’t run the check — try re-enabling push.',
+      notifications: 'Notifications',
+      notifTitle: 'Notifications',
+      notifEmpty: 'No notifications yet',
+      notifEmptyBody: 'Threshold crossings will show up here, whether the app was open or not.',
+      clearAll: 'Clear all',
+      justNow: 'Just now',
+      minutesAgo: (n) => `${n}m ago`,
+      hoursAgo: (n) => `${n}h ago`,
+      daysAgo: (n) => `${n}d ago`,
       bannerLabel: 'Threshold crossed',
       bannerText: (key, value, dir, current) =>
         dir === 'above'
@@ -306,6 +324,15 @@ export const dictionaries: Record<Locale, Dict> = {
       checkNowRunning: 'Kontrol ediliyor…',
       checkNowResult: (n) => (n > 0 ? `${n} bildirim gönderildi — kilit ekranına bak.` : 'Kontrol edildi — şu an geçen bir eşik yok.'),
       checkNowFailed: 'Kontrol çalıştırılamadı — push\'u yeniden açmayı dene.',
+      notifications: 'Bildirimler',
+      notifTitle: 'Bildirimler',
+      notifEmpty: 'Henüz bildirim yok',
+      notifEmptyBody: 'Eşik geçişleri, uygulama açık ya da kapalı fark etmeksizin burada görünecek.',
+      clearAll: 'Hepsini sil',
+      justNow: 'Az önce',
+      minutesAgo: (n) => `${n} dk önce`,
+      hoursAgo: (n) => `${n} sa önce`,
+      daysAgo: (n) => `${n} gün önce`,
       bannerLabel: 'Eşik geçildi',
       bannerText: (key, value, dir, current) =>
         dir === 'above'

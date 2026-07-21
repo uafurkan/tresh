@@ -27,6 +27,23 @@ async function writeBadge(n) {
   } catch { /* desteklenmeyen tarayıcı */ }
 }
 
+/* Bildirimler ekranında gösterilecek geçmiş — uygulama kapalıyken gelen
+   push'lar burada birikir, sayfa açılınca localStorage'daki (uygulama
+   açıkken oluşan) girdilerle birleştirilir. */
+const NOTIF_LOG_CACHE = 'tresh-notif-log';
+const NOTIF_LOG_KEY = '/notif-log';
+const NOTIF_LOG_MAX = 60;
+
+async function appendNotifLog(entry) {
+  try {
+    const cache = await caches.open(NOTIF_LOG_CACHE);
+    const res = await cache.match(NOTIF_LOG_KEY);
+    const list = res ? await res.json() : [];
+    list.unshift(entry);
+    await cache.put(NOTIF_LOG_KEY, new Response(JSON.stringify(list.slice(0, NOTIF_LOG_MAX))));
+  } catch { /* yoksay */ }
+}
+
 self.addEventListener('push', (event) => {
   let payload = { title: 'Tresh', body: 'Level crossed.', tag: 'tresh', url: '/app' };
   try {
@@ -35,6 +52,13 @@ self.addEventListener('push', (event) => {
   event.waitUntil((async () => {
     const count = (await readBadge()) + 1;
     await writeBadge(count);
+    await appendNotifLog({
+      id: `push-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title: payload.title,
+      body: payload.body,
+      ts: Date.now(),
+      url: payload.url,
+    });
     /* image/actions/requireInteraction yalnızca Chrome/Edge/Android'de gösterilir —
        Safari/macOS ve iOS PWA bu alanları sessizce yoksayar, hata vermez. */
     const options = {
@@ -71,4 +95,10 @@ self.addEventListener('notificationclick', (event) => {
 /* Uygulama açıldığında sayfa tarafı "badge-clear" mesajı gönderir. */
 self.addEventListener('message', (event) => {
   if (event.data === 'badge-clear') event.waitUntil(writeBadge(0));
+  if (event.data === 'notif-log-clear') {
+    event.waitUntil((async () => {
+      const cache = await caches.open(NOTIF_LOG_CACHE);
+      await cache.put(NOTIF_LOG_KEY, new Response(JSON.stringify([])));
+    })());
+  }
 });
