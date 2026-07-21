@@ -123,24 +123,55 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const floatTop = 100 - fillPct;
 
   const trackRef = useRef<HTMLDivElement>(null);
+  const fillRef = useRef<HTMLDivElement>(null);
+  const floatRef = useRef<HTMLDivElement>(null);
+  const valueTextRef = useRef<HTMLDivElement>(null);
+  const helperTextRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
+
+  // Sürükleme sırasında DOM'a doğrudan yazar — React state'i tetiklemez,
+  // böylece her pointermove'da tüm ağacı yeniden render etmeden fareyi
+  // birebir (aynı karede) takip eder.
+  const applyDrag = useCallback((value: number) => {
+    const clampedFill = Math.max(0, Math.min(100, ((value - setMin) / setCat.span) * 100));
+    const top = 100 - clampedFill;
+    if (fillRef.current) fillRef.current.style.height = `${clampedFill}%`;
+    if (floatRef.current) floatRef.current.style.top = `${top}%`;
+    if (valueTextRef.current) valueTextRef.current.textContent = value.toFixed(setCat.decimals);
+    if (helperTextRef.current && setLive != null) {
+      const alreadyPast = newDir === 'above' ? value <= setLive : value >= setLive;
+      helperTextRef.current.textContent = d.helper(
+        setLive.toFixed(setCat.decimals),
+        newDir,
+        Math.abs(value - setLive).toFixed(setCat.decimals),
+        alreadyPast
+      );
+    }
+    if (trackRef.current) trackRef.current.setAttribute('aria-valuenow', String(value));
+  }, [setMin, setCat.span, setCat.decimals, setLive, newDir, d]);
+
   const onTrackMove = useCallback((clientY: number) => {
     const el = trackRef.current;
-    if (!el || setLive == null) return;
+    if (!el || setLive == null) return null;
     const r = el.getBoundingClientRect();
     const p01 = Math.max(0, Math.min(1, (clientY - r.top) / r.height));
-    setNewValue(setMin + (1 - p01) * setCat.span);
+    return setMin + (1 - p01) * setCat.span;
   }, [setLive, setMin, setCat.span]);
 
   useEffect(() => {
-    // Pointermove saniyede 60-240 kez tetiklenebilir; her olayda setNewValue
-    // çağırmak her seferinde tüm ağacı yeniden render ettirip kasmaya yol
-    // açıyordu. Son konumu ref'te tutup karede en fazla bir kez uyguluyoruz.
+    // Pointermove saniyede 60-240 kez tetiklenebilir; React state'e her
+    // seferinde yazmak tüm ağacı yeniden render ettirip kasmaya yol açıyordu.
+    // Sürükleme boyunca DOM'a doğrudan yazıyoruz, React state'i sadece
+    // bırakıldığında (pointerup) bir kez güncelliyoruz.
     let raf: number | null = null;
     let pendingY: number | null = null;
+    let lastValue: number | null = null;
     const flush = () => {
       raf = null;
-      if (pendingY != null && dragging.current) onTrackMove(pendingY);
+      if (pendingY != null && dragging.current) {
+        const v = onTrackMove(pendingY);
+        if (v != null) { lastValue = v; applyDrag(v); }
+      }
     };
     const move = (e: PointerEvent) => {
       if (!dragging.current) return;
@@ -148,8 +179,11 @@ export default function TreshApp({ locale }: { locale: Locale }) {
       if (raf == null) raf = requestAnimationFrame(flush);
     };
     const up = () => {
+      if (!dragging.current) return;
       dragging.current = false;
       if (raf != null) { cancelAnimationFrame(raf); raf = null; }
+      if (lastValue != null) setNewValue(lastValue);
+      lastValue = null;
     };
     window.addEventListener('pointermove', move, { passive: true });
     window.addEventListener('pointerup', up, { passive: true });
@@ -158,7 +192,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
       window.removeEventListener('pointerup', up);
       if (raf != null) cancelAnimationFrame(raf);
     };
-  }, [onTrackMove]);
+  }, [onTrackMove, applyDrag]);
 
   const createThreshold = () => {
     if (effNewValue == null) return;
@@ -416,7 +450,11 @@ export default function TreshApp({ locale }: { locale: Locale }) {
       <div className="flex min-h-0 flex-1 items-stretch gap-5">
         <div
           ref={trackRef}
-          onPointerDown={(e) => { dragging.current = true; onTrackMove(e.clientY); }}
+          onPointerDown={(e) => {
+            dragging.current = true;
+            const v = onTrackMove(e.clientY);
+            if (v != null) { applyDrag(v); setNewValue(v); }
+          }}
           role="slider"
           aria-label={d.thresholdValue}
           aria-valuemin={setMin}
@@ -433,27 +471,28 @@ export default function TreshApp({ locale }: { locale: Locale }) {
           style={{ background: 'linear-gradient(180deg,#0B1622,#122236)', touchAction: 'none', minHeight: 180 }}
         >
           <div
+            ref={fillRef}
             className="absolute inset-x-0 bottom-0"
             style={{
               height: `${fillPct}%`,
               background: 'linear-gradient(180deg,rgba(52,227,214,0.28),rgba(52,227,214,0.10))',
               borderTop: '1.5px solid rgba(52,227,214,0.7)',
-              transition: 'height 60ms linear',
             }}
           />
           <div
+            ref={floatRef}
             className="absolute left-2 right-2 flex h-[34px] items-center justify-center rounded-xl bg-water"
-            style={{ top: `${floatTop}%`, transform: 'translateY(-50%)', boxShadow: '0 8px 24px -6px rgba(52,227,214,0.7)', transition: 'top 60ms linear' }}
+            style={{ top: `${floatTop}%`, transform: 'translateY(-50%)', boxShadow: '0 8px 24px -6px rgba(52,227,214,0.7)' }}
           >
             <div className="h-[3px] w-[22px] rounded-sm" style={{ background: 'rgba(4,18,26,0.4)' }} />
           </div>
         </div>
         <div className="flex flex-1 flex-col justify-center">
           <div className="mb-1.5 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.threshold}</div>
-          <div className="num text-content-primary" style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1 }}>
+          <div ref={valueTextRef} className="num text-content-primary" style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1 }}>
             {effNewValue != null ? effNewValue.toFixed(setCat.decimals) : '· · ·'}
           </div>
-          <div className="mt-2 text-[13px] leading-relaxed text-content-secondary">
+          <div ref={helperTextRef} className="mt-2 text-[13px] leading-relaxed text-content-secondary">
             {setLive != null && effNewValue != null
               ? d.helper(
                   setLive.toFixed(setCat.decimals),
