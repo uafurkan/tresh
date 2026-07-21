@@ -16,6 +16,9 @@ import { pushTopWatch, pushWatchList } from '@/lib/client/nativeBridge';
 type Screen = 'home' | 'set';
 
 const cataloguePairs = PAIR_CATALOG.map((p) => pairKey(p.base, p.quote));
+// Masaüstü ayar panelinde arama çubuğunun yanında gösterilen hızlı seçim
+// pariteleri — test paritesi hariç, katalogdaki ilk 8 gerçek parite.
+const POPULAR_PAIRS = PAIR_CATALOG.filter((p) => p.base !== 'TEST').slice(0, 8);
 
 export default function TreshApp({ locale }: { locale: Locale }) {
   const d = dictionaries[locale].app;
@@ -748,6 +751,30 @@ function SetPanel({
             )}
           </div>
         )}
+      </div>
+
+      {/* Masaüstünde dikey alan mobil kadar kısıtlı değil — arama çubuğunun
+          yanında en popüler pariteler de tek dokunuşla seçilebilsin diye
+          hızlı seçim satırı gösterilir. Mobil/App'te yalnızca arama var. */}
+      <div className="mb-4 hidden gap-2 md:grid md:grid-cols-4">
+        {POPULAR_PAIRS.map((p) => {
+          const i = PAIR_CATALOG.indexOf(p);
+          const on = i === newPairIdx;
+          return (
+            <button
+              key={pairKey(p.base, p.quote)}
+              onClick={() => onSelectPair(i)}
+              className="num rounded-xl border px-1.5 py-2.5 text-[13px] transition-all"
+              style={{
+                background: on ? 'rgba(52,227,214,0.14)' : 'rgba(11,22,34,0.5)',
+                borderColor: on ? 'rgba(52,227,214,0.5)' : 'rgba(143,165,179,0.16)',
+                color: on ? '#34E3D6' : '#8FA5B3',
+              }}
+            >
+              {p.base}/{p.quote}
+            </button>
+          );
+        })}
       </div>
 
       <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.notifyWhen}</div>
