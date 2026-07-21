@@ -66,6 +66,18 @@ async function fromFrankfurter(base: string, quote: string): Promise<RateQuote> 
   return { pair: pairKey(base, quote), rate, ts: Date.now(), source: 'frankfurter' };
 }
 
+/** CoinGecko — kripto/fiat çaprazlarını (BTC/TRY dahil) doğrudan, anahtarsız verir. */
+const COINGECKO_IDS: Record<string, string> = { BTC: 'bitcoin', ETH: 'ethereum' };
+async function fromCoinGecko(base: string, quote: string): Promise<RateQuote> {
+  const id = COINGECKO_IDS[base];
+  if (!id) throw new Error('coingecko: unsupported base');
+  const vs = quote.toLowerCase();
+  const data = await fetchJson(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=${vs}`);
+  const rate = Number(data?.[id]?.[vs]);
+  if (!Number.isFinite(rate) || rate <= 0) throw new Error('coingecko: no price');
+  return { pair: pairKey(base, quote), rate, ts: Date.now(), source: 'coingecko' };
+}
+
 const PROVIDERS = [fromYahoo, fromExchangerateHost, fromOpenErApi, fromFrankfurter];
 
 // Kısa süreli bellek-içi önbellek: sağlayıcıları dakikada onlarca kez dövmemek için.
@@ -80,8 +92,15 @@ export async function getRate(base: string, quote: string): Promise<RateQuote> {
   if (hit && cachedAt && Date.now() - cachedAt < CACHE_TTL_MS) return hit;
 
   // Yahoo (ve diğer sağlayıcılar) BTC/TRY gibi kripto↔fiat-dışı-USD çaprazlarını
-  // doğrudan desteklemiyor — BTC-USD × USD-TRY ile sentetik olarak hesaplanır.
+  // doğrudan desteklemiyor — önce CoinGecko'dan gerçek BTC/TRY kuru denenir,
+  // o da düşerse BTC-USD × USD-TRY ile sentetik hesaplanır.
   if (CRYPTO_BASES.has(base) && quote !== 'USD') {
+    try {
+      const q = await fromCoinGecko(base, quote);
+      (q as any).fetchedAt = Date.now();
+      cache.set(key, q);
+      return q;
+    } catch { /* CoinGecko yoksa sentetiğe düş */ }
     try {
       const [cryptoUsd, usdQuote] = await Promise.all([getRate(base, 'USD'), getRate('USD', quote)]);
       const q: RateQuote = {
