@@ -1,11 +1,14 @@
 import { ImageResponse } from 'next/og';
+import { dictionaries, isLocale } from '@/lib/i18n';
 
 export const runtime = 'edge';
-export const alt = 'Tresh — Döviz eşik alarmı';
+export const alt = 'Tresh — currency threshold alerts';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-export default function OgImage() {
+export default function OgImage({ params }: { params: { locale: string } }) {
+  const locale = isLocale(params.locale) ? params.locale : 'en';
+  const tagline = dictionaries[locale].meta.tagline;
   const wave = Array.from({ length: 61 }, (_, i) => {
     const x = i * 20;
     const y = 400 + Math.sin(i * 0.35) * 14 + Math.sin(i * 0.8) * 6;
@@ -44,9 +47,7 @@ export default function OgImage() {
           }}
         >
           <div style={{ fontSize: 72, fontWeight: 700 }}>Tresh</div>
-          <div style={{ fontSize: 34, color: '#8FA5B3', marginTop: 18, maxWidth: 700 }}>
-            Sayım tutunca haber ver, grafiğe dadanmak istemiyorum.
-          </div>
+          <div style={{ fontSize: 34, color: '#8FA5B3', marginTop: 18, maxWidth: 700 }}>{tagline}</div>
         </div>
       </div>
     ),

@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 interface Body {
   subscription: PushSubscriptionJSON;
   thresholds: Threshold[];
+  locale?: string;
 }
 
 /** Aboneliği + kullanıcının eşiklerini kaydeder (upsert). Cron bunları tarar. */
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
     subscription: sub,
     thresholds,
     lastRates: existing?.lastRates ?? {},
+    locale: body.locale === 'tr' ? 'tr' : 'en',
     updatedAt: Date.now(),
   });
   return NextResponse.json({ ok: true, id });

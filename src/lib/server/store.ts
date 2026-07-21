@@ -17,6 +17,8 @@ export interface Watcher {
   thresholds: Threshold[];
   /** Eşik id -> son bilinen kur (geçiş tespiti için). */
   lastRates: Record<string, number>;
+  /** Bildirim dili ('en' | 'tr'); eski kayıtlarda olmayabilir. */
+  locale?: string;
   updatedAt: number;
 }
 

@@ -1,65 +1,70 @@
 # Tresh
 
-Döviz kuru eşik-alarm uygulaması. Bir parite (ör. USD/TRY) ve limit seç; canlı kur bu
-limiti geçtiğinde — uygulama kapalı olsa bile — push bildirimi al.
+Currency threshold-alert app. Pick a pair (e.g. USD/TRY) and a limit; get a push
+notification the moment the live rate crosses it — even with the app closed.
 
-> *"Sayım tutunca haber ver, grafiğe dadanmak istemiyorum."*
+> *"Tell me when it hits my number, I don't want to babysit charts."*
 
-## Mimari
+**Languages:** English is the default (`/`, `/app`); Turkish lives under `/tr`
+(`/tr`, `/tr/app`). Locale routing is handled by `src/middleware.ts`, all UI
+strings live in `src/lib/i18n.ts`, and push notifications are sent in the
+subscriber's language.
 
-- **Next.js 14 (App Router) + TypeScript + Tailwind** — landing SSG, uygulama (`/app`) client.
-- **Canvas su motoru** — `src/components/WaterCanvas.tsx`; prototipteki katmanlı sinüs
-  dalga motorunun birebir taşınmış hali. Chart kütüphanesi yok.
-- **Canlı kur API'si** — `GET /api/rates?pairs=USD/TRY,EUR/USD`. Sağlayıcı zinciri ile
-  her zaman ayakta: **Yahoo Finance** (anahtarsız, anlık) → **exchangerate.host**
-  (`RATES_API_KEY` verilirse) → **open.er-api.com** → **frankfurter.app**. Bir kaynak
-  düşerse sıradaki devreye girer; hepsi düşerse son okuma "bayat" işaretiyle döner.
-  İstemci 15 sn'de bir yoklar; sunucu tarafında 10 sn'lik önbellek vardır.
-- **Web Push** — VAPID + `public/sw.js`. Abonelik + eşikler `POST /api/push/subscribe`
-  ile sunucuya yazılır.
-- **Vercel Cron** — `vercel.json` dakikada bir `/api/cron/check`'i çağırır: kurlar
-  çekilir, eşik geçişleri tespit edilir, geçenlere arka planda push gönderilir
-  (`CRON_SECRET` ile korunur).
-- **Depo soyutlaması** — abonelikler Upstash Redis REST env'leri doluysa kalıcı,
-  değilse bellek-içi tutulur (`src/lib/server/store.ts`). Eşiklerin istemci kopyası
-  `localStorage`'dadır (`src/lib/client/storage.ts`) — ileride Supabase/Postgres'e
-  geçiş için arayüzler sabittir.
+## Architecture
 
-## Kurulum
+- **Next.js 14 (App Router) + TypeScript + Tailwind** — SSG landing, client app at `/app`.
+- **Canvas water engine** — `src/components/WaterCanvas.tsx`; a faithful port of the
+  prototype's layered sine-wave engine. No chart library.
+- **Live rates API** — `GET /api/rates?pairs=USD/TRY,EUR/USD`. Always up thanks to a
+  provider chain: **Yahoo Finance** (keyless, near real-time) → **exchangerate.host**
+  (if `RATES_API_KEY` is set) → **open.er-api.com** → **frankfurter.app**. If one source
+  goes down, the next takes over; if all fail, the last reading is served marked stale.
+  The client polls every 15 s; the server keeps a 10 s cache.
+- **Web Push** — VAPID + `public/sw.js`. Subscription + thresholds (+ locale) are stored
+  server-side via `POST /api/push/subscribe`.
+- **Vercel Cron** — `vercel.json` hits `/api/cron/check` every minute: rates are fetched,
+  threshold crossings detected, and push notifications sent in the background
+  (protected by `CRON_SECRET`).
+- **Repository abstraction** — subscriptions persist in Upstash Redis when its REST env
+  vars are set, otherwise in memory (`src/lib/server/store.ts`). The client copy of
+  thresholds lives in `localStorage` (`src/lib/client/storage.ts`) — the interfaces are
+  stable for a later move to Supabase/Postgres.
+
+## Setup
 
 ```bash
-pnpm install          # veya npm install
+pnpm install          # or npm install
 cp .env.example .env.local
-npm run generate:vapid   # çıkan anahtarları .env.local'e yapıştır
+npm run generate:vapid   # paste the generated keys into .env.local
 pnpm dev              # http://localhost:3000
 ```
 
-## Ortam değişkenleri
+## Environment variables
 
-| Değişken | Zorunlu | Açıklama |
+| Variable | Required | Description |
 |---|---|---|
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Push için | `npm run generate:vapid` ile üret |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Push için | Public anahtarın aynısı |
-| `VAPID_SUBJECT` | Hayır | `mailto:...` iletişim adresi |
-| `RATES_API_KEY` | Hayır | exchangerate.host anahtarı; boşsa anahtarsız zincir çalışır |
-| `CRON_SECRET` | Üretimde | Cron route'unu korur (Vercel otomatik `Authorization: Bearer` gönderir) |
-| `UPSTASH_REDIS_REST_URL` / `..._TOKEN` | Üretimde önerilir | Aboneliklerin kalıcı deposu |
-| `NEXT_PUBLIC_SITE_URL` | Hayır | Canonical/OG için site adresi |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | For push | Generate with `npm run generate:vapid` |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | For push | Same value as the public key |
+| `VAPID_SUBJECT` | No | `mailto:...` contact address |
+| `RATES_API_KEY` | No | exchangerate.host key; the keyless chain works without it |
+| `CRON_SECRET` | In production | Protects the cron route (Vercel sends `Authorization: Bearer` automatically) |
+| `UPSTASH_REDIS_REST_URL` / `..._TOKEN` | Recommended in production | Persistent store for subscriptions |
+| `NEXT_PUBLIC_SITE_URL` | No | Site URL for canonical/OG tags |
 
 ## Deploy
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fuafurkan%2Ftresh&env=VAPID_PUBLIC_KEY,VAPID_PRIVATE_KEY,NEXT_PUBLIC_VAPID_PUBLIC_KEY,CRON_SECRET&project-name=tresh)
 
-1. Repoyu Vercel'e bağla; env değişkenlerini dashboard'a gir.
-2. `vercel.json`'daki cron otomatik kurulur (dakikada bir kontrol).
-3. Push'un uçtan uca çalışması için `UPSTASH_REDIS_REST_URL/TOKEN` ekle — bellek-içi
-   depo serverless instance'lar arasında paylaşılmaz.
+1. Connect the repo to Vercel and enter the env vars in the dashboard.
+2. The cron in `vercel.json` is set up automatically (checks every minute).
+3. Add `UPSTASH_REDIS_REST_URL/TOKEN` for end-to-end push — the in-memory store is
+   not shared across serverless instances.
 
-## Prototip
+## Prototype
 
-Bağlayıcı görsel referanslar `/prototype` klasöründedir (`Tresh.dc.html` mobil,
+The binding visual references live in `/prototype` (`Tresh.dc.html` mobile,
 `TreshWeb.dc.html` web).
 
-## Lisans
+## License
 
-MIT — bkz. [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).

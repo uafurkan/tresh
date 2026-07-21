@@ -3,6 +3,7 @@ import { getRepository } from '@/lib/server/store';
 import { getRates } from '@/lib/server/rates';
 import { sendPush } from '@/lib/server/push';
 import { pairKey } from '@/lib/pairs';
+import { pushBody } from '@/lib/i18n';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,12 +47,11 @@ export async function GET(req: NextRequest) {
           ? prev < t.value && rate >= t.value
           : prev > t.value && rate <= t.value;
         if (crossed) {
-          const verb = t.dir === 'above' ? 'geçti' : 'altına indi';
           const alive = await sendPush(w.subscription, {
             title: 'Tresh',
-            body: `${key} ${t.value.toFixed(t.decimals)}'${t.dir === 'above' ? 'i' : 'nin'} ${verb} — şu an ${rate.toFixed(t.decimals)}.`,
+            body: pushBody(w.locale ?? 'en', key, t.value.toFixed(t.decimals), t.dir, rate.toFixed(t.decimals)),
             tag: `tresh-${t.id}`,
-            url: '/app',
+            url: w.locale === 'tr' ? '/tr/app' : '/app',
           });
           if (!alive) { dead = true; break; }
           sent++;

@@ -6,6 +6,7 @@ import { PAIR_CATALOG, pairKey, type Threshold } from '@/lib/pairs';
 import { localRepository } from '@/lib/client/storage';
 import { enablePush, pushSupported, registerServiceWorker, syncThresholds } from '@/lib/client/push';
 import { useRates } from '@/lib/client/useRates';
+import { dictionaries, type AppDict, type Locale } from '@/lib/i18n';
 
 type Screen = 'home' | 'set';
 
@@ -22,7 +23,8 @@ function miniWavePath(level: number, w: number, h: number): string {
   return parts.join(' ');
 }
 
-export default function TreshApp() {
+export default function TreshApp({ locale }: { locale: Locale }) {
+  const d = dictionaries[locale].app;
   const [thresholds, setThresholds] = useState<Threshold[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -67,8 +69,8 @@ export default function TreshApp() {
   const persist = useCallback((next: Threshold[]) => {
     setThresholds(next);
     localRepository.save(next);
-    syncThresholds(next);
-  }, []);
+    syncThresholds(next, locale);
+  }, [locale]);
 
   const selected = thresholds.find((t) => t.id === selectedId) ?? thresholds[0] ?? null;
   const selectedCatalog = selected ? PAIR_CATALOG.find((p) => p.base === selected.base && p.quote === selected.quote) : null;
@@ -86,14 +88,14 @@ export default function TreshApp() {
       if (prev != null) {
         const crossed = t.dir === 'above' ? prev < t.value && cur >= t.value : prev > t.value && cur <= t.value;
         if (crossed) {
-          setBanner(`${key} ${t.value.toFixed(t.decimals)} seviyesini ${t.dir === 'above' ? 'geçti' : 'aşağı kırdı'} — şu an ${cur.toFixed(t.decimals)}.`);
+          setBanner(d.bannerText(key, t.value.toFixed(t.decimals), t.dir, cur.toFixed(t.decimals)));
           setOverflowTick((n) => n + 1);
           window.setTimeout(() => setBanner(null), 6000);
         }
       }
       prevRates.current[t.id] = cur;
     }
-  }, [rates, thresholds]);
+  }, [rates, thresholds, d]);
 
   // ---- Su geometrisi ----
   const span = selectedCatalog?.span ?? 1;
@@ -161,7 +163,7 @@ export default function TreshApp() {
   const togglePerm = async () => {
     if (perm || permBusy) return;
     setPermBusy(true);
-    const ok = await enablePush(thresholds);
+    const ok = await enablePush(thresholds, locale);
     setPerm(ok);
     setPermBusy(false);
   };
@@ -189,11 +191,11 @@ export default function TreshApp() {
     const dist = live != null ? Math.abs(live - t.value) : null;
     let color: string, status: string, statusColor: string;
     if (t.paused) {
-      color = '#5f7585'; status = 'Susturuldu'; statusColor = '#5f7585';
+      color = '#5f7585'; status = d.statusMuted; statusColor = '#5f7585';
     } else {
       const dull = [46, 164, 160], vivid = [56, 231, 217];
       color = `rgb(${dull.map((d, i) => Math.round(d + (vivid[i] - d) * tens)).join(',')})`;
-      status = tens > 0.72 ? 'Yaklaşıyor' : tens > 0.4 ? 'İzleniyor' : 'Sakin';
+      status = tens > 0.72 ? d.statusApproaching : tens > 0.4 ? d.statusWatching : d.statusCalm;
       statusColor = tens > 0.72 ? '#FF9647' : '#8FA5B3';
     }
     const lvlCenter = t.value;
@@ -238,7 +240,11 @@ export default function TreshApp() {
         </div>
         {selected && selectedRate && (
           <div className="num mt-2 text-[13px] text-content-secondary">
-            {`${selectedRate.rate - selectedRate.opening >= 0 ? '+' : ''}${(selectedRate.rate - selectedRate.opening).toFixed(selected.decimals)} bugün · ${selected.dir === 'above' ? 'üstü' : 'altı'} ${selected.value.toFixed(selected.decimals)}`}
+            {d.today(
+              `${selectedRate.rate - selectedRate.opening >= 0 ? '+' : ''}${(selectedRate.rate - selectedRate.opening).toFixed(selected.decimals)}`,
+              selected.dir,
+              selected.value.toFixed(selected.decimals)
+            )}
           </div>
         )}
       </div>
@@ -246,15 +252,13 @@ export default function TreshApp() {
       {error && (
         <div className="absolute left-4 right-4 top-[118px] z-10 md:left-12 md:right-auto md:max-w-md">
           <div className="rounded-2xl border border-content-secondary/20 bg-bg-surface/70 p-4 backdrop-blur-md">
-            <div className="mb-0.5 text-sm text-content-primary">Sinyal kesildi</div>
-            <div className="mb-3 text-[13px] leading-relaxed text-content-secondary">
-              Kurlar duraklatıldı — son okuma tutuluyor. Bağlantı gelir gelmez kaldığımız yerden süreceğiz.
-            </div>
+            <div className="mb-0.5 text-sm text-content-primary">{d.errorTitle}</div>
+            <div className="mb-3 text-[13px] leading-relaxed text-content-secondary">{d.errorBody}</div>
             <button
               onClick={retry}
               className="rounded-xl border border-water/40 bg-water/15 px-4 py-2 text-[13px] text-water"
             >
-              Yeniden bağlan
+              {d.reconnect}
             </button>
           </div>
         </div>
@@ -266,10 +270,8 @@ export default function TreshApp() {
     <>
       {isEmpty && screen === 'home' && (
         <div className="rise-in px-5 pb-2 pt-6 text-center">
-          <div className="mb-2 font-heading text-[22px] leading-snug text-content-primary">Durgun su.</div>
-          <div className="mx-auto mb-1 max-w-[280px] text-sm leading-relaxed text-content-secondary">
-            İlk eşiğini kur; seviyeyi senin yerine biz izleyelim — sen uzaktayken bile.
-          </div>
+          <div className="mb-2 font-heading text-[22px] leading-snug text-content-primary">{d.emptyTitle}</div>
+          <div className="mx-auto mb-1 max-w-[280px] text-sm leading-relaxed text-content-secondary">{d.emptyBody}</div>
         </div>
       )}
       {thresholds.length > 0 && (
@@ -292,8 +294,8 @@ export default function TreshApp() {
                 <span className="min-w-0 flex-1">
                   <span className="num block text-sm tracking-wide text-content-primary">{key}</span>
                   <span className="mt-0.5 block text-xs text-content-secondary">
-                    {t.dir === 'above' ? 'Üstü' : 'Altı'} {t.value.toFixed(t.decimals)}
-                    {!t.paused && dist != null ? ` · ${dist.toFixed(t.decimals)} uzakta` : ''}
+                    {t.dir === 'above' ? d.above : d.below} {t.value.toFixed(t.decimals)}
+                    {!t.paused && dist != null ? d.away(dist.toFixed(t.decimals)) : ''}
                   </span>
                 </span>
                 <span className="flex-none text-right">
@@ -304,16 +306,16 @@ export default function TreshApp() {
               <div className="flex flex-none flex-col gap-1">
                 <button
                   onClick={() => togglePause(t.id)}
-                  aria-label={t.paused ? 'İzlemeyi sürdür' : 'Sustur'}
-                  title={t.paused ? 'İzlemeyi sürdür' : 'Sustur'}
+                  aria-label={t.paused ? d.resume : d.mute}
+                  title={t.paused ? d.resume : d.mute}
                   className="rounded-lg px-1.5 py-0.5 text-[11px] text-content-secondary hover:bg-bg-raised"
                 >
                   {t.paused ? '▸' : '⏸'}
                 </button>
                 <button
                   onClick={() => removeThreshold(t.id)}
-                  aria-label="Eşiği sil"
-                  title="Eşiği sil"
+                  aria-label={d.deleteThreshold}
+                  title={d.deleteThreshold}
                   className="rounded-lg px-1.5 py-0.5 text-[13px] text-content-secondary hover:bg-bg-raised"
                 >
                   ×
@@ -328,17 +330,17 @@ export default function TreshApp() {
         className="w-full rounded-[20px] bg-water p-4 text-base font-semibold text-[#04121a]"
         style={{ boxShadow: '0 16px 40px -14px rgba(52,227,214,0.6)' }}
       >
-        Eşik belirle
+        {d.setThreshold}
       </button>
     </>
   );
 
   const setPanel = (
     <div className="flex h-full flex-col">
-      <div className="mb-1 font-heading text-[26px] leading-tight text-content-primary">Çizgin nerede?</div>
-      <div className="mb-5 text-sm leading-normal text-content-secondary">Şamandırayı önemsediğin seviyeye sürükle.</div>
+      <div className="mb-1 font-heading text-[26px] leading-tight text-content-primary">{d.setTitle}</div>
+      <div className="mb-5 text-sm leading-normal text-content-secondary">{d.setSubtitle}</div>
 
-      <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">Parite</div>
+      <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.pair}</div>
       <div className="mb-4 grid grid-cols-3 gap-2">
         {PAIR_CATALOG.map((p, i) => {
           const on = i === newPairIdx;
@@ -359,14 +361,14 @@ export default function TreshApp() {
         })}
       </div>
 
-      <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">Haber ver, kur</div>
+      <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.notifyWhen}</div>
       <div className="mb-5 flex gap-2">
-        {(['above', 'below'] as const).map((d) => {
-          const on = newDir === d;
+        {(['above', 'below'] as const).map((dr) => {
+          const on = newDir === dr;
           return (
             <button
-              key={d}
-              onClick={() => setNewDir(d)}
+              key={dr}
+              onClick={() => setNewDir(dr)}
               className="flex-1 rounded-xl border p-3 text-sm transition-all"
               style={{
                 background: on ? 'rgba(52,227,214,0.14)' : 'rgba(11,22,34,0.5)',
@@ -374,7 +376,7 @@ export default function TreshApp() {
                 color: on ? '#34E3D6' : '#8FA5B3',
               }}
             >
-              {d === 'above' ? 'Üstüne çıkarsa' : 'Altına düşerse'}
+              {dr === 'above' ? d.dirAbove : d.dirBelow}
             </button>
           );
         })}
@@ -385,7 +387,7 @@ export default function TreshApp() {
           ref={trackRef}
           onPointerDown={(e) => { dragging.current = true; onTrackMove(e.clientY); }}
           role="slider"
-          aria-label="Eşik değeri"
+          aria-label={d.thresholdValue}
           aria-valuemin={setMin}
           aria-valuemax={setMin + setCat.span}
           aria-valuenow={effNewValue ?? undefined}
@@ -416,30 +418,27 @@ export default function TreshApp() {
           </div>
         </div>
         <div className="flex flex-1 flex-col justify-center">
-          <div className="mb-1.5 text-[11px] uppercase tracking-[1.5px] text-content-secondary">Eşik</div>
+          <div className="mb-1.5 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.threshold}</div>
           <div className="num text-content-primary" style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1 }}>
             {effNewValue != null ? effNewValue.toFixed(setCat.decimals) : '· · ·'}
           </div>
           <div className="mt-2 text-[13px] leading-relaxed text-content-secondary">
             {setLive != null && effNewValue != null
-              ? `Şu an ${setLive.toFixed(setCat.decimals)}. ${
-                  newDir === 'above'
-                    ? effNewValue > setLive
-                      ? `Tırmanacak ${(effNewValue - setLive).toFixed(setCat.decimals)} var.`
-                      : 'Zaten üstünde.'
-                    : effNewValue < setLive
-                      ? `Düşecek ${(setLive - effNewValue).toFixed(setCat.decimals)} var.`
-                      : 'Zaten altında.'
-                }`
-              : 'Canlı kur bekleniyor…'}
+              ? d.helper(
+                  setLive.toFixed(setCat.decimals),
+                  newDir,
+                  Math.abs(effNewValue - setLive).toFixed(setCat.decimals),
+                  newDir === 'above' ? effNewValue <= setLive : effNewValue >= setLive
+                )
+              : d.waitingLive}
           </div>
 
           <div className="mt-5 rounded-2xl border border-content-secondary/15 p-3.5" style={{ background: 'rgba(11,22,34,0.55)' }}>
             <div className="flex items-center justify-between gap-2.5">
-              <div className="text-[13px] text-content-primary">Push bildirimleri</div>
+              <div className="text-[13px] text-content-primary">{d.pushTitle}</div>
               <button
                 onClick={togglePerm}
-                aria-label="Push bildirimlerine izin ver"
+                aria-label={d.pushAria}
                 className="relative h-[26px] w-11 flex-none rounded-full border-0 transition-colors"
                 style={{ background: perm ? '#34E3D6' : 'rgba(143,165,179,0.3)', opacity: permBusy ? 0.6 : 1 }}
               >
@@ -450,9 +449,7 @@ export default function TreshApp() {
               </button>
             </div>
             <div className="mt-1.5 text-[11.5px] leading-relaxed text-content-secondary">
-              {pushSupported()
-                ? 'Seviye kırıldığı an sana ulaşabilmemiz için — uygulama kapalıyken bile.'
-                : 'Bu tarayıcı push desteklemiyor; uygulama açıkken yine de haber veririz.'}
+              {pushSupported() ? d.pushSupported : d.pushUnsupported}
             </div>
           </div>
         </div>
@@ -464,7 +461,7 @@ export default function TreshApp() {
         className="mt-4 w-full rounded-[20px] bg-water p-4 text-base font-semibold text-[#04121a] disabled:opacity-50"
         style={{ boxShadow: '0 16px 40px -14px rgba(52,227,214,0.6)' }}
       >
-        Bu seviyeyi izle
+        {d.watchThisLevel}
       </button>
     </div>
   );
@@ -479,15 +476,15 @@ export default function TreshApp() {
             {screen === 'home' ? (
               <div>
                 <div className="font-heading text-[19px] font-semibold text-content-primary">Tresh</div>
-                <div className="text-[11px] text-content-secondary">{activeCount} seviye izleniyor</div>
+                <div className="text-[11px] text-content-secondary">{d.levelsWatched(activeCount)}</div>
               </div>
             ) : (
               <button onClick={() => setScreen('home')} className="flex items-center gap-2 py-1 text-sm text-content-secondary">
-                <span className="text-lg leading-none">‹</span> Geri
+                <span className="text-lg leading-none">‹</span> {d.back}
               </button>
             )}
           </header>
-          {banner && <Banner text={banner} onClose={() => setBanner(null)} />}
+          {banner && <Banner text={banner} d={d} onClose={() => setBanner(null)} />}
           <div className="flex-1" />
           {screen === 'home' ? (
             <div className="px-4 pb-8 pt-4">{listPanel}</div>
@@ -505,11 +502,11 @@ export default function TreshApp() {
           {waterPanel}
           <div className="absolute left-12 top-10 z-10">
             <div className="font-heading text-[28px] font-semibold tracking-wide text-content-primary">Tresh</div>
-            <div className="mt-0.5 text-sm text-content-secondary">{activeCount} seviye izleniyor</div>
+            <div className="mt-0.5 text-sm text-content-secondary">{d.levelsWatched(activeCount)}</div>
           </div>
           {banner && (
             <div className="absolute left-1/2 top-6 z-30 -translate-x-1/2">
-              <Banner text={banner} onClose={() => setBanner(null)} wide />
+              <Banner text={banner} d={d} onClose={() => setBanner(null)} wide />
             </div>
           )}
         </div>
@@ -519,10 +516,10 @@ export default function TreshApp() {
         >
           <div className="mb-6 flex items-center justify-between">
             {screen === 'home' ? (
-              <h1 className="font-heading text-2xl text-content-primary">Seviyelerin</h1>
+              <h1 className="font-heading text-2xl text-content-primary">{d.yourLevels}</h1>
             ) : (
               <button onClick={() => setScreen('home')} className="flex items-center gap-2 text-[15px] text-content-secondary">
-                <span className="text-xl leading-none">‹</span> Geri
+                <span className="text-xl leading-none">‹</span> {d.back}
               </button>
             )}
           </div>
@@ -530,10 +527,8 @@ export default function TreshApp() {
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="min-h-0 flex-1 overflow-y-auto">{isEmpty ? (
                 <div className="flex h-full flex-col items-center justify-center px-5 text-center">
-                  <div className="mb-2.5 font-heading text-[26px] text-content-primary">Durgun su.</div>
-                  <div className="max-w-[300px] text-[15px] leading-relaxed text-content-secondary">
-                    İlk eşiğini kur; seviyeyi senin yerine biz izleyelim — sen uzaktayken bile.
-                  </div>
+                  <div className="mb-2.5 font-heading text-[26px] text-content-primary">{d.emptyTitle}</div>
+                  <div className="max-w-[300px] text-[15px] leading-relaxed text-content-secondary">{d.emptyBody}</div>
                 </div>
               ) : listPanel}</div>
               {isEmpty && (
@@ -542,7 +537,7 @@ export default function TreshApp() {
                   className="mt-5 w-full rounded-[20px] bg-water p-4 text-base font-semibold text-[#04121a]"
                   style={{ boxShadow: '0 18px 44px -16px rgba(52,227,214,0.6)' }}
                 >
-                  Eşik belirle
+                  {d.setThreshold}
                 </button>
               )}
             </div>
@@ -555,7 +550,7 @@ export default function TreshApp() {
   );
 }
 
-function Banner({ text, onClose, wide }: { text: string; onClose: () => void; wide?: boolean }) {
+function Banner({ text, d, onClose, wide }: { text: string; d: AppDict; onClose: () => void; wide?: boolean }) {
   return (
     <div className={`banner-in ${wide ? '' : 'mx-4'} z-30`}>
       <div
@@ -569,10 +564,10 @@ function Banner({ text, onClose, wide }: { text: string; onClose: () => void; wi
       >
         <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-overflow" style={{ boxShadow: '0 0 14px 2px rgba(255,150,74,0.6)' }} />
         <span className="flex-1">
-          <span className="mb-0.5 block text-xs tracking-wide text-content-secondary">Eşik geçildi</span>
+          <span className="mb-0.5 block text-xs tracking-wide text-content-secondary">{d.bannerLabel}</span>
           <span className="block text-sm leading-normal text-content-primary">{text}</span>
         </span>
-        <button onClick={onClose} aria-label="Kapat" className="px-1 text-content-secondary">×</button>
+        <button onClick={onClose} aria-label={d.close} className="px-1 text-content-secondary">×</button>
       </div>
     </div>
   );

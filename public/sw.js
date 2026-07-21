@@ -3,7 +3,7 @@ self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
 self.addEventListener('push', (event) => {
-  let payload = { title: 'Tresh', body: 'Seviye kırıldı.', tag: 'tresh', url: '/app' };
+  let payload = { title: 'Tresh', body: 'Level crossed.', tag: 'tresh', url: '/app' };
   try {
     if (event.data) payload = { ...payload, ...event.data.json() };
   } catch (e) { /* düz metin payload */ }

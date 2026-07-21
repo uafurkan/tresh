@@ -23,7 +23,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 }
 
 /** İzin ister, push aboneliği oluşturur ve eşiklerle birlikte sunucuya kaydeder. */
-export async function enablePush(thresholds: Threshold[]): Promise<boolean> {
+export async function enablePush(thresholds: Threshold[], locale = 'en'): Promise<boolean> {
   if (!pushSupported()) return false;
   const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!vapid) {
@@ -40,23 +40,23 @@ export async function enablePush(thresholds: Threshold[]): Promise<boolean> {
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapid) as unknown as BufferSource,
     }));
-  return syncSubscription(sub, thresholds);
+  return syncSubscription(sub, thresholds, locale);
 }
 
 /** Eşikler her değiştiğinde mevcut aboneliği sunucuyla eşitler. */
-export async function syncThresholds(thresholds: Threshold[]): Promise<void> {
+export async function syncThresholds(thresholds: Threshold[], locale = 'en'): Promise<void> {
   if (!pushSupported() || Notification.permission !== 'granted') return;
   const reg = await navigator.serviceWorker.getRegistration();
   const sub = await reg?.pushManager.getSubscription();
-  if (sub) await syncSubscription(sub, thresholds);
+  if (sub) await syncSubscription(sub, thresholds, locale);
 }
 
-async function syncSubscription(sub: PushSubscription, thresholds: Threshold[]): Promise<boolean> {
+async function syncSubscription(sub: PushSubscription, thresholds: Threshold[], locale: string): Promise<boolean> {
   try {
     const res = await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subscription: sub.toJSON(), thresholds }),
+      body: JSON.stringify({ subscription: sub.toJSON(), thresholds, locale }),
     });
     return res.ok;
   } catch {
