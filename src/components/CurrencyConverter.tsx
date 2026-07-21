@@ -7,14 +7,16 @@ import { dictionaries, type Locale } from '@/lib/i18n';
 
 const ALL_CODES = ['USD', ...CONVERTER_CURRENCIES.map((c) => c.code)];
 
-// Ondalıksız, sade tam sayı — sadece gruplu binlik ayracı. 1'in altındaki
-// değerler (ör. 1 TRY'nin USD karşılığı) yuvarlanınca "0" olup anlamsızlaşır,
-// onlar için istisnai olarak birkaç basamak bırakılıyor. Yerel (tr-TR /
-// en-US) doğru ayracı otomatik seçiyor.
+// Büyük tutarlarda ondalık gürültü — 2500 USD'lik bir çevrimde "117.981,42"
+// yerine sade "117.981" istiyoruz. Ama 1'e yakın kur değerlerini (EUR≈1.14,
+// GBP≈1.34, CHF≈1.23) da 0 ondalığa yuvarlarsak hepsi "$1" olup anlamsızlaşır
+// — bu yüzden basamak sayısı büyüklüğe göre kademeli. Yerel (tr-TR / en-US)
+// doğru binlik/ondalık ayracını otomatik seçiyor.
 function fmt(n: number, locale: Locale): string {
   if (!Number.isFinite(n)) return '—';
   const intlLocale = locale === 'tr' ? 'tr-TR' : 'en-US';
-  const decimals = Math.abs(n) < 1 ? 4 : 0;
+  const abs = Math.abs(n);
+  const decimals = abs >= 100 ? 0 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : 6;
   return new Intl.NumberFormat(intlLocale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
 }
 
