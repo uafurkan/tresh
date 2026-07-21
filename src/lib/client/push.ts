@@ -94,14 +94,9 @@ export async function sendTestPush(locale = 'en'): Promise<TestPushResult> {
   }
 }
 
-export type CheckNowResult = { ok: true; sent: number } | { ok: false; reason: 'not-enabled' | 'no-subscription' | 'not-subscribed' | 'network' };
+export type CheckNowResult = { ok: true; sent: number } | { ok: false; reason: 'not-enabled' | 'no-subscription' | 'not-subscribed' | 'server-error' | 'network' };
 
-/** Cron'un tetiklenmesini beklemeden, kullanıcının kendi eşiklerini (ör. TEST/DEMO) anında kontrol ettirir. */
-export async function checkNow(): Promise<CheckNowResult> {
-  if (!pushSupported() || Notification.permission !== 'granted') return { ok: false, reason: 'not-enabled' };
-  const reg = await navigator.serviceWorker.getRegistration();
-  const sub = await reg?.pushManager.getSubscription();
-  if (!sub) return { ok: false, reason: 'no-subscription' };
+async function checkNowOnce(sub: PushSubscription): Promise<CheckNowResult> {
   try {
     const res = await fetch('/api/push/check-now', {
       method: 'POST',
@@ -109,11 +104,31 @@ export async function checkNow(): Promise<CheckNowResult> {
       body: JSON.stringify({ subscription: sub.toJSON() }),
     });
     if (res.status === 404) return { ok: false, reason: 'not-subscribed' };
+    if (!res.ok) return { ok: false, reason: 'server-error' };
     const data = await res.json().catch(() => ({ ok: false }));
-    return data.ok ? { ok: true, sent: data.sent ?? 0 } : { ok: false, reason: 'network' };
+    return data.ok ? { ok: true, sent: data.sent ?? 0 } : { ok: false, reason: 'server-error' };
   } catch {
+    // fetch'in kendisi reddettiyse (bağlantı kesildi/CORS/vs.) — gerçek ağ hatası.
     return { ok: false, reason: 'network' };
   }
+}
+
+/**
+ * Cron'un tetiklenmesini beklemeden, kullanıcının kendi eşiklerini (ör.
+ * TEST/DEMO) anında kontrol ettirir. Upstash gibi dış servislere bağlı
+ * geçici gecikmeler/hatalar için tek seferlik otomatik yeniden deneme var.
+ */
+export async function checkNow(): Promise<CheckNowResult> {
+  if (!pushSupported() || Notification.permission !== 'granted') return { ok: false, reason: 'not-enabled' };
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = await reg?.pushManager.getSubscription();
+  if (!sub) return { ok: false, reason: 'no-subscription' };
+  let result = await checkNowOnce(sub);
+  if (!result.ok && (result.reason === 'server-error' || result.reason === 'network')) {
+    await new Promise((r) => setTimeout(r, 800));
+    result = await checkNowOnce(sub);
+  }
+  return result;
 }
 
 async function syncSubscription(sub: PushSubscription, thresholds: Threshold[], locale: string): Promise<boolean> {

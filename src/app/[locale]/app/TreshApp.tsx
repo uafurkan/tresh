@@ -675,7 +675,7 @@ function SetPanel({
   // ızgara dikeyde çok yer kaplıyor ve üstteki canlı kur okumasına alan
   // bırakmıyordu (kullanıcı ekran görüntüsüyle bildirdi).
   const [testStatus, setTestStatus] = useState<'idle' | 'sending' | 'sent' | Extract<TestPushResult, { ok: false }>['reason']>('idle');
-  const [checkStatus, setCheckStatus] = useState<'idle' | 'running' | { sent: number } | 'not-enabled' | 'no-subscription' | 'not-subscribed' | 'network'>('idle');
+  const [checkStatus, setCheckStatus] = useState<'idle' | 'running' | { sent: number } | 'not-enabled' | 'no-subscription' | 'not-subscribed' | 'server-error' | 'network'>('idle');
   const [pairSearchOpen, setPairSearchOpen] = useState(false);
   const [pairQuery, setPairQuery] = useState('');
   const pairMatches = PAIR_CATALOG.filter((p) => {
@@ -1037,6 +1037,7 @@ function SetPanel({
                       : checkStatus === 'not-enabled' ? d.checkNowNotEnabled
                       : checkStatus === 'no-subscription' ? d.checkNowNoSub
                       : checkStatus === 'not-subscribed' ? d.checkNowNotSubscribed
+                      : checkStatus === 'server-error' ? d.checkNowServerError
                       : checkStatus === 'network' ? d.checkNowNetwork
                       : d.checkNowFailed}
                   </div>

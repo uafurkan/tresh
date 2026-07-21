@@ -90,6 +90,7 @@ export interface AppDict {
   checkNowNoSub: string;
   checkNowNotSubscribed: string;
   checkNowNetwork: string;
+  checkNowServerError: string;
   notifications: string;
   notifTitle: string;
   notifEmpty: string;
@@ -212,6 +213,7 @@ export const dictionaries: Record<Locale, Dict> = {
       checkNowNoSub: 'No local push subscription — toggle push off and back on.',
       checkNowNotSubscribed: 'Server still can’t find your subscription after re-registering — check Vercel env vars (Upstash) and try again in a minute.',
       checkNowNetwork: 'Network error reaching the server — try again.',
+      checkNowServerError: 'Server had a hiccup (rate provider or database) — tried twice, still failing. Wait a minute and try again.',
       notifications: 'Notifications',
       notifTitle: 'Notifications',
       notifEmpty: 'No notifications yet',
@@ -336,6 +338,7 @@ export const dictionaries: Record<Locale, Dict> = {
       checkNowNoSub: 'Yerel push aboneliği yok — push\'u kapatıp tekrar aç.',
       checkNowNotSubscribed: 'Yeniden kaydettikten sonra bile sunucu aboneliği bulamadı — Vercel env değişkenlerini (Upstash) kontrol edip bir dakika sonra tekrar dene.',
       checkNowNetwork: 'Sunucuya ulaşırken ağ hatası — tekrar dene.',
+      checkNowServerError: 'Sunucuda geçici bir aksaklık oldu (kur sağlayıcı ya da veritabanı) — iki kez denedik, hâlâ olmadı. Bir dakika bekleyip tekrar dene.',
       notifications: 'Bildirimler',
       notifTitle: 'Bildirimler',
       notifEmpty: 'Henüz bildirim yok',
