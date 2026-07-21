@@ -7,16 +7,14 @@ import { dictionaries, type Locale } from '@/lib/i18n';
 
 const ALL_CODES = ['USD', ...CONVERTER_CURRENCIES.map((c) => c.code)];
 
-// iOS'un Hesap Makinesi/Dönüştürücü'sünde olduğu gibi: gruplu binlik ayracı +
-// sabit ondalık basamak sayısı. "maximumSignificantDigits" büyük sayılarda
-// ondalığı tamamen kırpıp "117,944" gibi anlaşılmaz sonuçlar veriyordu;
-// onun yerine büyüklüğe göre sabit basamak sayısı kullanıyoruz. Yerel de
-// (tr-TR / en-US) doğru binlik/ondalık ayracını otomatik seçiyor.
+// Ondalıksız, sade tam sayı — sadece gruplu binlik ayracı. 1'in altındaki
+// değerler (ör. 1 TRY'nin USD karşılığı) yuvarlanınca "0" olup anlamsızlaşır,
+// onlar için istisnai olarak birkaç basamak bırakılıyor. Yerel (tr-TR /
+// en-US) doğru ayracı otomatik seçiyor.
 function fmt(n: number, locale: Locale): string {
   if (!Number.isFinite(n)) return '—';
-  const abs = Math.abs(n);
-  const decimals = abs >= 1 ? 2 : abs >= 0.01 ? 4 : 6;
   const intlLocale = locale === 'tr' ? 'tr-TR' : 'en-US';
+  const decimals = Math.abs(n) < 1 ? 4 : 0;
   return new Intl.NumberFormat(intlLocale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
 }
 
