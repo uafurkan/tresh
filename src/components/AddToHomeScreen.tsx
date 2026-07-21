@@ -74,6 +74,16 @@ export default function AddToHomeScreen({ d }: { d: AppDict }) {
           <div className="mt-1 text-[11.5px] leading-relaxed text-content-secondary">
             {isIos ? d.installIosBody : d.installAndroidBody}
           </div>
+          {isIos && (
+            <ol className="mt-2 flex flex-col gap-1 text-[11.5px] leading-relaxed text-content-secondary">
+              {d.installIosSteps.map((step, i) => (
+                <li key={i} className="flex gap-1.5">
+                  <span className="flex-none text-overflow">{i + 1}.</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          )}
           {!isIos && deferredPrompt && (
             <button
               onClick={install}

@@ -81,6 +81,7 @@ export interface AppDict {
   today: (diff: string, dir: 'above' | 'below', value: string) => string;
   installIosTitle: string;
   installIosBody: string;
+  installIosSteps: string[];
   installAndroidTitle: string;
   installAndroidBody: string;
   installAndroidCta: string;
@@ -177,7 +178,13 @@ export const dictionaries: Record<Locale, Dict> = {
       reconnect: 'Reconnect',
       today: (diff, dir, value) => `${diff} today · ${dir === 'above' ? 'above' : 'below'} ${value}`,
       installIosTitle: 'Add to Home Screen for push',
-      installIosBody: 'iPhone only sends push notifications to apps added to the Home Screen. Tap Share, then “Add to Home Screen.”',
+      installIosBody: 'iPhone only sends push notifications to apps added to the Home Screen — Safari alone can’t do it. It takes 10 seconds:',
+      installIosSteps: [
+        'Tap the Share icon (square with an arrow) in Safari’s toolbar.',
+        'Scroll down and tap “Add to Home Screen.”',
+        'Tap “Add” in the top right.',
+        'Open Tresh from the new icon on your Home Screen, then turn on push there.',
+      ],
       installAndroidTitle: 'Install Tresh',
       installAndroidBody: 'Add it to your home screen for quick access and reliable notifications.',
       installAndroidCta: 'Install app',
@@ -266,7 +273,13 @@ export const dictionaries: Record<Locale, Dict> = {
       reconnect: 'Yeniden bağlan',
       today: (diff, dir, value) => `${diff} bugün · ${dir === 'above' ? 'üstü' : 'altı'} ${value}`,
       installIosTitle: 'Push için ana ekrana ekle',
-      installIosBody: 'iPhone push bildirimlerini yalnızca ana ekrana eklenmiş uygulamalara gönderir. Paylaş simgesine, sonra “Ana Ekrana Ekle”ye dokun.',
+      installIosBody: 'iPhone push bildirimlerini yalnızca ana ekrana eklenmiş uygulamalara gönderir — Safari sekmesinde tek başına çalışmaz. 10 saniye sürer:',
+      installIosSteps: [
+        'Safari araç çubuğundaki Paylaş simgesine (kare + yukarı ok) dokun.',
+        'Aşağı kaydırıp “Ana Ekrana Ekle”ye dokun.',
+        'Sağ üstteki “Ekle”ye bas.',
+        'Ana ekranda beliren yeni simgeden Tresh’i aç, push’u orada aç.',
+      ],
       installAndroidTitle: 'Tresh’i yükle',
       installAndroidBody: 'Hızlı erişim ve güvenilir bildirimler için ana ekranına ekle.',
       installAndroidCta: 'Uygulamayı yükle',
