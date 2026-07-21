@@ -125,7 +125,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
   const floatRef = useRef<HTMLDivElement>(null);
-  const valueTextRef = useRef<HTMLDivElement>(null);
+  const valueTextRef = useRef<HTMLInputElement>(null);
   const helperTextRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   // Sürükleme başında ölçülür, sürükleme boyunca yeniden ölçülmez —
@@ -142,7 +142,9 @@ export default function TreshApp({ locale }: { locale: Locale }) {
     const top = 100 - clampedFill;
     if (fillRef.current) fillRef.current.style.height = `${clampedFill}%`;
     if (floatRef.current) floatRef.current.style.top = `${top}%`;
-    if (valueTextRef.current) valueTextRef.current.textContent = value.toFixed(setCat.decimals);
+    if (valueTextRef.current && document.activeElement !== valueTextRef.current) {
+      valueTextRef.current.value = value.toFixed(setCat.decimals);
+    }
     if (helperTextRef.current && setLive != null) {
       const alreadyPast = newDir === 'above' ? value <= setLive : value >= setLive;
       helperTextRef.current.textContent = d.helper(
@@ -501,9 +503,36 @@ export default function TreshApp({ locale }: { locale: Locale }) {
         </div>
         <div className="flex flex-1 flex-col justify-center">
           <div className="mb-1.5 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.threshold}</div>
-          <div ref={valueTextRef} className="num text-content-primary" style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1 }}>
-            {effNewValue != null ? effNewValue.toFixed(setCat.decimals) : '· · ·'}
-          </div>
+          {effNewValue != null ? (
+            <input
+              key={`${setPairKeyStr}-${newDir}`}
+              ref={valueTextRef}
+              type="text"
+              inputMode="decimal"
+              defaultValue={effNewValue.toFixed(setCat.decimals)}
+              aria-label={d.thresholdValue}
+              className="num block w-full border-0 bg-transparent p-0 text-content-primary outline-none"
+              style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1, caretColor: '#34E3D6' }}
+              onFocus={(e) => e.currentTarget.select()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur();
+              }}
+              onBlur={(e) => {
+                const parsed = parseFloat(e.currentTarget.value.replace(',', '.'));
+                if (!Number.isNaN(parsed)) {
+                  const clamped = Math.max(setMin, Math.min(setMin + setCat.span, parsed));
+                  setNewValue(clamped);
+                  e.currentTarget.value = clamped.toFixed(setCat.decimals);
+                } else {
+                  e.currentTarget.value = effNewValue.toFixed(setCat.decimals);
+                }
+              }}
+            />
+          ) : (
+            <div className="num text-content-primary" style={{ fontSize: 'clamp(36px, 6vw, 52px)', fontWeight: 500, lineHeight: 1 }}>
+              · · ·
+            </div>
+          )}
           <div ref={helperTextRef} className="mt-2 text-[13px] leading-relaxed text-content-secondary">
             {setLive != null && effNewValue != null
               ? d.helper(
