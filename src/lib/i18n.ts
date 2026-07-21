@@ -60,6 +60,8 @@ export interface AppDict {
   setTitle: string;
   setSubtitle: string;
   pair: string;
+  pairSearchPlaceholder: string;
+  pairNoMatch: string;
   notifyWhen: string;
   dirAbove: string;
   dirBelow: string;
@@ -152,6 +154,8 @@ export const dictionaries: Record<Locale, Dict> = {
       setTitle: 'Where is your line?',
       setSubtitle: 'Drag the float to the level you care about.',
       pair: 'Pair',
+      pairSearchPlaceholder: 'Search a pair or coin…',
+      pairNoMatch: 'No match.',
       notifyWhen: 'Notify me when',
       dirAbove: 'If it rises above',
       dirBelow: 'If it falls below',
@@ -251,6 +255,8 @@ export const dictionaries: Record<Locale, Dict> = {
       setTitle: 'Çizgin nerede?',
       setSubtitle: 'Şamandırayı önemsediğin seviyeye sürükle.',
       pair: 'Parite',
+      pairSearchPlaceholder: 'Parite veya coin ara…',
+      pairNoMatch: 'Eşleşme yok.',
       notifyWhen: 'Haber ver, kur',
       dirAbove: 'Üstüne çıkarsa',
       dirBelow: 'Altına düşerse',

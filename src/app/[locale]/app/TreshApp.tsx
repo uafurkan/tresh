@@ -244,15 +244,9 @@ export default function TreshApp({ locale }: { locale: Locale }) {
   // Ayar ekranındayken rakam, alttaki panelin üstünde sabit bir yerde
   // kalmalı — aksi halde panel arkasında yarı görünür/tıklanamaz hale
   // geliyordu (canlı kura dokunma kısayolu erişilemez oluyordu).
-  const readoutTop = onSetScreen ? 68 : Math.max(120, Math.min(surfaceY - 150, 420));
-  // Ayar ekranında panel (alt sayfa) daha az yükseklik kaplıyor ki üstteki
-  // kur okuması ile panelin kendi başlığı ("Eşik belirle") çakışmasın —
-  // küçük ekranlarda (ör. iPhone SE) 78dvh panel + 86px'lik büyük rakam
-  // panelin başlığının üstüne biniyordu.
-  const readoutFontSize = onSetScreen ? 'clamp(34px, 7vw, 60px)' : 'clamp(44px, 8vw, 86px)';
-  // Büyük okuma için tasarlanan 30px'lik gölge bulanıklığı, ayar ekranındaki
-  // küçük fontta rakamları okunmaz bir lekeye dönüştürüyordu — orana göre azalt.
-  const readoutTextShadow = onSetScreen ? '0 1px 14px rgba(5,11,20,0.9)' : '0 2px 30px rgba(5,11,20,0.9)';
+  const readoutTop = onSetScreen ? 84 : Math.max(120, Math.min(surfaceY - 150, 420));
+  const readoutFontSize = onSetScreen ? 'clamp(40px, 7.5vw, 76px)' : 'clamp(44px, 8vw, 86px)';
+  const readoutTextShadow = '0 2px 30px rgba(5,11,20,0.9)';
 
   const listItems = thresholds.map((t) => {
     const key = pairKey(t.base, t.quote);
@@ -484,7 +478,7 @@ export default function TreshApp({ locale }: { locale: Locale }) {
           {screen === 'home' ? (
             <div className="pointer-events-auto px-4 pb-8 pt-4">{listPanel}</div>
           ) : (
-            <div className="pointer-events-auto rounded-t-[28px] px-5 pb-8 pt-5" style={{ background: 'rgba(5,11,20,0.72)', backdropFilter: 'blur(10px)', minHeight: '68dvh' }}>
+            <div className="pointer-events-auto rounded-t-[28px] px-5 pb-8 pt-5" style={{ background: 'rgba(5,11,20,0.72)', backdropFilter: 'blur(10px)', minHeight: '72dvh' }}>
               <SetPanel {...setPanelProps} />
             </div>
           )}
@@ -599,6 +593,17 @@ function SetPanel({
   const pendingYRef = useRef<number | null>(null);
   const lastValueRef = useRef<number | null>(null);
 
+  // Parite seçimi artık 8+ butonluk bir ızgara yerine arama çubuğu —
+  // ızgara dikeyde çok yer kaplıyor ve üstteki canlı kur okumasına alan
+  // bırakmıyordu (kullanıcı ekran görüntüsüyle bildirdi).
+  const [pairSearchOpen, setPairSearchOpen] = useState(false);
+  const [pairQuery, setPairQuery] = useState('');
+  const pairMatches = PAIR_CATALOG.filter((p) => {
+    const q = pairQuery.trim().toLowerCase();
+    if (!q) return true;
+    return `${p.base}/${p.quote}`.toLowerCase().includes(q) || p.base.toLowerCase().includes(q) || p.quote.toLowerCase().includes(q);
+  });
+
   // Sürükleme sırasında DOM'a doğrudan yazar — React state'i tetiklemez,
   // böylece her pointermove'da tüm ağacı yeniden render etmeden fareyi
   // birebir (aynı karede) takip eder.
@@ -701,24 +706,48 @@ function SetPanel({
       <div className="mb-5 text-sm leading-normal text-content-secondary">{isEditing ? d.editSubtitle : d.setSubtitle}</div>
 
       <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.pair}</div>
-      <div className="mb-4 grid grid-cols-3 gap-2">
-        {PAIR_CATALOG.map((p, i) => {
-          const on = i === newPairIdx;
-          return (
-            <button
-              key={pairKey(p.base, p.quote)}
-              onClick={() => onSelectPair(i)}
-              className="num rounded-xl border px-1.5 py-2.5 text-[13px] transition-all"
-              style={{
-                background: on ? 'rgba(52,227,214,0.14)' : 'rgba(11,22,34,0.5)',
-                borderColor: on ? 'rgba(52,227,214,0.5)' : 'rgba(143,165,179,0.16)',
-                color: on ? '#34E3D6' : '#8FA5B3',
-              }}
-            >
-              {p.base}/{p.quote}
-            </button>
-          );
-        })}
+      <div className="relative mb-4">
+        <input
+          type="text"
+          inputMode="search"
+          value={pairSearchOpen ? pairQuery : `${setCat.base}/${setCat.quote}`}
+          placeholder={d.pairSearchPlaceholder}
+          onFocus={(e) => { setPairSearchOpen(true); setPairQuery(''); e.currentTarget.select(); }}
+          onChange={(e) => setPairQuery(e.currentTarget.value)}
+          onBlur={() => window.setTimeout(() => setPairSearchOpen(false), 120)}
+          className="num w-full rounded-xl border px-3.5 py-3 text-[15px] outline-none transition-all"
+          style={{
+            background: 'rgba(11,22,34,0.5)',
+            borderColor: pairSearchOpen ? 'rgba(52,227,214,0.5)' : 'rgba(143,165,179,0.16)',
+            color: '#EAF3F6',
+            caretColor: '#34E3D6',
+          }}
+        />
+        {pairSearchOpen && (
+          <div
+            className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 max-h-[220px] overflow-y-auto rounded-xl border"
+            style={{ background: '#0B1622', borderColor: 'rgba(143,165,179,0.2)', boxShadow: '0 20px 50px -18px rgba(0,0,0,0.8)' }}
+          >
+            {pairMatches.length === 0 ? (
+              <div className="px-3.5 py-3 text-[13px] text-content-secondary">{d.pairNoMatch}</div>
+            ) : (
+              pairMatches.map((p) => {
+                const i = PAIR_CATALOG.indexOf(p);
+                const on = i === newPairIdx;
+                return (
+                  <button
+                    key={pairKey(p.base, p.quote)}
+                    onPointerDown={() => { onSelectPair(i); setPairSearchOpen(false); }}
+                    className="num block w-full px-3.5 py-2.5 text-left text-[14px] transition-colors"
+                    style={{ color: on ? '#34E3D6' : '#EAF3F6', background: on ? 'rgba(52,227,214,0.1)' : 'transparent' }}
+                  >
+                    {p.base}/{p.quote}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
 
       <div className="mb-2 text-[11px] uppercase tracking-[1.5px] text-content-secondary">{d.notifyWhen}</div>
