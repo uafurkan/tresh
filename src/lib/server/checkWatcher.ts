@@ -39,7 +39,7 @@ export async function checkAndNotify(w: Watcher, rateMap: Map<string, number>): 
         const arrow = t.dir === 'above' ? '▲' : '▼';
         const alive = await sendPush(w.subscription, {
           title: `Tresh · ${key} ${arrow}`,
-          body: pushBody(locale, key, t.value.toFixed(t.decimals), t.dir, rate.toFixed(t.decimals)),
+          body: pushBody(locale, key, t.value.toFixed(t.decimals), t.dir, rate.toFixed(t.decimals), t.decimals),
           tag: `tresh-${t.id}`,
           url,
           icon: '/icon-192.png',

@@ -375,14 +375,23 @@ export const dictionaries: Record<Locale, Dict> = {
   },
 };
 
+function fmtPushNum(value: string, decimals: number, locale: string): string {
+  const num = parseFloat(value);
+  if (!Number.isFinite(num)) return value;
+  const intlLocale = locale === 'tr' ? 'tr-TR' : 'en-US';
+  return new Intl.NumberFormat(intlLocale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(num);
+}
+
 /** Cron push bildirim metinleri (sunucu tarafı — Dict'ten bağımsız, hafif). */
-export function pushBody(locale: string, key: string, value: string, dir: 'above' | 'below', rate: string): string {
+export function pushBody(locale: string, key: string, value: string, dir: 'above' | 'below', rate: string, decimals: number = 2): string {
+  const fmtValue = fmtPushNum(value, decimals, locale);
+  const fmtRate = fmtPushNum(rate, decimals, locale);
   if (locale === 'tr') {
     return dir === 'above'
-      ? `${key} ${value} seviyesini geçti — şu an ${rate}.`
-      : `${key} ${value} seviyesinin altına indi — şu an ${rate}.`;
+      ? `${key} ${fmtValue} seviyesini geçti — şu an ${fmtRate}.`
+      : `${key} ${fmtValue} seviyesinin altına indi — şu an ${fmtRate}.`;
   }
   return dir === 'above'
-    ? `${key} crossed ${value} — now ${rate}.`
-    : `${key} fell below ${value} — now ${rate}.`;
+    ? `${key} crossed ${fmtValue} — now ${fmtRate}.`
+    : `${key} fell below ${fmtValue} — now ${fmtRate}.`;
 }
