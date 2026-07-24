@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { CRYPTO_BASES, PAIR_CATALOG, fmtNum, pairKey, parseLocaleNumber, type AppDict, type Locale, type PairDef } from '@tresh/shared';
 import { COLORS } from '../lib/theme';
+import ThresholdSlider from '../components/ThresholdSlider';
+import { checkNow, sendTestPush, type CheckNowResult } from '../lib/push';
 
 interface Props {
   d: AppDict;
@@ -17,54 +19,88 @@ interface Props {
   onSave: () => void;
   onDelete?: () => void;
   onCancel: () => void;
+  pushEnabled: boolean;
+  pushBusy: boolean;
+  pushError: string | null;
+  onTogglePush: () => void;
 }
 
 export default function SetScreen({
-  d, locale, isEditing, pairIdx, onSelectPair, dir, onSelectDir, liveRate, value, onValueChange, onSave, onDelete, onCancel,
+  d, locale, isEditing, pairIdx, onSelectPair, dir, onSelectDir, liveRate, value, onValueChange,
+  onSave, onDelete, onCancel, pushEnabled, pushBusy, pushError, onTogglePush,
 }: Props) {
   const [query, setQuery] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [testStatus, setTestStatus] = useState<'idle' | 'sending' | 'sent' | 'no-subscription' | 'failed'>('idle');
+  const [checkStatus, setCheckStatus] = useState<'idle' | 'running' | CheckNowResult>('idle');
+
   const cat = PAIR_CATALOG[pairIdx];
   const catKey = pairKey(cat.base, cat.quote);
 
   const defaultOffset = CRYPTO_BASES.has(cat.base) ? (liveRate ?? 0) * 0.015 : Math.pow(10, -cat.decimals);
   const effValue = value ?? (liveRate != null ? liveRate + defaultOffset * (dir === 'above' ? 1 : -1) : null);
-  const step = CRYPTO_BASES.has(cat.base) ? Math.max(cat.span * 0.002, Math.pow(10, -cat.decimals)) : Math.pow(10, -cat.decimals);
+  const sliderMin = (liveRate ?? effValue ?? 0) - cat.span / 2;
 
   const matches = useMemo<PairDef[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return PAIR_CATALOG;
-    return PAIR_CATALOG.filter((p) => `${p.base}/${p.quote}`.toLowerCase().includes(q) || p.base.toLowerCase().includes(q) || p.quote.toLowerCase().includes(q));
+    return PAIR_CATALOG.filter(
+      (p) =>
+        `${p.base}/${p.quote}`.toLowerCase().includes(q) ||
+        p.base.toLowerCase().includes(q) ||
+        p.quote.toLowerCase().includes(q)
+    );
   }, [query]);
 
+  // Büyük rakam alanı: sürükleme sırasında her karede React state'i güncellemek
+  // yerine doğrudan TextInput'a yazılır (web'de de aynı sebeple imperative).
+  const valueInputRef = useRef<TextInput>(null);
   const [textValue, setTextValue] = useState(effValue != null ? fmtNum(effValue, cat.decimals, locale) : '');
+  const editingText = useRef(false);
 
-  // Parite veya yön değişince (kullanıcı elle bir şey yazmadıysa) alandaki
-  // metni güncel varsayılan değere senkronize et.
   useEffect(() => {
+    if (editingText.current) return;
     setTextValue(effValue != null ? fmtNum(effValue, cat.decimals, locale) : '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pairIdx, dir, locale]);
+  }, [pairIdx, dir, locale, value, liveRate]);
+
+  const onSliderDrag = (v: number) => {
+    if (editingText.current) return;
+    valueInputRef.current?.setNativeProps({ text: fmtNum(v, cat.decimals, locale) });
+  };
 
   const commitText = (raw: string) => {
+    editingText.current = false;
     const n = parseLocaleNumber(raw);
-    if (Number.isFinite(n)) onValueChange(n);
+    if (Number.isFinite(n)) {
+      const clamped = Math.max(sliderMin, Math.min(sliderMin + cat.span, n));
+      onValueChange(clamped);
+      setTextValue(fmtNum(clamped, cat.decimals, locale));
+    } else if (effValue != null) {
+      setTextValue(fmtNum(effValue, cat.decimals, locale));
+    }
   };
 
-  const bump = (mult: number) => {
-    const base = effValue ?? liveRate ?? 0;
-    const next = +(base + step * mult).toFixed(cat.decimals);
-    onValueChange(next);
-    setTextValue(fmtNum(next, cat.decimals, locale));
-  };
+  const alreadyPast = effValue != null && liveRate != null && (dir === 'above' ? effValue <= liveRate : effValue >= liveRate);
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>{isEditing ? d.updateLevel : d.setThreshold}</Text>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={{ paddingBottom: 32 }}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.headerRow}>
+        <Pressable style={styles.backBtn} onPress={onCancel} hitSlop={10} accessibilityLabel={d.back}>
+          <Text style={styles.backGlyph}>‹</Text>
+          <Text style={styles.backText}>{d.back}</Text>
+        </Pressable>
+      </View>
+
+      <Text style={styles.title}>{d.setTitle}</Text>
       <Text style={styles.subtitle}>{isEditing ? d.editSubtitle : d.setSubtitle}</Text>
 
       <Text style={styles.label}>{d.pair}</Text>
-      <Pressable style={styles.pairButton} onPress={() => setPickerOpen((v) => !v)}>
+      <Pressable style={[styles.pairButton, pickerOpen && styles.pairButtonOpen]} onPress={() => setPickerOpen((v) => !v)}>
         <Text style={styles.pairButtonText}>{catKey}</Text>
         <Text style={styles.pairButtonChevron}>{pickerOpen ? '▲' : '▼'}</Text>
       </Pressable>
@@ -78,16 +114,17 @@ export default function SetScreen({
             onChangeText={setQuery}
             autoCapitalize="characters"
           />
-          <ScrollView style={{ maxHeight: 220 }} keyboardShouldPersistTaps="handled">
+          <ScrollView style={{ maxHeight: 220 }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
             {matches.length === 0 ? (
               <Text style={styles.noMatch}>{d.pairNoMatch}</Text>
             ) : (
               matches.map((p) => {
                 const idx = PAIR_CATALOG.indexOf(p);
+                const on = idx === pairIdx;
                 return (
                   <Pressable
                     key={pairKey(p.base, p.quote)}
-                    style={styles.pickerRow}
+                    style={[styles.pickerRow, on && styles.pickerRowOn]}
                     onPress={() => {
                       onSelectPair(idx);
                       onValueChange(null);
@@ -95,7 +132,7 @@ export default function SetScreen({
                       setQuery('');
                     }}
                   >
-                    <Text style={styles.pickerRowText}>{p.base}/{p.quote}</Text>
+                    <Text style={[styles.pickerRowText, on && styles.pickerRowTextOn]}>{p.base}/{p.quote}</Text>
                   </Pressable>
                 );
               })
@@ -106,84 +143,207 @@ export default function SetScreen({
 
       <Text style={styles.label}>{d.notifyWhen}</Text>
       <View style={styles.dirRow}>
-        <Pressable style={[styles.dirBtn, dir === 'above' && styles.dirBtnActive]} onPress={() => onSelectDir('above')}>
-          <Text style={[styles.dirBtnText, dir === 'above' && styles.dirBtnTextActive]}>{d.dirAbove}</Text>
-        </Pressable>
-        <Pressable style={[styles.dirBtn, dir === 'below' && styles.dirBtnActive]} onPress={() => onSelectDir('below')}>
-          <Text style={[styles.dirBtnText, dir === 'below' && styles.dirBtnTextActive]}>{d.dirBelow}</Text>
-        </Pressable>
+        {(['above', 'below'] as const).map((dr) => {
+          const on = dir === dr;
+          return (
+            <Pressable key={dr} style={[styles.dirBtn, on && styles.dirBtnActive]} onPress={() => onSelectDir(dr)}>
+              <Text style={[styles.dirBtnText, on && styles.dirBtnTextActive]}>{dr === 'above' ? d.dirAbove : d.dirBelow}</Text>
+            </Pressable>
+          );
+        })}
       </View>
 
-      <Text style={styles.label}>{d.thresholdValue}</Text>
-      <View style={styles.stepperRow}>
-        <Pressable style={styles.stepBtn} onPress={() => bump(-1)}>
-          <Text style={styles.stepBtnText}>–</Text>
-        </Pressable>
-        <TextInput
-          style={styles.valueInput}
-          value={textValue}
-          onChangeText={setTextValue}
-          onEndEditing={() => commitText(textValue)}
-          keyboardType="decimal-pad"
-          placeholder="0"
-          placeholderTextColor={COLORS.contentSecondary}
+      {/* Web'deki imza etkileşim: solda dikey şamandıra, sağda büyük değer. */}
+      <View style={styles.sliderRow}>
+        <ThresholdSlider
+          min={sliderMin}
+          span={cat.span}
+          value={effValue}
+          onChange={onValueChange}
+          onDrag={onSliderDrag}
+          height={210}
         />
-        <Pressable style={styles.stepBtn} onPress={() => bump(1)}>
-          <Text style={styles.stepBtnText}>+</Text>
-        </Pressable>
+        <View style={styles.valueCol}>
+          <Text style={styles.label}>{d.threshold}</Text>
+          {effValue != null ? (
+            <TextInput
+              ref={valueInputRef}
+              style={styles.valueInput}
+              value={textValue}
+              onChangeText={setTextValue}
+              onFocus={() => { editingText.current = true; }}
+              onEndEditing={(e) => commitText(e.nativeEvent.text)}
+              onBlur={() => commitText(textValue)}
+              keyboardType="decimal-pad"
+              returnKeyType="done"
+              selectTextOnFocus
+            />
+          ) : (
+            <Text style={styles.valueInput}>· · ·</Text>
+          )}
+          <Text style={styles.helper}>
+            {liveRate != null && effValue != null
+              ? d.helper(
+                  fmtNum(liveRate, cat.decimals, locale),
+                  dir,
+                  fmtNum(Math.abs(effValue - liveRate), cat.decimals, locale),
+                  alreadyPast
+                )
+              : d.waitingLive}
+          </Text>
+        </View>
       </View>
 
-      <Pressable style={styles.saveBtn} onPress={onSave} disabled={effValue == null}>
+      {/* Push kutusu — web'de de tam bu konumda, ayar ekranının içinde. */}
+      <View style={styles.pushCard}>
+        <View style={styles.pushRow}>
+          <View style={styles.pushTextCol}>
+            <Text style={styles.pushTitle}>{d.pushTitle}</Text>
+            <Text style={styles.pushBody}>{d.pushSupported}</Text>
+          </View>
+          {pushBusy ? (
+            <ActivityIndicator color={COLORS.water} />
+          ) : (
+            <Switch
+              value={pushEnabled}
+              onValueChange={onTogglePush}
+              trackColor={{ false: 'rgba(143,165,179,0.3)', true: COLORS.water }}
+              thumbColor={COLORS.contentPrimary}
+            />
+          )}
+        </View>
+        {pushError && <Text style={styles.pushError}>{pushError}</Text>}
+
+        {pushEnabled && (
+          <View style={styles.testRow}>
+            <Pressable
+              style={[styles.testBtn, testStatus === 'sending' && styles.btnDisabled]}
+              disabled={testStatus === 'sending'}
+              onPress={async () => {
+                setTestStatus('sending');
+                const res = await sendTestPush(locale);
+                setTestStatus(res.ok ? 'sent' : res.reason);
+              }}
+            >
+              <Text style={styles.testBtnText}>{testStatus === 'sending' ? d.testPushSending : d.sendTestPush}</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.checkBtn, checkStatus === 'running' && styles.btnDisabled]}
+              disabled={checkStatus === 'running'}
+              onPress={async () => {
+                setCheckStatus('running');
+                setCheckStatus(await checkNow());
+              }}
+            >
+              <Text style={styles.checkBtnText}>{checkStatus === 'running' ? d.checkNowRunning : d.checkNow}</Text>
+            </Pressable>
+
+            {testStatus !== 'idle' && testStatus !== 'sending' && (
+              <Text style={[styles.statusText, { color: testStatus === 'sent' ? COLORS.water : COLORS.overflow }]}>
+                {testStatus === 'sent' ? d.testPushSent : testStatus === 'no-subscription' ? d.testPushNoSub : d.testPushFailed}
+              </Text>
+            )}
+            {checkStatus !== 'idle' && checkStatus !== 'running' && (
+              <Text style={[styles.statusText, { color: checkStatus.ok ? COLORS.water : COLORS.overflow }]}>
+                {checkStatus.ok
+                  ? d.checkNowResult(checkStatus.sent)
+                  : checkStatus.reason === 'no-subscription'
+                  ? d.checkNowNoSub
+                  : checkStatus.reason === 'not-subscribed'
+                  ? d.checkNowNotSubscribed
+                  : checkStatus.reason === 'network'
+                  ? d.checkNowNetwork
+                  : `${d.checkNowServerError}${checkStatus.detail ? ` (${checkStatus.detail})` : ''}`}
+              </Text>
+            )}
+          </View>
+        )}
+      </View>
+
+      <Pressable style={[styles.saveBtn, effValue == null && styles.btnDisabled]} onPress={onSave} disabled={effValue == null}>
         <Text style={styles.saveBtnText}>{isEditing ? d.updateLevel : d.watchThisLevel}</Text>
       </Pressable>
 
-      <View style={styles.bottomRow}>
-        <Pressable style={styles.cancelBtn} onPress={onCancel}>
-          <Text style={styles.cancelBtnText}>{d.back}</Text>
+      {isEditing && onDelete && (
+        <Pressable style={styles.deleteBtn} onPress={onDelete}>
+          <Text style={styles.deleteBtnText}>{d.deleteThreshold}</Text>
         </Pressable>
-        {isEditing && onDelete && (
-          <Pressable style={styles.deleteBtn} onPress={onDelete}>
-            <Text style={styles.deleteBtnText}>{d.deleteThreshold}</Text>
-          </Pressable>
-        )}
-      </View>
+      )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 16 },
-  title: { fontSize: 20, fontWeight: '700', color: COLORS.contentPrimary, marginTop: 8 },
-  subtitle: { fontSize: 13, color: COLORS.contentSecondary, marginTop: 4, marginBottom: 20, lineHeight: 18 },
-  label: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: COLORS.contentSecondary, marginBottom: 8, marginTop: 4 },
+  headerRow: { marginBottom: 4 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: -6, paddingVertical: 4 },
+  backGlyph: { color: COLORS.contentSecondary, fontSize: 24, lineHeight: 26, fontWeight: '300' },
+  backText: { color: COLORS.contentSecondary, fontSize: 14 },
+  title: { fontSize: 24, fontWeight: '600', color: COLORS.contentPrimary, marginTop: 2 },
+  subtitle: { fontSize: 13, color: COLORS.contentSecondary, marginTop: 4, marginBottom: 18, lineHeight: 18 },
+  label: { fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 8 },
   pairButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: COLORS.bgRaised, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, marginBottom: 16,
+    backgroundColor: 'rgba(11,22,34,0.5)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(143,165,179,0.16)',
+    paddingVertical: 13, paddingHorizontal: 14, marginBottom: 16,
   },
-  pairButtonText: { color: COLORS.contentPrimary, fontSize: 16, fontWeight: '600' },
-  pairButtonChevron: { color: COLORS.contentSecondary, fontSize: 12 },
-  pickerBox: { backgroundColor: COLORS.bgSurface, borderRadius: 14, padding: 8, marginTop: -8, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(143,165,179,0.14)' },
-  searchInput: { color: COLORS.contentPrimary, fontSize: 14, paddingVertical: 10, paddingHorizontal: 10, backgroundColor: COLORS.bgRaised, borderRadius: 10, marginBottom: 6 },
-  noMatch: { color: COLORS.contentSecondary, fontSize: 13, textAlign: 'center', paddingVertical: 12 },
-  pickerRow: { paddingVertical: 12, paddingHorizontal: 10, borderRadius: 10 },
-  pickerRowText: { color: COLORS.contentPrimary, fontSize: 14 },
-  dirRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  dirBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: COLORS.bgRaised, borderWidth: 1, borderColor: 'transparent' },
-  dirBtnActive: { backgroundColor: 'rgba(52,227,214,0.15)', borderColor: 'rgba(52,227,214,0.5)' },
-  dirBtnText: { color: COLORS.contentSecondary, fontSize: 14, fontWeight: '600' },
+  pairButtonOpen: { borderColor: 'rgba(52,227,214,0.5)' },
+  pairButtonText: { color: '#EAF3F6', fontSize: 15 },
+  pairButtonChevron: { color: COLORS.contentSecondary, fontSize: 11 },
+  pickerBox: {
+    backgroundColor: '#0B1622', borderRadius: 12, padding: 6, marginTop: -8, marginBottom: 16,
+    borderWidth: 1, borderColor: 'rgba(143,165,179,0.2)',
+  },
+  searchInput: {
+    color: COLORS.contentPrimary, fontSize: 14, paddingVertical: 10, paddingHorizontal: 10,
+    backgroundColor: 'rgba(18,34,54,0.6)', borderRadius: 10, marginBottom: 4,
+  },
+  noMatch: { color: COLORS.contentSecondary, fontSize: 13, paddingHorizontal: 14, paddingVertical: 12 },
+  pickerRow: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8 },
+  pickerRowOn: { backgroundColor: 'rgba(52,227,214,0.1)' },
+  pickerRowText: { color: '#EAF3F6', fontSize: 14 },
+  pickerRowTextOn: { color: COLORS.water },
+  dirRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
+  dirBtn: {
+    flex: 1, paddingVertical: 13, borderRadius: 12, alignItems: 'center',
+    backgroundColor: 'rgba(11,22,34,0.5)', borderWidth: 1, borderColor: 'rgba(143,165,179,0.16)',
+  },
+  dirBtnActive: { backgroundColor: 'rgba(52,227,214,0.14)', borderColor: 'rgba(52,227,214,0.5)' },
+  dirBtnText: { color: COLORS.contentSecondary, fontSize: 14 },
   dirBtnTextActive: { color: COLORS.water },
-  stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8, marginBottom: 24 },
-  stepBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.bgRaised, alignItems: 'center', justifyContent: 'center' },
-  stepBtnText: { color: COLORS.contentPrimary, fontSize: 22, fontWeight: '600' },
+  sliderRow: { flexDirection: 'row', gap: 18, marginBottom: 20 },
+  valueCol: { flex: 1, justifyContent: 'center' },
   valueInput: {
-    flex: 1, textAlign: 'center', fontSize: 28, fontWeight: '500', color: COLORS.contentPrimary,
-    backgroundColor: COLORS.bgSurface, borderRadius: 16, paddingVertical: 14,
+    fontSize: 42, fontWeight: '500', color: COLORS.contentPrimary, padding: 0, lineHeight: 48,
   },
-  saveBtn: { backgroundColor: COLORS.water, borderRadius: 20, paddingVertical: 16, alignItems: 'center', marginBottom: 12 },
+  helper: { marginTop: 8, fontSize: 13, lineHeight: 18, color: COLORS.contentSecondary },
+  pushCard: {
+    borderRadius: 16, borderWidth: 1, borderColor: 'rgba(143,165,179,0.15)',
+    backgroundColor: 'rgba(11,22,34,0.55)', padding: 14, marginBottom: 16,
+  },
+  pushRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  pushTextCol: { flex: 1 },
+  pushTitle: { color: COLORS.contentPrimary, fontSize: 13 },
+  pushBody: { color: COLORS.contentSecondary, fontSize: 11.5, marginTop: 4, lineHeight: 16 },
+  pushError: { color: COLORS.overflow, fontSize: 11.5, marginTop: 8, lineHeight: 16 },
+  testRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+  testBtn: {
+    borderRadius: 8, paddingVertical: 7, paddingHorizontal: 12,
+    borderWidth: 1, borderColor: 'rgba(52,227,214,0.4)', backgroundColor: 'rgba(52,227,214,0.08)',
+  },
+  testBtnText: { color: COLORS.water, fontSize: 12 },
+  checkBtn: {
+    borderRadius: 8, paddingVertical: 7, paddingHorizontal: 12,
+    borderWidth: 1, borderColor: 'rgba(255,150,74,0.4)', backgroundColor: 'rgba(255,150,74,0.08)',
+  },
+  checkBtnText: { color: COLORS.overflow, fontSize: 12 },
+  statusText: { width: '100%', fontSize: 11.5, lineHeight: 16 },
+  btnDisabled: { opacity: 0.5 },
+  saveBtn: { backgroundColor: COLORS.water, borderRadius: 20, paddingVertical: 16, alignItems: 'center' },
   saveBtnText: { color: '#04121a', fontSize: 16, fontWeight: '700' },
-  bottomRow: { flexDirection: 'row', gap: 10 },
-  cancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 16, alignItems: 'center', backgroundColor: COLORS.bgRaised },
-  cancelBtnText: { color: COLORS.contentSecondary, fontSize: 14, fontWeight: '600' },
-  deleteBtn: { flex: 1, paddingVertical: 14, borderRadius: 16, alignItems: 'center', backgroundColor: 'rgba(255,150,74,0.1)', borderWidth: 1, borderColor: 'rgba(255,150,74,0.3)' },
+  deleteBtn: {
+    marginTop: 10, paddingVertical: 14, borderRadius: 16, alignItems: 'center',
+    backgroundColor: 'rgba(255,150,74,0.1)', borderWidth: 1, borderColor: 'rgba(255,150,74,0.3)',
+  },
   deleteBtnText: { color: COLORS.overflow, fontSize: 14, fontWeight: '600' },
 });

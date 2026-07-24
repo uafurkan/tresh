@@ -15,8 +15,9 @@ import SwipeBack from './src/components/SwipeBack';
 import HomeScreen from './src/screens/HomeScreen';
 import SetScreen from './src/screens/SetScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
+import ConverterScreen from './src/screens/ConverterScreen';
 
-type Screen = 'home' | 'set' | 'notifications';
+type Screen = 'home' | 'set' | 'notifications' | 'converter';
 
 function detectLocale(): Locale {
   const tag = Localization.getLocales()[0]?.languageCode ?? 'en';
@@ -133,6 +134,7 @@ function AppInner() {
   const selectedCat = selected ? PAIR_CATALOG.find((p) => p.base === selected.base && p.quote === selected.quote) : null;
   const selectedRate = selected ? rates[pairKey(selected.base, selected.quote)]?.rate ?? null : null;
 
+  const activeCount = thresholds.filter((t) => !t.paused).length;
   const onSetScreen = screen === 'set';
   const displayCat = onSetScreen ? setCat : selectedCat;
   const displayRate = onSetScreen ? setLive : selectedRate;
@@ -200,6 +202,7 @@ function AppInner() {
   };
 
   const openNotifications = useCallback(() => setScreen('notifications'), []);
+  const openConverter = useCallback(() => setScreen('converter'), []);
   /** Tek geri dönüş noktası — hem kenardan kaydırma hem de geri butonları bunu çağırır. */
   const goBack = useCallback(() => {
     setScreen('home');
@@ -250,7 +253,10 @@ function AppInner() {
 
       <SafeAreaView style={styles.overlay} pointerEvents="box-none">
         <View style={styles.header} pointerEvents="box-none">
-          <Text style={styles.headerTitle}>Tresh</Text>
+          <View>
+            <Text style={styles.headerTitle}>Tresh</Text>
+            <Text style={styles.headerSubtitle}>{d.levelsWatched(activeCount)}</Text>
+          </View>
           {screen === 'home' && (
             <Pressable style={styles.bellBtn} onPress={openNotifications} hitSlop={8}>
               <Text style={styles.bellGlyph}>🔔</Text>
@@ -285,7 +291,14 @@ function AppInner() {
 
         {banner && (
           <View style={styles.banner}>
-            <Text style={styles.bannerText}>{banner}</Text>
+            <View style={styles.bannerDot} />
+            <View style={styles.bannerTextCol}>
+              <Text style={styles.bannerLabel}>{d.bannerLabel}</Text>
+              <Text style={styles.bannerText}>{banner}</Text>
+            </View>
+            <Pressable onPress={() => setBanner(null)} hitSlop={10} accessibilityLabel={d.close}>
+              <Text style={styles.bannerClose}>×</Text>
+            </Pressable>
           </View>
         )}
       </SafeAreaView>
@@ -304,6 +317,8 @@ function AppInner() {
             onTogglePause={togglePause}
             onDelete={removeThreshold}
             onAdd={startAdd}
+            onOpenConverter={openConverter}
+            converterLabel={dictionaries[locale].landing.converterTitle}
           />
         )}
         {screen === 'set' && (
@@ -321,7 +336,14 @@ function AppInner() {
             onSave={submitThreshold}
             onDelete={editingId ? () => removeThreshold(editingId) : undefined}
             onCancel={goBack}
+            pushEnabled={pushEnabled}
+            pushBusy={pushBusy}
+            pushError={pushError}
+            onTogglePush={togglePush}
           />
+        )}
+        {screen === 'converter' && (
+          <ConverterScreen locale={locale} onBack={goBack} backLabel={d.back} />
         )}
         {screen === 'notifications' && (
           <NotificationsScreen
@@ -347,7 +369,8 @@ const styles = StyleSheet.create({
   vignetteBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 220, backgroundColor: 'rgba(5,11,20,0.55)' },
   overlay: { ...StyleSheet.absoluteFillObject, zIndex: 2 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8 },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: COLORS.contentPrimary },
+  headerTitle: { fontSize: 19, fontWeight: '600', color: COLORS.contentPrimary },
+  headerSubtitle: { fontSize: 11, color: COLORS.contentSecondary, marginTop: 1 },
   bellBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(18,34,54,0.7)' },
   bellGlyph: { fontSize: 16 },
   bellDot: { position: 'absolute', top: 6, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.overflow },
@@ -359,10 +382,18 @@ const styles = StyleSheet.create({
   },
   readoutToday: { marginTop: 8, fontSize: 13, color: COLORS.contentSecondary, textAlign: 'center' },
   banner: {
-    position: 'absolute', left: 16, right: 16, top: 60,
-    backgroundColor: 'rgba(52,227,214,0.14)', borderWidth: 1, borderColor: 'rgba(52,227,214,0.4)', borderRadius: 14, padding: 12,
+    position: 'absolute', left: 16, right: 16, top: 76, flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+    backgroundColor: 'rgba(18,34,54,0.94)', borderWidth: 1, borderColor: 'rgba(255,150,74,0.42)', borderRadius: 16, padding: 14,
+    shadowColor: '#000', shadowOpacity: 0.6, shadowRadius: 18, shadowOffset: { width: 0, height: 12 }, elevation: 8,
   },
+  bannerDot: {
+    width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.overflow, marginTop: 6,
+    shadowColor: COLORS.overflow, shadowOpacity: 0.6, shadowRadius: 7, shadowOffset: { width: 0, height: 0 },
+  },
+  bannerTextCol: { flex: 1 },
+  bannerLabel: { color: COLORS.contentSecondary, fontSize: 11, letterSpacing: 0.6, marginBottom: 2 },
   bannerText: { color: COLORS.contentPrimary, fontSize: 13, lineHeight: 18 },
+  bannerClose: { color: COLORS.contentSecondary, fontSize: 20, lineHeight: 22, paddingHorizontal: 4 },
   panel: {
     position: 'absolute', left: 0, right: 0, bottom: 0, height: `${PANEL_HEIGHT_RATIO * 100}%`, zIndex: 3,
     backgroundColor: 'rgba(4,9,14,0.92)', borderTopLeftRadius: 28, borderTopRightRadius: 28,

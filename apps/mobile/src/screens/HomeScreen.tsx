@@ -30,9 +30,11 @@ interface Props {
   onTogglePause: (id: string) => void;
   onDelete: (id: string) => void;
   onAdd: () => void;
+  onOpenConverter: () => void;
+  converterLabel: string;
 }
 
-export default function HomeScreen({ d, locale, thresholds, rates, selectedId, onSelect, onEdit, onTogglePause, onDelete, onAdd }: Props) {
+export default function HomeScreen({ d, locale, thresholds, rates, selectedId, onSelect, onEdit, onTogglePause, onDelete, onAdd, onOpenConverter, converterLabel }: Props) {
   const isEmpty = thresholds.length === 0;
 
   return (
@@ -116,6 +118,9 @@ export default function HomeScreen({ d, locale, thresholds, rates, selectedId, o
       <Pressable style={styles.cta} onPress={onAdd}>
         <Text style={styles.ctaText}>{d.setThreshold}</Text>
       </Pressable>
+      <Pressable style={styles.secondaryCta} onPress={onOpenConverter}>
+        <Text style={styles.secondaryCtaText}>{converterLabel}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -153,4 +158,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   ctaText: { color: '#04121a', fontSize: 16, fontWeight: '700' },
+  secondaryCta: {
+    marginTop: 8, paddingVertical: 13, borderRadius: 18, alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(143,165,179,0.2)', backgroundColor: 'rgba(11,22,34,0.5)',
+  },
+  secondaryCtaText: { color: COLORS.contentSecondary, fontSize: 14, fontWeight: '600' },
 });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getRepository, watcherIdFromEndpoint, type PushSubscriptionJSON } from '@/lib/server/store';
+import { getRepository, watcherIdFromEndpoint, watcherIdFromExpoToken, type PushSubscriptionJSON } from '@/lib/server/store';
 import { getRates } from '@/lib/server/rates';
 import { checkAndNotify } from '@/lib/server/checkWatcher';
 import { pairKey } from '@tresh/shared';
@@ -14,20 +14,23 @@ export const maxDuration = 30;
  * çalışıyor mu, yoksa push mu bozuk" ayrımını saniyeler içinde yapabilmek için.
  */
 export async function POST(req: NextRequest) {
-  let body: { subscription?: PushSubscriptionJSON };
+  let body: { subscription?: PushSubscriptionJSON; expoPushToken?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: 'bad-json' }, { status: 400 });
   }
   const sub = body?.subscription;
-  if (!sub?.endpoint) {
+  const expoPushToken = body?.expoPushToken;
+  if (!sub?.endpoint && !expoPushToken) {
     return NextResponse.json({ ok: false, error: 'bad-subscription' }, { status: 400 });
   }
 
   try {
     const repo = getRepository();
-    const id = await watcherIdFromEndpoint(sub.endpoint);
+    const id = expoPushToken
+      ? await watcherIdFromExpoToken(expoPushToken)
+      : await watcherIdFromEndpoint(sub!.endpoint);
     const watcher = await repo.get(id);
     if (!watcher) return NextResponse.json({ ok: false, error: 'not-subscribed' }, { status: 404 });
 
