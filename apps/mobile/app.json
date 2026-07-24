@@ -39,6 +39,30 @@
     ],
     "notification": {
       "iosDisplayInForeground": true
+    },
+    "extra": {
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "bundleIdentifier": "com.tresh.app.widget",
+                  "targetName": "TreshWidget"
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "c41e3990-f19d-4fea-9c1e-8a7835f84e19"
+      }
+    },
+    "owner": "uafurkan",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c41e3990-f19d-4fea-9c1e-8a7835f84e19"
     }
   }
 }
