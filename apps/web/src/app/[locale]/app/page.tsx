@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { dictionaries, localePath, type Locale } from '@/lib/i18n';
+import { dictionaries, localePath, type Locale } from '@tresh/shared';
 import TreshApp from './TreshApp';
 
 export function generateMetadata({ params }: { params: { locale: Locale } }): Metadata {

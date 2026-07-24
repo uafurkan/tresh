@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { dictionaries, type AppDict } from '@/lib/i18n';
+import { dictionaries, type AppDict } from '@tresh/shared';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;

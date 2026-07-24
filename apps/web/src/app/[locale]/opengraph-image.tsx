@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { dictionaries, isLocale } from '@/lib/i18n';
+import { dictionaries, isLocale } from '@tresh/shared';
 
 export const runtime = 'edge';
 export const alt = 'Tresh — currency threshold alerts';

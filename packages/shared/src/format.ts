@@ -1,6 +1,4 @@
-'use client';
-
-import type { Locale } from '@/lib/i18n';
+import type { Locale } from './i18n';
 
 /** Sabit ondalık basamak + yerel binlik ayracı (tr-TR: nokta/virgül, en-US: virgül/nokta). */
 export function fmtNum(value: number, decimals: number, locale: Locale): string {

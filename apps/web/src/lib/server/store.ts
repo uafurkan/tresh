@@ -1,4 +1,4 @@
-import type { Threshold } from '@/lib/pairs';
+import type { Threshold } from '@tresh/shared';
 
 /**
  * Abonelik deposu. Upstash Redis REST env'leri doluysa kalıcı,

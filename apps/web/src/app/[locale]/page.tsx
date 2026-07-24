@@ -2,7 +2,7 @@ import Link from 'next/link';
 import LandingWater from '@/components/LandingWater';
 import WatchlistPreview from '@/components/WatchlistPreview';
 import CurrencyConverter from '@/components/CurrencyConverter';
-import { dictionaries, localePath, type Locale } from '@/lib/i18n';
+import { dictionaries, localePath, type Locale } from '@tresh/shared';
 
 export default function LandingPage({ params }: { params: { locale: Locale } }) {
   const locale = params.locale;

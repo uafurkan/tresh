@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import { Bricolage_Grotesque, Martian_Mono, Hanken_Grotesk } from 'next/font/google';
-import { dictionaries, isLocale, localePath, locales, type Locale } from '@/lib/i18n';
+import { dictionaries, isLocale, localePath, locales, type Locale } from '@tresh/shared';
 import '../globals.css';
 
 const heading = Bricolage_Grotesque({

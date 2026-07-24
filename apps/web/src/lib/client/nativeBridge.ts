@@ -1,6 +1,6 @@
 'use client';
 
-import type { Threshold } from '@/lib/pairs';
+import type { Threshold } from '@tresh/shared';
 
 /**
  * iOS native sarmalayıcı köprüsü.

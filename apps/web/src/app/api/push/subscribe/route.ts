@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRepository, watcherIdFromEndpoint, type PushSubscriptionJSON } from '@/lib/server/store';
-import type { Threshold } from '@/lib/pairs';
+import type { Threshold } from '@tresh/shared';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

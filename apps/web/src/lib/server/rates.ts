@@ -1,4 +1,4 @@
-import { PAIR_CATALOG, CONVERTER_PAIRS, CRYPTO_BASES, pairKey } from '@/lib/pairs';
+import { PAIR_CATALOG, CONVERTER_PAIRS, CRYPTO_BASES, pairKey } from '@tresh/shared';
 
 export interface RateQuote {
   pair: string;

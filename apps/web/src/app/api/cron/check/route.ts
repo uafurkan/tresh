@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getRepository } from '@/lib/server/store';
 import { getRates } from '@/lib/server/rates';
 import { checkAndNotify } from '@/lib/server/checkWatcher';
-import { pairKey } from '@/lib/pairs';
+import { pairKey } from '@tresh/shared';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

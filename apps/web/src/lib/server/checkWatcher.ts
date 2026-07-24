@@ -1,7 +1,6 @@
 import type { Watcher } from './store';
 import { sendPush } from './push';
-import { pairKey } from '@/lib/pairs';
-import { pushBody } from '@/lib/i18n';
+import { pairKey, pushBody } from '@tresh/shared';
 
 const OPEN_ACTION_LABEL: Record<string, string> = { en: 'Open Tresh', tr: 'Tresh’i aç' };
 

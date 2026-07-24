@@ -1,0 +1,8 @@
+{
+  "name": "@tresh/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Web ve mobile arasında paylaşılan mantık: pariteler, i18n, sayı biçimlendirme.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts"
+}

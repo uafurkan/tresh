@@ -1,6 +1,6 @@
 'use client';
 
-import type { Threshold } from '@/lib/pairs';
+import type { Threshold } from '@tresh/shared';
 
 /**
  * Eşiklerin kalıcı deposu. İlk sürümde localStorage; arayüz sabit kaldığı

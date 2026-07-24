@@ -2,9 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRates } from '@/lib/client/useRates';
-import { CONVERTER_CURRENCIES, CONVERTER_PAIRS } from '@/lib/pairs';
-import { dictionaries, type Locale } from '@/lib/i18n';
-import { fmtNum, parseLocaleNumber } from '@/lib/client/format';
+import { CONVERTER_CURRENCIES, CONVERTER_PAIRS, dictionaries, type Locale, fmtNum, parseLocaleNumber } from '@tresh/shared';
 
 const ALL_CODES = ['USD', ...CONVERTER_CURRENCIES.map((c) => c.code)];
 

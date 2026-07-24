@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { localRepository } from '@/lib/client/storage';
 import { useRates } from '@/lib/client/useRates';
 import { tensionOf, miniWavePath } from '@/lib/client/wave';
-import { PAIR_CATALOG, pairKey, type Threshold } from '@/lib/pairs';
-import { dictionaries, localePath, type Locale } from '@/lib/i18n';
+import { PAIR_CATALOG, pairKey, type Threshold, dictionaries, localePath, type Locale } from '@tresh/shared';
 
 /** Ana sayfada, tarayıcıda zaten kayıtlı eşik varsa şık bir önizlemesini gösterir. */
 export default function WatchlistPreview({ locale }: { locale: Locale }) {

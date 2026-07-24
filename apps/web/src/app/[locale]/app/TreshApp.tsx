@@ -4,13 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import Link from 'next/link';
 import WaterCanvas from '@/components/WaterCanvas';
 import AddToHomeScreen from '@/components/AddToHomeScreen';
-import { PAIR_CATALOG, CRYPTO_BASES, pairKey, type PairDef, type Threshold } from '@/lib/pairs';
+import { PAIR_CATALOG, CRYPTO_BASES, pairKey, type PairDef, type Threshold, dictionaries, localePath, type AppDict, type Locale, fmtNum, parseLocaleNumber } from '@tresh/shared';
 import { localRepository } from '@/lib/client/storage';
 import { checkNow, enablePush, pushSupported, registerServiceWorker, sendTestPush, syncThresholds, type CheckNowResult, type TestPushResult } from '@/lib/client/push';
 import { useRates } from '@/lib/client/useRates';
-import { dictionaries, localePath, type AppDict, type Locale } from '@/lib/i18n';
 import { tensionOf, miniWavePath } from '@/lib/client/wave';
-import { fmtNum, parseLocaleNumber } from '@/lib/client/format';
 import { pushTopWatch, pushWatchList } from '@/lib/client/nativeBridge';
 import { clearNotifLog, logNotifLocal, readNotifLog, type NotifLogEntry } from '@/lib/client/notifLog';
 
