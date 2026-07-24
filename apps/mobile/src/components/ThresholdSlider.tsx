@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { PanResponder, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { PanResponder, StyleSheet, View, type LayoutChangeEvent, type View as RNView } from 'react-native';
 import { COLORS } from '../lib/theme';
 
 interface Props {
@@ -25,10 +25,21 @@ interface Props {
 export default function ThresholdSlider({ min, span, value, onChange, onDrag, onDragStart, onDragEnd, height = 200 }: Props) {
   const [trackH, setTrackH] = useState(height);
   const trackHRef = useRef(height);
+  const trackRef = useRef<RNView>(null);
+  // Dokunulan noktanın ekrandaki mutlak Y'si (pageY), çubuğun ekrandaki
+  // mutlak tepe noktasından (trackPageYRef) çıkarılarak kullanılıyor.
+  // nativeEvent.locationY, parmak hareket ederken anlık olarak "o anda
+  // parmağın altındaki view"a göre yeniden hesaplanabiliyor (RN'nin bilinen
+  // davranışı) — bu da tam olarak bildirilen "değer sapıtması" sapıtmasına
+  // yol açıyordu. pageY + measure() sabit bir referans noktası verir.
+  const trackPageYRef = useRef(0);
   const onLayout = (e: LayoutChangeEvent) => {
     const h = e.nativeEvent.layout.height;
     trackHRef.current = h;
     setTrackH(h);
+    trackRef.current?.measure((_x, _y, _w, _h, _pageX, pageY) => {
+      trackPageYRef.current = pageY;
+    });
   };
 
   // PanResponder bir kez kurulur (her render'da yeniden kurmak sürüklemeyi
@@ -67,12 +78,12 @@ export default function ThresholdSlider({ min, span, value, onChange, onDrag, on
         onShouldBlockNativeResponder: () => true,
         onPanResponderGrant: (evt) => {
           onDragStartRef.current?.();
-          const v = valueFromY(evt.nativeEvent.locationY);
+          const v = valueFromY(evt.nativeEvent.pageY - trackPageYRef.current);
           onDragRef.current?.(v);
           onChangeRef.current(v);
         },
         onPanResponderMove: (evt) => {
-          const v = valueFromY(evt.nativeEvent.locationY);
+          const v = valueFromY(evt.nativeEvent.pageY - trackPageYRef.current);
           onDragRef.current?.(v);
           onChangeRef.current(v);
         },
@@ -85,7 +96,7 @@ export default function ThresholdSlider({ min, span, value, onChange, onDrag, on
   const fillPct = value != null ? Math.max(0, Math.min(100, ((value - min) / span) * 100)) : 50;
 
   return (
-    <View style={[styles.track, { height }]} onLayout={onLayout} {...responder.panHandlers}>
+    <View ref={trackRef} style={[styles.track, { height }]} onLayout={onLayout} {...responder.panHandlers}>
       <View style={[styles.fill, { height: `${fillPct}%` }]} />
       <View style={[styles.float, { top: trackH * (1 - fillPct / 100) - 17 }]}>
         <View style={styles.grip} />
