@@ -186,8 +186,8 @@ function AppInner() {
   const activeCount = thresholds.filter((t) => !t.paused).length;
   const onSetScreen = screen === 'set';
   const tiltDeg = useTilt(screen === 'home');
-  const displayCat = onSetScreen ? setCat : selectedCat;
-  const displayRate = onSetScreen ? setLive : selectedRate;
+  const displayCat = onSetScreen ? setCat : selectedCat ?? setCat;
+  const displayRate = onSetScreen ? setLive : selectedRate ?? setLive;
   const displayValue = onSetScreen ? effNewValue : selected?.value ?? null;
   const displayDecimals = onSetScreen ? setCat.decimals : selected?.decimals ?? setCat.decimals;
 
