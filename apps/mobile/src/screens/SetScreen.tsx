@@ -84,11 +84,17 @@ export default function SetScreen({
 
   const alreadyPast = effValue != null && liveRate != null && (dir === 'above' ? effValue <= liveRate : effValue >= liveRate);
 
+  // Şamandırayı sürüklerken dıştaki sayfa kaymasın — parmağın altındaki
+  // gerçek konum kayınca değer sapıtıyordu. scrollEnabled, PanResponder'ın
+  // capture-phase yakalamasına ek bir güvenlik katmanı.
+  const [scrollLocked, setScrollLocked] = useState(false);
+
   return (
     <ScrollView
       style={styles.root}
       contentContainerStyle={{ paddingBottom: 32 }}
       keyboardShouldPersistTaps="handled"
+      scrollEnabled={!scrollLocked}
     >
       <View style={styles.headerRow}>
         <Pressable style={styles.backBtn} onPress={onCancel} hitSlop={10} accessibilityLabel={d.back}>
@@ -162,6 +168,8 @@ export default function SetScreen({
           value={effValue}
           onChange={onValueChange}
           onDrag={onSliderDrag}
+          onDragStart={() => setScrollLocked(true)}
+          onDragEnd={() => setScrollLocked(false)}
           height={210}
         />
         <View style={styles.valueCol}>

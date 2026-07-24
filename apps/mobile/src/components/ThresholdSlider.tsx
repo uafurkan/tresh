@@ -11,6 +11,9 @@ interface Props {
   onChange: (v: number) => void;
   /** Sürükleme sırasında (her karede) çağrılır — büyük rakamı anlık güncellemek için. */
   onDrag?: (v: number) => void;
+  /** Sürükleme başlarken/biterken — dıştaki ScrollView'ı geçici kapatmak için. */
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
   height?: number;
 }
 
@@ -19,7 +22,7 @@ interface Props {
  * üçlüsü) React Native karşılığı: dolan su + sürüklenebilir şamandıra.
  * Dokunulan noktaya atlar, sonra parmakla birlikte sürüklenir.
  */
-export default function ThresholdSlider({ min, span, value, onChange, onDrag, height = 200 }: Props) {
+export default function ThresholdSlider({ min, span, value, onChange, onDrag, onDragStart, onDragEnd, height = 200 }: Props) {
   const [trackH, setTrackH] = useState(height);
   const trackHRef = useRef(height);
   const onLayout = (e: LayoutChangeEvent) => {
@@ -38,6 +41,10 @@ export default function ThresholdSlider({ min, span, value, onChange, onDrag, he
   onChangeRef.current = onChange;
   const onDragRef = useRef(onDrag);
   onDragRef.current = onDrag;
+  const onDragStartRef = useRef(onDragStart);
+  onDragStartRef.current = onDragStart;
+  const onDragEndRef = useRef(onDragEnd);
+  onDragEndRef.current = onDragEnd;
 
   const valueFromY = (y: number): number => {
     const h = trackHRef.current || 1;
@@ -48,12 +55,18 @@ export default function ThresholdSlider({ min, span, value, onChange, onDrag, he
   const responder = useMemo(
     () =>
       PanResponder.create({
+        // "Capture" varyantları, dokunuşu asıl sahibinden (burada dıştaki
+        // ScrollView) ÖNCE, yayılma aşamasının en başında yakalar — bunlar
+        // olmadan ScrollView bazen aynı anda kaydırmayı da başlatıyor,
+        // parmağın altındaki gerçek konum kayıp değer sapıtıyordu.
+        onStartShouldSetPanResponderCapture: () => true,
+        onMoveShouldSetPanResponderCapture: () => true,
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
-        // Dikey sürükleme bize ait — dıştaki ScrollView'ın kapmasını engelle.
         onPanResponderTerminationRequest: () => false,
         onShouldBlockNativeResponder: () => true,
         onPanResponderGrant: (evt) => {
+          onDragStartRef.current?.();
           const v = valueFromY(evt.nativeEvent.locationY);
           onDragRef.current?.(v);
           onChangeRef.current(v);
@@ -63,6 +76,8 @@ export default function ThresholdSlider({ min, span, value, onChange, onDrag, he
           onDragRef.current?.(v);
           onChangeRef.current(v);
         },
+        onPanResponderRelease: () => onDragEndRef.current?.(),
+        onPanResponderTerminate: () => onDragEndRef.current?.(),
       }),
     []
   );
