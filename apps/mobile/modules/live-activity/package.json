@@ -1,0 +1,7 @@
+{
+  "name": "live-activity",
+  "version": "1.0.0",
+  "description": "Tresh — Dynamic Island / Live Activity için yerel Expo modülü (yalnızca iOS).",
+  "main": "index.ts",
+  "license": "UNLICENSED"
+}

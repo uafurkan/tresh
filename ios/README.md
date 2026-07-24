@@ -1,5 +1,12 @@
 # Tresh — iOS Native Wrapper (Dynamic Island)
 
+> **Not:** Bu klasördeki bağımsız WKWebView sarmalayıcı, artık aktif geliştirme
+> hattı değil — `apps/mobile` (Expo/React Native) tam uygulamaya dönüştü ve
+> aynı Dynamic Island/Live Activity özelliği oraya `apps/mobile/modules/
+> live-activity` (JS↔ActivityKit köprüsü) ve `apps/mobile/targets/widget`
+> (widget extension, bu klasördeki Swift dosyalarının aynısından üretildi)
+> olarak taşındı. Bu klasör referans/yedek olarak duruyor, silinmedi.
+
 Web/PWA'lar iOS'ta Dynamic Island'a **erişemez** — bu Apple'ın donanım-seviyesi
 kısıtı, tarayıcıda hiçbir API'si yok. Dynamic Island / Live Activity yalnızca
 **native (Swift) uygulamalara** açık.

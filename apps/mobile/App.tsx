@@ -8,6 +8,7 @@ import { loadThresholds, saveThresholds } from './src/lib/storage';
 import { clearNotifLog, logNotifLocal, readNotifLog, type NotifLogEntry } from './src/lib/notifLog';
 import { useRates } from './src/hooks/useRates';
 import { enablePush, syncMobileThresholds } from './src/lib/push';
+import { LiveActivity } from './modules/live-activity';
 import HomeScreen from './src/screens/HomeScreen';
 import SetScreen from './src/screens/SetScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
@@ -88,6 +89,20 @@ export default function App() {
       prevRates.current[t.id] = cur;
     }
   }, [rates, thresholds, d, locale]);
+
+  // Dynamic Island / Live Activity — en üstteki (ilk aktif, yoksa ilk) takibi
+  // canlı kurla birlikte gösterir. Android'de ve iOS 16.1 altında no-op.
+  useEffect(() => {
+    if (!hydrated) return;
+    const top = thresholds.find((t) => !t.paused) ?? thresholds[0];
+    if (!top) {
+      LiveActivity.end();
+      return;
+    }
+    const rate = rates[pairKey(top.base, top.quote)]?.rate;
+    if (rate == null) return;
+    LiveActivity.startOrUpdate(pairKey(top.base, top.quote), rate, top.value, top.dir, top.decimals);
+  }, [hydrated, thresholds, rates]);
 
   const setCat = PAIR_CATALOG[newPairIdx];
   const setLive = rates[pairKey(setCat.base, setCat.quote)]?.rate ?? null;

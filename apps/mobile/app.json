@@ -10,7 +10,10 @@
     "backgroundColor": "#04090E",
     "ios": {
       "bundleIdentifier": "com.tresh.app",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSSupportsLiveActivities": true
+      }
     },
     "android": {
       "package": "com.tresh.app",
@@ -33,7 +36,8 @@
           "icon": "./assets/icon.png",
           "color": "#34E3D6"
         }
-      ]
+      ],
+      "@bacons/apple-targets"
     ],
     "notification": {
       "iosDisplayInForeground": true
