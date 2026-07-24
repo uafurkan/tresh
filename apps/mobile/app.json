@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Tresh",
+    "slug": "tresh",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "tresh",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#04090E",
+    "ios": {
+      "bundleIdentifier": "com.tresh.app",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.tresh.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#04090E",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
