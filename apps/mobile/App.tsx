@@ -26,9 +26,8 @@ import { BellIcon, ChevronLeftIcon, CloseIcon, HomeIcon } from './src/components
 import HomeScreen from './src/screens/HomeScreen';
 import SetScreen from './src/screens/SetScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
-import ConverterScreen from './src/screens/ConverterScreen';
 
-type Screen = 'home' | 'set' | 'notifications' | 'converter';
+type Screen = 'home' | 'set' | 'notifications';
 
 function detectLocale(): Locale {
   const tag = Localization.getLocales()[0]?.languageCode ?? 'en';
@@ -252,7 +251,6 @@ function AppInner() {
   };
 
   const openNotifications = useCallback(() => setScreen('notifications'), []);
-  const openConverter = useCallback(() => setScreen('converter'), []);
   /** Tek geri dönüş noktası — hem kenardan kaydırma hem de geri butonları bunu çağırır. */
   const goBack = useCallback(() => {
     setScreen('home');
@@ -388,8 +386,6 @@ function AppInner() {
             onTogglePause={togglePause}
             onDelete={removeThreshold}
             onAdd={startAdd}
-            onOpenConverter={openConverter}
-            converterLabel={dictionaries[locale].landing.converterTitle}
           />
         )}
         {screen === 'set' && (
@@ -412,7 +408,6 @@ function AppInner() {
             onTogglePush={togglePush}
           />
         )}
-        {screen === 'converter' && <ConverterScreen locale={locale} />}
         {screen === 'notifications' && (
           <NotificationsScreen
             d={d}

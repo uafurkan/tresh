@@ -3,12 +3,15 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { CONVERTER_CURRENCIES, CONVERTER_PAIRS, dictionaries, fmtNum, parseLocaleNumber, type Locale } from '@tresh/shared';
 import { COLORS, FONTS } from '../lib/theme';
 import { useRates } from '../hooks/useRates';
-import { ChevronDownIcon, SwapIcon } from '../components/Icons';
+import { ChevronDownIcon, SwapIcon } from './Icons';
 
 const ALL_CODES = ['USD', ...CONVERTER_CURRENCIES.map((c) => c.code)];
 
-/** Web'in ana sayfasındaki döviz çeviricinin mobil karşılığı. */
-export default function ConverterScreen({ locale }: { locale: Locale }) {
+/**
+ * Web'in ana sayfasındaki hızlı çevirici widget'ı — web'de olduğu gibi
+ * ayrı bir ekran değil, ana ekranın kendi içine gömülü bir bölüm.
+ */
+export default function ConverterWidget({ locale }: { locale: Locale }) {
   const d = dictionaries[locale].landing;
   const { rates } = useRates(CONVERTER_PAIRS);
   const [amount, setAmount] = useState('1');
@@ -38,7 +41,7 @@ export default function ConverterScreen({ locale }: { locale: Locale }) {
   };
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
+    <View style={styles.root}>
       <Text style={styles.label}>{d.converterTitle}</Text>
 
       <View style={styles.field}>
@@ -106,12 +109,12 @@ export default function ConverterScreen({ locale }: { locale: Locale }) {
           </View>
         </Pressable>
       </Modal>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, paddingHorizontal: 16 },
+  root: { marginTop: 22 },
   label: { fontFamily: FONTS.body, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 10 },
   field: {
     flexDirection: 'row', alignItems: 'center', gap: 10,

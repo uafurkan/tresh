@@ -11,6 +11,7 @@ import {
 } from '@tresh/shared';
 import { COLORS, FONTS } from '../lib/theme';
 import { CloseIcon, PauseIcon, PlayIcon } from '../components/Icons';
+import ConverterWidget from '../components/ConverterWidget';
 import type { LiveRate } from '../hooks/useRates';
 
 function miniWavePath(level: number, w: number, h: number): string {
@@ -31,22 +32,20 @@ interface Props {
   onTogglePause: (id: string) => void;
   onDelete: (id: string) => void;
   onAdd: () => void;
-  onOpenConverter: () => void;
-  converterLabel: string;
 }
 
-export default function HomeScreen({ d, locale, thresholds, rates, selectedId, onSelect, onEdit, onTogglePause, onDelete, onAdd, onOpenConverter, converterLabel }: Props) {
+export default function HomeScreen({ d, locale, thresholds, rates, selectedId, onSelect, onEdit, onTogglePause, onDelete, onAdd }: Props) {
   const isEmpty = thresholds.length === 0;
 
   return (
-    <View style={styles.root}>
+    <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
       {isEmpty ? (
         <View style={styles.empty}>
           <Text style={styles.emptyTitle}>{d.emptyTitle}</Text>
           <Text style={styles.emptyBody}>{d.emptyBody}</Text>
         </View>
       ) : (
-        <ScrollView style={styles.list} contentContainerStyle={{ paddingBottom: 8 }}>
+        <View>
           {thresholds.map((t) => {
             const key = pairKey(t.base, t.quote);
             const live = rates[key]?.rate;
@@ -124,24 +123,21 @@ export default function HomeScreen({ d, locale, thresholds, rates, selectedId, o
               </View>
             );
           })}
-        </ScrollView>
+        </View>
       )}
       <Pressable style={styles.cta} onPress={onAdd}>
         <Text style={styles.ctaText}>{d.setThreshold}</Text>
       </Pressable>
-      <Pressable style={styles.secondaryCta} onPress={onOpenConverter}>
-        <Text style={styles.secondaryCtaText}>{converterLabel}</Text>
-      </Pressable>
-    </View>
+      <ConverterWidget locale={locale} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, paddingHorizontal: 16, paddingBottom: 12 },
+  root: { flex: 1, paddingHorizontal: 16 },
   empty: { alignItems: 'center', paddingTop: 32, paddingHorizontal: 16, paddingBottom: 8 },
   emptyTitle: { fontFamily: FONTS.headingSemiBold, fontSize: 22, color: COLORS.contentPrimary, marginBottom: 8, textAlign: 'center' },
   emptyBody: { fontFamily: FONTS.body, fontSize: 14, lineHeight: 20, color: COLORS.contentSecondary, textAlign: 'center', maxWidth: 280 },
-  list: { flex: 1 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -168,9 +164,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   ctaText: { fontFamily: FONTS.bodyBold, color: '#04121a', fontSize: 16 },
-  secondaryCta: {
-    marginTop: 8, paddingVertical: 13, borderRadius: 18, alignItems: 'center',
-    borderWidth: 1, borderColor: 'rgba(143,165,179,0.2)', backgroundColor: 'rgba(11,22,34,0.5)',
-  },
-  secondaryCtaText: { fontFamily: FONTS.bodySemiBold, color: COLORS.contentSecondary, fontSize: 14 },
 });
