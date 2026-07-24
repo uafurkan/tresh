@@ -76,6 +76,8 @@ export interface AppDict {
   pushDenied: string;
   pushMissingConfig: string;
   pushFailed: string;
+  pushTokenFailed: string;
+  pushSyncFailed: string;
   sendTestPush: string;
   testPushSending: string;
   testPushSent: string;
@@ -199,6 +201,8 @@ export const dictionaries: Record<Locale, Dict> = {
       pushDenied: 'Notifications are blocked for this site. Allow them in your browser’s site settings, then try again.',
       pushMissingConfig: 'Push isn’t configured on this deployment yet.',
       pushFailed: 'Couldn’t enable push right now — try again in a moment.',
+      pushTokenFailed: 'Couldn’t get a push token from this app build. In Expo Go this can fail — a development build is needed.',
+      pushSyncFailed: 'The server rejected this device — its push support may not be deployed yet.',
       sendTestPush: 'Send a test notification',
       testPushSending: 'Sending…',
       testPushSent: 'Sent — close the app and check your lock screen.',
@@ -324,6 +328,8 @@ export const dictionaries: Record<Locale, Dict> = {
       pushDenied: 'Bu site için bildirimler engellenmiş. Tarayıcının site ayarlarından izin verip tekrar dene.',
       pushMissingConfig: 'Bu deploy üzerinde push henüz yapılandırılmamış.',
       pushFailed: 'Push şu an açılamadı — birazdan tekrar dene.',
+      pushTokenFailed: 'Bu uygulama sürümünden push anahtarı alınamadı. Expo Go’da bu başarısız olabilir — development build gerekiyor.',
+      pushSyncFailed: 'Sunucu bu cihazı kabul etmedi — mobil push desteği henüz yayına alınmamış olabilir.',
       sendTestPush: 'Test bildirimi gönder',
       testPushSending: 'Gönderiliyor…',
       testPushSent: 'Gönderildi — uygulamayı kapatıp kilit ekranını kontrol et.',

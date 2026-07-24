@@ -26,6 +26,9 @@ function clampPx(min: number, vwPct: number, max: number, width: number): number
   return Math.min(max, Math.max(min, width * (vwPct / 100)));
 }
 
+/** Alt panelin ekran yüksekliğine oranı — okuma bloğunun üst sınırı da buna bağlı. */
+const PANEL_HEIGHT_RATIO = 0.66;
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -143,7 +146,12 @@ function AppInner() {
   const thrLevel = displayValue != null ? clamp01((displayValue - min) / span) : 0.62;
   const tension = displayValue != null && displayRate != null ? tensionOf(displayRate, displayValue, span) : 0;
 
-  const readoutTop = onSetScreen ? 84 : Math.max(120, Math.min(surfaceY - 150, 420));
+  // Okuma bloğu, alttaki panelin ARKASINDA kalmamalı — panel ekranın alt
+  // %66'sını kaplıyor, dolayısıyla üst sınır panelin üst kenarının bir miktar
+  // üstünde tutulur (web'de de aynı "yüzeye tutun ama panele girme" kuralı var).
+  const panelTop = win.height * (1 - PANEL_HEIGHT_RATIO);
+  const readoutMaxTop = Math.max(120, panelTop - 150);
+  const readoutTop = onSetScreen ? 84 : Math.max(120, Math.min(surfaceY - 150, readoutMaxTop));
   const readoutFontSize = onSetScreen ? clampPx(40, 7.5, 76, win.width) : clampPx(44, 8, 86, win.width);
 
   const submitThreshold = () => {
@@ -207,8 +215,8 @@ function AppInner() {
         'unsupported-device': d.pushUnsupported,
         denied: d.pushDenied,
         'missing-project-id': d.pushMissingConfig,
-        'token-failed': d.pushFailed,
-        'sync-failed': d.pushFailed,
+        'token-failed': d.pushTokenFailed,
+        'sync-failed': d.pushSyncFailed,
       };
       setPushError(map[res.reason] ?? d.pushFailed);
     }
@@ -346,7 +354,7 @@ const styles = StyleSheet.create({
   },
   bannerText: { color: COLORS.contentPrimary, fontSize: 13, lineHeight: 18 },
   panel: {
-    position: 'absolute', left: 0, right: 0, bottom: 0, height: '66%', zIndex: 3,
+    position: 'absolute', left: 0, right: 0, bottom: 0, height: `${PANEL_HEIGHT_RATIO * 100}%`, zIndex: 3,
     backgroundColor: 'rgba(4,9,14,0.92)', borderTopLeftRadius: 28, borderTopRightRadius: 28,
     paddingTop: 18, paddingBottom: 28,
   },
