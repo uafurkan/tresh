@@ -86,7 +86,13 @@ export default function WaterBackground({
   const tension = a.dTension;
   const surfaceY = H * (1 - a.dLevel);
   const thrY = H * (1 - thresholdLevel);
-  onSurfaceY?.(surfaceY);
+  // DİKKAT: onSurfaceY'yi burada (render gövdesinde) senkron çağırmak
+  // "Cannot update a component while rendering a different component"
+  // hatasına yol açıyordu — React 19'da bu saniyede 60 kez tetiklenince
+  // beyaz ekran çökmesine dönüşüyordu. useEffect'e taşındı (render sonrası).
+  useEffect(() => {
+    onSurfaceY?.(surfaceY);
+  });
 
   let cr: [number, number, number] = [
     DULL[0] + (VIVID[0] - DULL[0]) * tension,

@@ -38,6 +38,9 @@ export default function App() {
   const [overflowTick, setOverflowTick] = useState(0);
   const [notifLog, setNotifLog] = useState<NotifLogEntry[]>([]);
   const [surfaceY, setSurfaceY] = useState(win.height * 0.5);
+  const onSurfaceY = useCallback((y: number) => {
+    setSurfaceY((prev) => (Math.abs(prev - y) > 0.5 ? y : prev));
+  }, []);
 
   const [newPairIdx, setNewPairIdx] = useState(0);
   const [newDir, setNewDir] = useState<'above' | 'below'>('above');
@@ -215,7 +218,7 @@ export default function App() {
           loading={!hydrated}
           width={win.width}
           height={win.height}
-          onSurfaceY={setSurfaceY}
+          onSurfaceY={onSurfaceY}
         />
         <View pointerEvents="none" style={styles.vignetteTop} />
         <View pointerEvents="none" style={styles.vignetteBottom} />
