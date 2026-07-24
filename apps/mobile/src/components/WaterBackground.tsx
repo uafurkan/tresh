@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Canvas, Fill, Path, Skia, LinearGradient, vec, DashPathEffect, Group, Circle, type SkPath } from '@shopify/react-native-skia';
+import { View } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 export interface WaterBackgroundProps {
   /** 0..1 — su yüzeyinin normalleştirilmiş seviyesi. */
@@ -22,32 +23,32 @@ const DULL: [number, number, number] = [34, 118, 126];
 const VIVID: [number, number, number] = [56, 231, 217];
 const AMBER: [number, number, number] = [255, 150, 74];
 
-function wavePath(W: number, baseY: number, amp: number, freq: number, phase: number, H: number): SkPath {
-  const path = Skia.Path.Make();
-  path.moveTo(0, H);
-  for (let x = 0; x <= W; x += 6) {
-    const y = baseY + Math.sin(x * freq + phase) * amp + Math.sin(x * freq * 2.3 + phase * 1.5) * amp * 0.4;
-    path.lineTo(x, y);
-  }
-  path.lineTo(W, H);
-  path.close();
-  return path;
+function waveY(x: number, baseY: number, amp: number, freq: number, phase: number): number {
+  return baseY + Math.sin(x * freq + phase) * amp + Math.sin(x * freq * 2.3 + phase * 1.5) * amp * 0.4;
 }
 
-function waveStroke(W: number, baseY: number, amp: number, freq: number, phase: number): SkPath {
-  const path = Skia.Path.Make();
+function wavePathD(W: number, baseY: number, amp: number, freq: number, phase: number, H: number): string {
+  const parts: string[] = [`M0,${H.toFixed(1)}`];
+  for (let x = 0; x <= W; x += 6) parts.push(`L${x.toFixed(1)},${waveY(x, baseY, amp, freq, phase).toFixed(1)}`);
+  parts.push(`L${W.toFixed(1)},${H.toFixed(1)} Z`);
+  return parts.join(' ');
+}
+
+function waveStrokeD(W: number, baseY: number, amp: number, freq: number, phase: number): string {
+  const parts: string[] = [];
   for (let x = 0; x <= W; x += 6) {
-    const y = baseY + Math.sin(x * freq + phase) * amp + Math.sin(x * freq * 2.3 + phase * 1.5) * amp * 0.4;
-    if (x === 0) path.moveTo(x, y);
-    else path.lineTo(x, y);
+    const y = waveY(x, baseY, amp, freq, phase).toFixed(1);
+    parts.push(`${x === 0 ? 'M' : 'L'}${x.toFixed(1)},${y}`);
   }
-  return path;
+  return parts.join(' ');
 }
 
 /**
- * Web'deki WaterCanvas.tsx'in (HTML5 Canvas, requestAnimationFrame) Skia ile
- * birebir taşınmış hali — aynı iki katmanlı sinüs dalga motoru, aynı
- * gerilim-bazlı renk enterpolasyonu, aynı eşik çizgisi ve overflow halkaları.
+ * Web'deki WaterCanvas.tsx'in (HTML5 Canvas, requestAnimationFrame) SVG ile
+ * taşınmış hali — aynı iki katmanlı sinüs dalga motoru, aynı gerilim-bazlı
+ * (donuk -> canlı) renk enterpolasyonu, aynı kesikli eşik çizgisi, aynı
+ * overflow halka animasyonu. react-native-svg kullanır (Skia yerine) —
+ * Expo Go dahil her ortamda ekstra native derleme gerektirmeden çalışır.
  */
 export default function WaterBackground({
   level, thresholdLevel, tension: targetTension, overflowTick, reduced, error, loading, width: W, height: H, onSurfaceY,
@@ -117,44 +118,36 @@ export default function WaterBackground({
   const speed = 1 + tension * 1.4;
   const amp = loading ? 3 : 5 + tension * 7;
 
-  const washFill = wavePath(W, surfaceY + 10, amp * 0.6, 0.014, time * speed * 0.6 + 2, H);
-  const mainFill = wavePath(W, surfaceY, amp, 0.021, time * speed, H);
-  const mainStroke = waveStroke(W, surfaceY, amp, 0.021, time * speed);
-
-  const thrLine = Skia.Path.Make();
-  thrLine.moveTo(0, thrY);
-  thrLine.lineTo(W, thrY);
+  const washFillD = wavePathD(W, surfaceY + 10, amp * 0.6, 0.014, time * speed * 0.6 + 2, H);
+  const mainFillD = wavePathD(W, surfaceY, amp, 0.021, time * speed, H);
+  const mainStrokeD = waveStrokeD(W, surfaceY, amp, 0.021, time * speed);
   const thrColor = ovAmt > 0.2 ? `rgba(255,150,74,${0.5 + ovAmt * 0.4})` : 'rgba(232,241,245,0.32)';
 
   return (
-    <Canvas style={{ width: W, height: H }}>
-      <Fill color="#04090E" />
-      <Path path={washFill} color={col(0.16)} />
-      <Path path={mainFill}>
-        <LinearGradient
-          start={vec(0, surfaceY)}
-          end={vec(0, H)}
-          colors={[col(0.42), `rgba(${(cr[0] * 0.5) | 0},${(cr[1] * 0.5) | 0},${(cr[2] * 0.55) | 0},0.5)`, 'rgba(6,16,26,0.85)']}
-          positions={[0, 0.5, 1]}
-        />
-      </Path>
-      <Path path={mainStroke} style="stroke" strokeWidth={2} color={col(loading ? 0.4 : 0.95)} />
-      <Path path={thrLine} style="stroke" strokeWidth={1.5} color={thrColor}>
-        <DashPathEffect intervals={[2, 7]} />
-      </Path>
-      {a.overflow && !reduced && (
-        <Group>
-          {[0, 0.18].map((delay) => {
-            const el = (now - a.overflow!.t0) / 1000 - delay;
-            if (el < 0 || el > 0.9) return null;
-            const r = 20 + el * 260;
-            const al = Math.max(0, 1 - el / 0.9) * 0.5;
-            return (
-              <Circle key={delay} cx={W * 0.5} cy={thrY} r={r} style="stroke" strokeWidth={2.5 * (1 - el)} color={`rgba(255,150,74,${al})`} />
-            );
-          })}
-        </Group>
-      )}
-    </Canvas>
+    <View style={{ width: W, height: H }}>
+      <Svg width={W} height={H}>
+        <Defs>
+          <LinearGradient id="waterGrad" x1={0} y1={surfaceY} x2={0} y2={H} gradientUnits="userSpaceOnUse">
+            <Stop offset="0" stopColor={col(0.42)} />
+            <Stop offset="0.5" stopColor={`rgba(${(cr[0] * 0.5) | 0},${(cr[1] * 0.5) | 0},${(cr[2] * 0.55) | 0},0.5)`} />
+            <Stop offset="1" stopColor="rgba(6,16,26,0.85)" />
+          </LinearGradient>
+        </Defs>
+        <Rect x={0} y={0} width={W} height={H} fill="#04090E" />
+        <Path d={washFillD} fill={col(0.16)} />
+        <Path d={mainFillD} fill="url(#waterGrad)" />
+        <Path d={mainStrokeD} fill="none" stroke={col(loading ? 0.4 : 0.95)} strokeWidth={2} />
+        <Path d={`M0,${thrY.toFixed(1)} L${W},${thrY.toFixed(1)}`} stroke={thrColor} strokeWidth={1.5} strokeDasharray="2 7" />
+        {a.overflow && !reduced && [0, 0.18].map((delay) => {
+          const el = (now - a.overflow!.t0) / 1000 - delay;
+          if (el < 0 || el > 0.9) return null;
+          const r = 20 + el * 260;
+          const al = Math.max(0, 1 - el / 0.9) * 0.5;
+          return (
+            <Circle key={delay} cx={W * 0.5} cy={thrY} r={r} fill="none" stroke={`rgba(255,150,74,${al})`} strokeWidth={2.5 * (1 - el)} />
+          );
+        })}
+      </Svg>
+    </View>
   );
 }
