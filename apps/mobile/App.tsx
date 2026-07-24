@@ -10,6 +10,7 @@ import { useRates } from './src/hooks/useRates';
 import { enablePush, syncMobileThresholds } from './src/lib/push';
 import { LiveActivity } from './modules/live-activity';
 import WaterBackground from './src/components/WaterBackground';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import HomeScreen from './src/screens/HomeScreen';
 import SetScreen from './src/screens/SetScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
@@ -26,6 +27,14 @@ function clampPx(min: number, vwPct: number, max: number, width: number): number
 }
 
 export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppInner />
+    </ErrorBoundary>
+  );
+}
+
+function AppInner() {
   const [locale] = useState<Locale>(detectLocale);
   const d = dictionaries[locale].app;
   const win = useWindowDimensions();
