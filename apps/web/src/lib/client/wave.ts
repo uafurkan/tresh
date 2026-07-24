@@ -1,6 +1,4 @@
-export function tensionOf(rate: number, value: number, span: number): number {
-  return Math.max(0, Math.min(1, 1 - Math.abs(rate - value) / (span * 0.5)));
-}
+export { tensionOf } from '@tresh/shared';
 
 export function miniWavePath(level: number, w: number, h: number): string {
   const midY = h * (1 - level) * 0.7 + h * 0.15;
