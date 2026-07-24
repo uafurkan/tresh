@@ -26,7 +26,17 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-localization"
-    ]
+      "expo-localization",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#34E3D6"
+        }
+      ]
+    ],
+    "notification": {
+      "iosDisplayInForeground": true
+    }
   }
 }

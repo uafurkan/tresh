@@ -1,5 +1,5 @@
 import webpush from 'web-push';
-import type { PushSubscriptionJSON } from './store';
+import type { PushSubscriptionJSON, Watcher } from './store';
 
 let configured = false;
 
@@ -49,4 +49,42 @@ export async function sendPush(sub: PushSubscriptionJSON, payload: PushPayload):
     console.error('push send failed:', e?.statusCode ?? e);
     return true;
   }
+}
+
+/**
+ * Mobil (iOS/Android) uygulaması için Expo'nun push servisi kullanılır —
+ * APNs/FCM sertifika yönetimini Expo üstlenir, biz yalnızca Expo push
+ * token'ına HTTPS isteği atarız. Anahtar/sertifika gerektirmez.
+ */
+export async function sendExpoPush(token: string, payload: PushPayload): Promise<boolean> {
+  try {
+    const res = await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        to: token,
+        title: payload.title,
+        body: payload.body,
+        data: { url: payload.url, tag: payload.tag },
+        sound: 'default',
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    const ticket = data?.data;
+    // Expo, ölü/geçersiz token'lar için DeviceNotRegistered hatası döner —
+    // web push'taki 404/410 ile aynı anlamda: aboneliği sil.
+    if (ticket?.status === 'error' && ticket?.details?.error === 'DeviceNotRegistered') return false;
+    if (!res.ok) console.error('expo push send failed:', res.status);
+    return true;
+  } catch (e) {
+    console.error('expo push send failed:', e);
+    return true;
+  }
+}
+
+/** Watcher'ın türüne (web/mobil) göre doğru gönderim yolunu seçer. */
+export async function sendPushToWatcher(w: Watcher, payload: PushPayload): Promise<boolean> {
+  if (w.expoPushToken) return sendExpoPush(w.expoPushToken, payload);
+  if (w.subscription) return sendPush(w.subscription, payload);
+  return true;
 }

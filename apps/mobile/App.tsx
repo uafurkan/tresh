@@ -7,6 +7,7 @@ import { COLORS } from './src/lib/theme';
 import { loadThresholds, saveThresholds } from './src/lib/storage';
 import { clearNotifLog, logNotifLocal, readNotifLog, type NotifLogEntry } from './src/lib/notifLog';
 import { useRates } from './src/hooks/useRates';
+import { enablePush, syncMobileThresholds } from './src/lib/push';
 import HomeScreen from './src/screens/HomeScreen';
 import SetScreen from './src/screens/SetScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
@@ -34,6 +35,10 @@ export default function App() {
   const [newValue, setNewValue] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
+
   useEffect(() => {
     loadThresholds().then((loaded) => {
       setThresholds(loaded);
@@ -55,9 +60,10 @@ export default function App() {
   const persist = useCallback((next: Threshold[]) => {
     setThresholds(next);
     saveThresholds(next);
-    // TODO (push fazı): sunucudaki izleyici kaydı da burada güncellenecek —
-    // şimdilik eşik geçişleri yalnızca uygulama açıkken tespit ediliyor.
-  }, []);
+    // Push açıksa sunucudaki eşik listesi de güncellenir (arka planda bildirim
+    // gönderebilmesi için); kapalıysa yalnızca uygulama açıkken tespit çalışır.
+    syncMobileThresholds(next, locale);
+  }, [locale]);
 
   // Uygulama açıkken eşik geçişi tespiti — web'deki client-side banner mantığıyla aynı.
   const prevRates = useRef<Record<string, number>>({});
@@ -139,6 +145,25 @@ export default function App() {
     setNotifLog([]);
   }, []);
 
+  const togglePush = useCallback(async () => {
+    if (pushEnabled || pushBusy) return;
+    setPushBusy(true);
+    setPushError(null);
+    const res = await enablePush(thresholds, locale);
+    setPushEnabled(res.ok);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        'unsupported-device': d.pushUnsupported,
+        denied: d.pushDenied,
+        'missing-project-id': d.pushMissingConfig,
+        'token-failed': d.pushFailed,
+        'sync-failed': d.pushFailed,
+      };
+      setPushError(map[res.reason] ?? d.pushFailed);
+    }
+    setPushBusy(false);
+  }, [pushEnabled, pushBusy, thresholds, locale, d]);
+
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bgDeep} />
@@ -190,7 +215,15 @@ export default function App() {
         />
       )}
       {screen === 'notifications' && (
-        <NotificationsScreen d={d} entries={notifLog} onClearAll={clearAllNotifications} />
+        <NotificationsScreen
+          d={d}
+          entries={notifLog}
+          onClearAll={clearAllNotifications}
+          pushEnabled={pushEnabled}
+          pushBusy={pushBusy}
+          pushError={pushError}
+          onTogglePush={togglePush}
+        />
       )}
     </SafeAreaView>
   );

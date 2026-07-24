@@ -1,5 +1,5 @@
 import type { Watcher } from './store';
-import { sendPush } from './push';
+import { sendPushToWatcher } from './push';
 import { pairKey, pushBody } from '@tresh/shared';
 
 const OPEN_ACTION_LABEL: Record<string, string> = { en: 'Open Tresh', tr: 'Tresh’i aç' };
@@ -36,7 +36,7 @@ export async function checkAndNotify(w: Watcher, rateMap: Map<string, number>): 
         : prev > t.value && rate <= t.value;
       if (crossed) {
         const arrow = t.dir === 'above' ? '▲' : '▼';
-        const alive = await sendPush(w.subscription, {
+        const alive = await sendPushToWatcher(w, {
           title: `Tresh · ${key} ${arrow}`,
           body: pushBody(locale, key, t.value.toFixed(t.decimals), t.dir, rate.toFixed(t.decimals), t.decimals),
           tag: `tresh-${t.id}`,

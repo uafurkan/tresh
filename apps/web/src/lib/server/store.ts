@@ -12,8 +12,11 @@ export interface PushSubscriptionJSON {
 }
 
 export interface Watcher {
-  id: string; // abonelik kimliği (endpoint hash'i)
-  subscription: PushSubscriptionJSON;
+  id: string; // abonelik kimliği (endpoint/token hash'i)
+  /** Web Push (VAPID) — tarayıcı/PWA abonelikleri. */
+  subscription?: PushSubscriptionJSON;
+  /** Expo push token — mobil (iOS/Android) uygulaması. subscription ile birbirini dışlar. */
+  expoPushToken?: string;
   thresholds: Threshold[];
   /** Eşik id -> son bilinen kur (geçiş tespiti için). */
   lastRates: Record<string, number>;
@@ -102,8 +105,17 @@ export function getRepository(): Repository {
   return globalThis.__treshRepo;
 }
 
-export async function watcherIdFromEndpoint(endpoint: string): Promise<string> {
-  const data = new TextEncoder().encode(endpoint);
+async function sha256Hex24(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
   const digest = await crypto.subtle.digest('SHA-256', data);
   return Buffer.from(digest).toString('hex').slice(0, 24);
+}
+
+export async function watcherIdFromEndpoint(endpoint: string): Promise<string> {
+  return sha256Hex24(endpoint);
+}
+
+/** Expo push token'ları da endpoint gibi hash'lenip aynı watcher id şemasında saklanır. */
+export async function watcherIdFromExpoToken(token: string): Promise<string> {
+  return sha256Hex24(`expo:${token}`);
 }

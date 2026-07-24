@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import type { AppDict } from '@tresh/shared';
 import { COLORS } from '../lib/theme';
 import type { NotifLogEntry } from '../lib/notifLog';
@@ -7,9 +7,13 @@ interface Props {
   d: AppDict;
   entries: NotifLogEntry[];
   onClearAll: () => void;
+  pushEnabled: boolean;
+  pushBusy: boolean;
+  pushError: string | null;
+  onTogglePush: () => void;
 }
 
-export default function NotificationsScreen({ d, entries, onClearAll }: Props) {
+export default function NotificationsScreen({ d, entries, onClearAll, pushEnabled, pushBusy, pushError, onTogglePush }: Props) {
   const relTime = (ts: number) => {
     const diffMin = Math.max(0, Math.round((Date.now() - ts) / 60000));
     if (diffMin < 1) return d.justNow;
@@ -29,6 +33,27 @@ export default function NotificationsScreen({ d, entries, onClearAll }: Props) {
           </Pressable>
         )}
       </View>
+
+      <View style={styles.pushCard}>
+        <View style={styles.pushRow}>
+          <View style={styles.pushTextCol}>
+            <Text style={styles.pushTitle}>{d.pushTitle}</Text>
+            <Text style={styles.pushBody}>{d.pushSupported}</Text>
+          </View>
+          {pushBusy ? (
+            <ActivityIndicator color={COLORS.water} />
+          ) : (
+            <Switch
+              value={pushEnabled}
+              onValueChange={onTogglePush}
+              trackColor={{ false: COLORS.bgRaised, true: 'rgba(52,227,214,0.5)' }}
+              thumbColor={pushEnabled ? COLORS.water : COLORS.contentSecondary}
+            />
+          )}
+        </View>
+        {pushError && <Text style={styles.pushError}>{pushError}</Text>}
+      </View>
+
       {entries.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyTitle}>{d.notifEmpty}</Text>
@@ -57,6 +82,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 19, fontWeight: '700', color: COLORS.contentPrimary },
   clearBtn: { borderRadius: 10, paddingVertical: 6, paddingHorizontal: 12, backgroundColor: 'rgba(255,150,74,0.08)', borderWidth: 1, borderColor: 'rgba(255,150,74,0.4)' },
   clearBtnText: { color: COLORS.overflow, fontSize: 12, fontWeight: '600' },
+  pushCard: { borderRadius: 16, padding: 14, marginBottom: 16, backgroundColor: COLORS.bgRaised },
+  pushRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  pushTextCol: { flex: 1 },
+  pushTitle: { color: COLORS.contentPrimary, fontSize: 14, fontWeight: '600' },
+  pushBody: { color: COLORS.contentSecondary, fontSize: 12, marginTop: 2, lineHeight: 16 },
+  pushError: { color: COLORS.overflow, fontSize: 12, marginTop: 8, lineHeight: 16 },
   empty: { alignItems: 'center', paddingTop: 24 },
   emptyTitle: { fontSize: 20, fontWeight: '600', color: COLORS.contentPrimary, marginBottom: 8, textAlign: 'center' },
   emptyBody: { fontSize: 14, lineHeight: 20, color: COLORS.contentSecondary, textAlign: 'center', maxWidth: 280 },
