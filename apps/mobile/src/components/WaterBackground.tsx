@@ -29,18 +29,18 @@ function waveY(x: number, baseY: number, amp: number, freq: number, phase: numbe
   return baseY + Math.sin(x * freq + phase) * amp + Math.sin(x * freq * 2.3 + phase * 1.5) * amp * 0.4;
 }
 
-function wavePathD(W: number, baseY: number, amp: number, freq: number, phase: number, H: number): string {
-  const parts: string[] = [`M0,${H.toFixed(1)}`];
-  for (let x = 0; x <= W; x += 6) parts.push(`L${x.toFixed(1)},${waveY(x, baseY, amp, freq, phase).toFixed(1)}`);
-  parts.push(`L${W.toFixed(1)},${H.toFixed(1)} Z`);
+function wavePathD(x0: number, x1: number, baseY: number, amp: number, freq: number, phase: number, bottomY: number): string {
+  const parts: string[] = [`M${x0.toFixed(1)},${bottomY.toFixed(1)}`];
+  for (let x = x0; x <= x1; x += 6) parts.push(`L${x.toFixed(1)},${waveY(x, baseY, amp, freq, phase).toFixed(1)}`);
+  parts.push(`L${x1.toFixed(1)},${bottomY.toFixed(1)} Z`);
   return parts.join(' ');
 }
 
-function waveStrokeD(W: number, baseY: number, amp: number, freq: number, phase: number): string {
+function waveStrokeD(x0: number, x1: number, baseY: number, amp: number, freq: number, phase: number): string {
   const parts: string[] = [];
-  for (let x = 0; x <= W; x += 6) {
+  for (let x = x0; x <= x1; x += 6) {
     const y = waveY(x, baseY, amp, freq, phase).toFixed(1);
-    parts.push(`${x === 0 ? 'M' : 'L'}${x.toFixed(1)},${y}`);
+    parts.push(`${x === x0 ? 'M' : 'L'}${x.toFixed(1)},${y}`);
   }
   return parts.join(' ');
 }
@@ -120,9 +120,15 @@ export default function WaterBackground({
   const speed = 1 + tension * 1.4;
   const amp = loading ? 3 : 5 + tension * 7;
 
-  const washFillD = wavePathD(W, surfaceY + 10, amp * 0.6, 0.014, time * speed * 0.6 + 2, H);
-  const mainFillD = wavePathD(W, surfaceY, amp, 0.021, time * speed, H);
-  const mainStrokeD = waveStrokeD(W, surfaceY, amp, 0.021, time * speed);
+  // Terazi rotasyonu (G) su gövdesini ekranın kenarları etrafında döndürür;
+  // suyu tam W/H sınırlarında çizersek dönünce köşelerde düz arka planın
+  // göründüğü boş üçgenler kalır. Suyu ekranın biraz dışına taşacak kadar
+  // geniş/derin çiziyoruz — Svg zaten kendi sınırlarına göre kırpıyor.
+  const PAD_X = W * 0.4;
+  const PAD_BOTTOM = H * 0.3;
+  const washFillD = wavePathD(-PAD_X, W + PAD_X, surfaceY + 10, amp * 0.6, 0.014, time * speed * 0.6 + 2, H + PAD_BOTTOM);
+  const mainFillD = wavePathD(-PAD_X, W + PAD_X, surfaceY, amp, 0.021, time * speed, H + PAD_BOTTOM);
+  const mainStrokeD = waveStrokeD(-PAD_X, W + PAD_X, surfaceY, amp, 0.021, time * speed);
   const thrColor = ovAmt > 0.2 ? `rgba(255,150,74,${0.5 + ovAmt * 0.4})` : 'rgba(232,241,245,0.32)';
 
   return (
