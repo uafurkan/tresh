@@ -6,21 +6,22 @@
     "@bacons/apple-targets": "^5.0.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@tresh/shared": "workspace:*",
-    "expo": "~56.0.17",
-    "expo-constants": "~56.0.22",
-    "expo-device": "~56.0.4",
-    "expo-localization": "~56.0.6",
-    "expo-notifications": "~56.0.22",
-    "expo-status-bar": "~56.0.4",
-    "expo-updates": "~56.0.23",
-    "react": "19.2.3",
-    "react-native": "0.85.3",
-    "react-native-svg": "15.15.4"
+    "expo": "~54.0.36",
+    "expo-constants": "~18.0.13",
+    "expo-device": "~8.0.10",
+    "expo-localization": "~17.0.9",
+    "expo-notifications": "~0.32.17",
+    "expo-status-bar": "~3.0.9",
+    "expo-updates": "~29.0.19",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-svg": "15.12.1"
   },
   "devDependencies": {
+    "@expo/image-utils": "^0.8.15",
     "@expo/plist": "^0.8.1",
-    "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
+    "@types/react": "~19.1.17",
+    "typescript": "~5.9.3"
   },
   "scripts": {
     "start": "expo start",
