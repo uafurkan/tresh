@@ -46,21 +46,39 @@ const PANEL_HEIGHT_RATIO = 0.66;
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function App() {
-  const [bricolageReady] = useBricolageFonts({ BricolageGrotesque_400Regular, BricolageGrotesque_600SemiBold });
-  const [martianReady] = useMartianFonts({ MartianMono_400Regular, MartianMono_500Medium });
-  const [hankenReady] = useHankenFonts({
+  // DİKKAT: useFonts'un ikinci elemanı (hata) önceden yok sayılıyordu —
+  // font yüklemesi herhangi bir sebeple hata verirse `loaded` hiç true
+  // olmuyor, "fontsReady" sonsuza dek false kalıyor ve aşağıdaki
+  // `return null` kalıcı beyaz ekrana dönüşüyordu (ErrorBoundary bunu
+  // yakalayamaz, çünkü atılan bir render hatası değil). Artık hata da
+  // "hazır" sayılıyor — o zaman sistem fontuna sessizce düşülür.
+  const [bricolageLoaded, bricolageError] = useBricolageFonts({ BricolageGrotesque_400Regular, BricolageGrotesque_600SemiBold });
+  const [martianLoaded, martianError] = useMartianFonts({ MartianMono_400Regular, MartianMono_500Medium });
+  const [hankenLoaded, hankenError] = useHankenFonts({
     HankenGrotesk_400Regular,
     HankenGrotesk_500Medium,
     HankenGrotesk_600SemiBold,
     HankenGrotesk_700Bold,
   });
-  const fontsReady = bricolageReady && martianReady && hankenReady;
+  const fontsReady =
+    (bricolageLoaded || !!bricolageError) && (martianLoaded || !!martianError) && (hankenLoaded || !!hankenError);
+
+  // Ek güvenlik ağı: her ne sebeple olursa olsun 4 saniyede hazır
+  // olunmazsa yine de uygulamayı göster — sonsuza dek beyaz ekranda
+  // kalmaktansa fontsuz açılmak çok daha iyi.
+  const [timedOut, setTimedOut] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setTimedOut(true), 4000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const ready = fontsReady || timedOut;
 
   useEffect(() => {
-    if (fontsReady) SplashScreen.hideAsync().catch(() => {});
-  }, [fontsReady]);
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
 
-  if (!fontsReady) return null;
+  if (!ready) return null;
 
   return (
     <ErrorBoundary>
