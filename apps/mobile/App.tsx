@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import * as Localization from 'expo-localization';
+import { BlurView } from 'expo-blur';
 import { useFonts as useBricolageFonts, BricolageGrotesque_400Regular, BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque';
 import { useFonts as useMartianFonts, MartianMono_400Regular, MartianMono_500Medium } from '@expo-google-fonts/martian-mono';
 import {
@@ -373,6 +374,15 @@ function AppInner() {
       </SafeAreaView>
 
       <View style={styles.panel}>
+        {/* Liquid Glass (iOS 26): kontrol katmanının içeriğin üzerinde
+            gerçek bulanıklıkla yüzmesi gerekiyor — Expo Go'da native
+            Liquid Glass API'lerine erişim yok (Dynamic Island'daki gibi
+            bir sınır, gerçek build + iOS 26 SDK gerektirir), ama
+            expo-blur ile gerçek blur + ince "specular" üst çizgisiyle
+            aynı estetiğe olabildiğince yaklaşıyoruz. */}
+        <BlurView intensity={42} tint="dark" style={StyleSheet.absoluteFillObject} />
+        <View pointerEvents="none" style={styles.panelTint} />
+        <View pointerEvents="none" style={styles.panelHighlight} />
         <SwipeBack enabled={screen !== 'home'} onBack={goBack}>
         {screen === 'home' && (
           <HomeScreen
@@ -463,7 +473,13 @@ const styles = StyleSheet.create({
   bannerCloseBtn: { paddingHorizontal: 4, paddingTop: 3 },
   panel: {
     position: 'absolute', left: 0, right: 0, bottom: 0, height: `${PANEL_HEIGHT_RATIO * 100}%`, zIndex: 3,
-    backgroundColor: 'rgba(4,9,14,0.92)', borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', borderBottomWidth: 0,
     paddingTop: 18, paddingBottom: 28,
+  },
+  panelTint: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(4,9,14,0.5)' },
+  panelHighlight: {
+    position: 'absolute', left: 0, right: 0, top: 0, height: 1,
+    backgroundColor: 'rgba(255,255,255,0.22)',
   },
 });
