@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { CONVERTER_CURRENCIES, CONVERTER_PAIRS, dictionaries, fmtNum, parseLocaleNumber, type Locale } from '@tresh/shared';
 import { COLORS } from '../lib/theme';
 import { useRates } from '../hooks/useRates';
+import { ChevronDownIcon, ChevronLeftIcon, SwapIcon } from '../components/Icons';
 
 const ALL_CODES = ['USD', ...CONVERTER_CURRENCIES.map((c) => c.code)];
 
@@ -39,7 +40,7 @@ export default function ConverterScreen({ locale, onBack, backLabel }: { locale:
   return (
     <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
       <Pressable style={styles.backBtn} onPress={onBack} hitSlop={10} accessibilityLabel={backLabel}>
-        <Text style={styles.backGlyph}>‹</Text>
+        <ChevronLeftIcon />
         <Text style={styles.backText}>{backLabel}</Text>
       </Pressable>
 
@@ -55,12 +56,12 @@ export default function ConverterScreen({ locale, onBack, backLabel }: { locale:
         />
         <Pressable style={styles.codeBtn} onPress={() => setPicking('from')} hitSlop={6}>
           <Text style={styles.codeText}>{from}</Text>
-          <Text style={styles.codeChevron}>▾</Text>
+          <ChevronDownIcon size={11} color={COLORS.water} />
         </Pressable>
       </View>
 
       <Pressable style={styles.swapBtn} onPress={swap} accessibilityLabel={d.converterSwap} hitSlop={8}>
-        <Text style={styles.swapGlyph}>⇅</Text>
+        <SwapIcon />
       </Pressable>
 
       <View style={styles.field}>
@@ -69,7 +70,7 @@ export default function ConverterScreen({ locale, onBack, backLabel }: { locale:
         </Text>
         <Pressable style={styles.codeBtn} onPress={() => setPicking('to')} hitSlop={6}>
           <Text style={styles.codeText}>{to}</Text>
-          <Text style={styles.codeChevron}>▾</Text>
+          <ChevronDownIcon size={11} color={COLORS.water} />
         </Pressable>
       </View>
 
@@ -117,7 +118,6 @@ export default function ConverterScreen({ locale, onBack, backLabel }: { locale:
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 16 },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: -6, paddingVertical: 4, marginBottom: 6 },
-  backGlyph: { color: COLORS.contentSecondary, fontSize: 24, lineHeight: 26, fontWeight: '300' },
   backText: { color: COLORS.contentSecondary, fontSize: 14 },
   label: { fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 10 },
   field: {
@@ -129,13 +129,11 @@ const styles = StyleSheet.create({
   resultText: { flex: 1, fontSize: 18, color: COLORS.contentPrimary },
   codeBtn: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   codeText: { color: COLORS.water, fontSize: 14, fontWeight: '600' },
-  codeChevron: { color: COLORS.water, fontSize: 11 },
   swapBtn: {
     alignSelf: 'center', width: 36, height: 36, borderRadius: 18, marginVertical: 10,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(11,22,34,0.7)', borderWidth: 1, borderColor: 'rgba(143,165,179,0.2)',
   },
-  swapGlyph: { color: COLORS.contentSecondary, fontSize: 16 },
   board: { marginTop: 22, borderTopWidth: 1, borderTopColor: 'rgba(143,165,179,0.12)', paddingTop: 16 },
   boardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 7 },
   boardCode: { color: COLORS.contentSecondary, fontSize: 14 },

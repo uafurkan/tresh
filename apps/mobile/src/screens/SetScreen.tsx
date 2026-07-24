@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, Tex
 import { CRYPTO_BASES, PAIR_CATALOG, fmtNum, pairKey, parseLocaleNumber, type AppDict, type Locale, type PairDef } from '@tresh/shared';
 import { COLORS } from '../lib/theme';
 import ThresholdSlider from '../components/ThresholdSlider';
+import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from '../components/Icons';
 import { checkNow, sendTestPush, type CheckNowResult } from '../lib/push';
 
 interface Props {
@@ -91,7 +92,7 @@ export default function SetScreen({
     >
       <View style={styles.headerRow}>
         <Pressable style={styles.backBtn} onPress={onCancel} hitSlop={10} accessibilityLabel={d.back}>
-          <Text style={styles.backGlyph}>‹</Text>
+          <ChevronLeftIcon />
           <Text style={styles.backText}>{d.back}</Text>
         </Pressable>
       </View>
@@ -102,7 +103,7 @@ export default function SetScreen({
       <Text style={styles.label}>{d.pair}</Text>
       <Pressable style={[styles.pairButton, pickerOpen && styles.pairButtonOpen]} onPress={() => setPickerOpen((v) => !v)}>
         <Text style={styles.pairButtonText}>{catKey}</Text>
-        <Text style={styles.pairButtonChevron}>{pickerOpen ? '▲' : '▼'}</Text>
+        {pickerOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
       </Pressable>
       {pickerOpen && (
         <View style={styles.pickerBox}>
@@ -277,7 +278,6 @@ const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 16 },
   headerRow: { marginBottom: 4 },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: -6, paddingVertical: 4 },
-  backGlyph: { color: COLORS.contentSecondary, fontSize: 24, lineHeight: 26, fontWeight: '300' },
   backText: { color: COLORS.contentSecondary, fontSize: 14 },
   title: { fontSize: 24, fontWeight: '600', color: COLORS.contentPrimary, marginTop: 2 },
   subtitle: { fontSize: 13, color: COLORS.contentSecondary, marginTop: 4, marginBottom: 18, lineHeight: 18 },
@@ -289,7 +289,6 @@ const styles = StyleSheet.create({
   },
   pairButtonOpen: { borderColor: 'rgba(52,227,214,0.5)' },
   pairButtonText: { color: '#EAF3F6', fontSize: 15 },
-  pairButtonChevron: { color: COLORS.contentSecondary, fontSize: 11 },
   pickerBox: {
     backgroundColor: '#0B1622', borderRadius: 12, padding: 6, marginTop: -8, marginBottom: 16,
     borderWidth: 1, borderColor: 'rgba(143,165,179,0.2)',

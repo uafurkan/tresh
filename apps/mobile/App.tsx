@@ -12,6 +12,7 @@ import { LiveActivity } from './modules/live-activity';
 import WaterBackground from './src/components/WaterBackground';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import SwipeBack from './src/components/SwipeBack';
+import { BellIcon, CloseIcon } from './src/components/Icons';
 import HomeScreen from './src/screens/HomeScreen';
 import SetScreen from './src/screens/SetScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
@@ -258,8 +259,13 @@ function AppInner() {
             <Text style={styles.headerSubtitle}>{d.levelsWatched(activeCount)}</Text>
           </View>
           {screen === 'home' && (
-            <Pressable style={styles.bellBtn} onPress={openNotifications} hitSlop={8}>
-              <Text style={styles.bellGlyph}>🔔</Text>
+            <Pressable
+              style={styles.bellBtn}
+              onPress={openNotifications}
+              hitSlop={8}
+              accessibilityLabel={d.notifications}
+            >
+              <BellIcon />
               {notifLog.length > 0 && <View style={styles.bellDot} />}
             </Pressable>
           )}
@@ -296,8 +302,8 @@ function AppInner() {
               <Text style={styles.bannerLabel}>{d.bannerLabel}</Text>
               <Text style={styles.bannerText}>{banner}</Text>
             </View>
-            <Pressable onPress={() => setBanner(null)} hitSlop={10} accessibilityLabel={d.close}>
-              <Text style={styles.bannerClose}>×</Text>
+            <Pressable onPress={() => setBanner(null)} hitSlop={10} accessibilityLabel={d.close} style={styles.bannerCloseBtn}>
+              <CloseIcon size={13} strokeWidth={1.8} />
             </Pressable>
           </View>
         )}
@@ -372,7 +378,6 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 19, fontWeight: '600', color: COLORS.contentPrimary },
   headerSubtitle: { fontSize: 11, color: COLORS.contentSecondary, marginTop: 1 },
   bellBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(18,34,54,0.7)' },
-  bellGlyph: { fontSize: 16 },
   bellDot: { position: 'absolute', top: 6, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.overflow },
   readout: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   readoutLabel: { fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: COLORS.contentSecondary, marginBottom: 6 },
@@ -393,7 +398,7 @@ const styles = StyleSheet.create({
   bannerTextCol: { flex: 1 },
   bannerLabel: { color: COLORS.contentSecondary, fontSize: 11, letterSpacing: 0.6, marginBottom: 2 },
   bannerText: { color: COLORS.contentPrimary, fontSize: 13, lineHeight: 18 },
-  bannerClose: { color: COLORS.contentSecondary, fontSize: 20, lineHeight: 22, paddingHorizontal: 4 },
+  bannerCloseBtn: { paddingHorizontal: 4, paddingTop: 3 },
   panel: {
     position: 'absolute', left: 0, right: 0, bottom: 0, height: `${PANEL_HEIGHT_RATIO * 100}%`, zIndex: 3,
     backgroundColor: 'rgba(4,9,14,0.92)', borderTopLeftRadius: 28, borderTopRightRadius: 28,

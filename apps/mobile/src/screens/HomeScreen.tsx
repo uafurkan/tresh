@@ -10,6 +10,7 @@ import {
   type Threshold,
 } from '@tresh/shared';
 import { COLORS } from '../lib/theme';
+import { CloseIcon, PauseIcon, PlayIcon } from '../components/Icons';
 import type { LiveRate } from '../hooks/useRates';
 
 function miniWavePath(level: number, w: number, h: number): string {
@@ -103,11 +104,21 @@ export default function HomeScreen({ d, locale, thresholds, rates, selectedId, o
                   </View>
                 </Pressable>
                 <View style={styles.rowActions}>
-                  <Pressable onPress={() => onTogglePause(t.id)} style={styles.iconBtn} hitSlop={8}>
-                    <Text style={styles.iconGlyph}>{t.paused ? '▶' : '❚❚'}</Text>
+                  <Pressable
+                    onPress={() => onTogglePause(t.id)}
+                    style={styles.iconBtn}
+                    hitSlop={8}
+                    accessibilityLabel={t.paused ? d.resume : d.mute}
+                  >
+                    {t.paused ? <PlayIcon /> : <PauseIcon />}
                   </Pressable>
-                  <Pressable onPress={() => onDelete(t.id)} style={styles.iconBtn} hitSlop={8}>
-                    <Text style={[styles.iconGlyph, { color: COLORS.overflow }]}>✕</Text>
+                  <Pressable
+                    onPress={() => onDelete(t.id)}
+                    style={styles.iconBtn}
+                    hitSlop={8}
+                    accessibilityLabel={d.deleteThreshold}
+                  >
+                    <CloseIcon color={COLORS.overflow} />
                   </Pressable>
                 </View>
               </View>
@@ -149,7 +160,6 @@ const styles = StyleSheet.create({
   rowStatus: { fontSize: 11, marginTop: 2 },
   rowActions: { flexDirection: 'column', gap: 6 },
   iconBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
-  iconGlyph: { color: COLORS.contentSecondary, fontSize: 12 },
   cta: {
     backgroundColor: COLORS.water,
     borderRadius: 20,

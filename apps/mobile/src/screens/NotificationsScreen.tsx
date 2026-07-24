@@ -1,6 +1,7 @@
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import type { AppDict } from '@tresh/shared';
 import { COLORS } from '../lib/theme';
+import { ChevronLeftIcon } from '../components/Icons';
 import type { NotifLogEntry } from '../lib/notifLog';
 
 interface Props {
@@ -29,7 +30,7 @@ export default function NotificationsScreen({ d, entries, onClearAll, pushEnable
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Pressable style={styles.backBtn} onPress={onBack} hitSlop={10} accessibilityLabel={d.back}>
-            <Text style={styles.backGlyph}>‹</Text>
+            <ChevronLeftIcon size={20} color={COLORS.contentPrimary} />
           </Pressable>
           <Text style={styles.title}>{d.notifTitle}</Text>
         </View>
@@ -87,7 +88,6 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, marginTop: 8 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   backBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },
-  backGlyph: { color: COLORS.contentPrimary, fontSize: 30, lineHeight: 32, fontWeight: '300' },
   title: { fontSize: 19, fontWeight: '700', color: COLORS.contentPrimary },
   clearBtn: { borderRadius: 10, paddingVertical: 6, paddingHorizontal: 12, backgroundColor: 'rgba(255,150,74,0.08)', borderWidth: 1, borderColor: 'rgba(255,150,74,0.4)' },
   clearBtnText: { color: COLORS.overflow, fontSize: 12, fontWeight: '600' },
