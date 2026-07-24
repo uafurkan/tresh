@@ -12,7 +12,8 @@
       "bundleIdentifier": "com.tresh.app",
       "supportsTablet": false,
       "infoPlist": {
-        "NSSupportsLiveActivities": true
+        "NSSupportsLiveActivities": true,
+        "NSMotionUsageDescription": "Su terazisi efekti için cihazın eğimi kullanılır."
       }
     },
     "android": {

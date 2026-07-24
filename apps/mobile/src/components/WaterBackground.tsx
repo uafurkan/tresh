@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
-import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 export interface WaterBackgroundProps {
   /** 0..1 — su yüzeyinin normalleştirilmiş seviyesi. */
@@ -17,6 +17,8 @@ export interface WaterBackgroundProps {
   width: number;
   height: number;
   onSurfaceY?: (y: number) => void;
+  /** Su terazisi efekti: cihaz eğimine ters yönde derece cinsinden dönüş. */
+  tiltDeg?: number;
 }
 
 const DULL: [number, number, number] = [34, 118, 126];
@@ -51,7 +53,7 @@ function waveStrokeD(W: number, baseY: number, amp: number, freq: number, phase:
  * Expo Go dahil her ortamda ekstra native derleme gerektirmeden çalışır.
  */
 export default function WaterBackground({
-  level, thresholdLevel, tension: targetTension, overflowTick, reduced, error, loading, width: W, height: H, onSurfaceY,
+  level, thresholdLevel, tension: targetTension, overflowTick, reduced, error, loading, width: W, height: H, onSurfaceY, tiltDeg = 0,
 }: WaterBackgroundProps) {
   const [, force] = useState(0);
   const anim = useRef({
@@ -134,9 +136,15 @@ export default function WaterBackground({
           </LinearGradient>
         </Defs>
         <Rect x={0} y={0} width={W} height={H} fill="#04090E" />
-        <Path d={washFillD} fill={col(0.16)} />
-        <Path d={mainFillD} fill="url(#waterGrad)" />
-        <Path d={mainStrokeD} fill="none" stroke={col(loading ? 0.4 : 0.95)} strokeWidth={2} />
+        {/* Su terazisi: sıvı gövdesi, gerçek bir terazideki gibi cihaz
+            eğimine karşı yüzey merkezinden döner; eşik çizgisi cihaza
+            sabit kalır (dünyaya değil telefona göre), tıpkı üzerinde
+            işaret olan bir kaba bakar gibi. */}
+        <G rotation={tiltDeg} origin={`${W / 2}, ${surfaceY}`}>
+          <Path d={washFillD} fill={col(0.16)} />
+          <Path d={mainFillD} fill="url(#waterGrad)" />
+          <Path d={mainStrokeD} fill="none" stroke={col(loading ? 0.4 : 0.95)} strokeWidth={2} />
+        </G>
         <Path d={`M0,${thrY.toFixed(1)} L${W},${thrY.toFixed(1)}`} stroke={thrColor} strokeWidth={1.5} strokeDasharray="2 7" />
         {a.overflow && !reduced && [0, 0.18].map((delay) => {
           const el = (now - a.overflow!.t0) / 1000 - delay;

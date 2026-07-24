@@ -10,6 +10,7 @@ import { useRates } from './src/hooks/useRates';
 import { enablePush, syncMobileThresholds } from './src/lib/push';
 import { LiveActivity } from './modules/live-activity';
 import WaterBackground from './src/components/WaterBackground';
+import { useTilt } from './src/hooks/useTilt';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import SwipeBack from './src/components/SwipeBack';
 import { BellIcon, CloseIcon } from './src/components/Icons';
@@ -137,6 +138,7 @@ function AppInner() {
 
   const activeCount = thresholds.filter((t) => !t.paused).length;
   const onSetScreen = screen === 'set';
+  const tiltDeg = useTilt(screen === 'home');
   const displayCat = onSetScreen ? setCat : selectedCat;
   const displayRate = onSetScreen ? setLive : selectedRate;
   const displayValue = onSetScreen ? effNewValue : selected?.value ?? null;
@@ -247,6 +249,7 @@ function AppInner() {
           width={win.width}
           height={win.height}
           onSurfaceY={onSurfaceY}
+          tiltDeg={tiltDeg}
         />
         <View pointerEvents="none" style={styles.vignetteTop} />
         <View pointerEvents="none" style={styles.vignetteBottom} />
