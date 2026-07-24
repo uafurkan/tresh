@@ -23,7 +23,7 @@ import WaterBackground from './src/components/WaterBackground';
 import { useTilt } from './src/hooks/useTilt';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import SwipeBack from './src/components/SwipeBack';
-import { BellIcon, CloseIcon } from './src/components/Icons';
+import { BellIcon, ChevronLeftIcon, CloseIcon, HomeIcon } from './src/components/Icons';
 import HomeScreen from './src/screens/HomeScreen';
 import SetScreen from './src/screens/SetScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
@@ -285,13 +285,20 @@ function AppInner() {
 
       <SafeAreaView style={styles.overlay} pointerEvents="box-none">
         <View style={styles.header} pointerEvents="box-none">
-          <View>
-            <Text style={styles.headerTitle}>Tresh</Text>
-            <Text style={styles.headerSubtitle}>{d.levelsWatched(activeCount)}</Text>
-          </View>
-          {screen === 'home' && (
+          {screen === 'home' ? (
+            <View>
+              <Text style={styles.headerTitle}>Tresh</Text>
+              <Text style={styles.headerSubtitle}>{d.levelsWatched(activeCount)}</Text>
+            </View>
+          ) : (
+            <Pressable style={styles.headerBackBtn} onPress={goBack} hitSlop={10} accessibilityLabel={d.back}>
+              <ChevronLeftIcon size={18} />
+              <Text style={styles.headerBackText}>{d.back}</Text>
+            </Pressable>
+          )}
+          <View style={styles.headerActions}>
             <Pressable
-              style={styles.bellBtn}
+              style={styles.circleBtn}
               onPress={openNotifications}
               hitSlop={8}
               accessibilityLabel={d.notifications}
@@ -299,7 +306,15 @@ function AppInner() {
               <BellIcon />
               {notifLog.length > 0 && <View style={styles.bellDot} />}
             </Pressable>
-          )}
+            <Pressable
+              style={styles.circleBtn}
+              onPress={() => setScreen('home')}
+              hitSlop={8}
+              accessibilityLabel={d.home}
+            >
+              <HomeIcon />
+            </Pressable>
+          </View>
         </View>
 
         <View style={[styles.readout, { top: readoutTop }]} pointerEvents="box-none">
@@ -372,16 +387,13 @@ function AppInner() {
             onValueChange={setNewValue}
             onSave={submitThreshold}
             onDelete={editingId ? () => removeThreshold(editingId) : undefined}
-            onCancel={goBack}
             pushEnabled={pushEnabled}
             pushBusy={pushBusy}
             pushError={pushError}
             onTogglePush={togglePush}
           />
         )}
-        {screen === 'converter' && (
-          <ConverterScreen locale={locale} onBack={goBack} backLabel={d.back} />
-        )}
+        {screen === 'converter' && <ConverterScreen locale={locale} />}
         {screen === 'notifications' && (
           <NotificationsScreen
             d={d}
@@ -391,7 +403,6 @@ function AppInner() {
             pushBusy={pushBusy}
             pushError={pushError}
             onTogglePush={togglePush}
-            onBack={goBack}
           />
         )}
         </SwipeBack>
@@ -405,11 +416,17 @@ const styles = StyleSheet.create({
   vignetteTop: { position: 'absolute', left: 0, right: 0, top: 0, height: 140, backgroundColor: 'rgba(5,11,20,0.35)' },
   vignetteBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 220, backgroundColor: 'rgba(5,11,20,0.55)' },
   overlay: { ...StyleSheet.absoluteFillObject, zIndex: 2 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8 },
+  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8 },
   headerTitle: { fontFamily: FONTS.headingSemiBold, fontSize: 19, color: COLORS.contentPrimary },
   headerSubtitle: { fontFamily: FONTS.body, fontSize: 11, color: COLORS.contentSecondary, marginTop: 1 },
-  bellBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(18,34,54,0.7)' },
-  bellDot: { position: 'absolute', top: 6, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.overflow },
+  headerBackBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
+  headerBackText: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 14 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  circleBtn: {
+    width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(11,22,34,0.55)', borderWidth: 1, borderColor: 'rgba(143,165,179,0.22)',
+  },
+  bellDot: { position: 'absolute', top: 7, right: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.overflow },
   readout: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   readoutLabel: { fontFamily: FONTS.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: COLORS.contentSecondary, marginBottom: 6 },
   readoutValue: {

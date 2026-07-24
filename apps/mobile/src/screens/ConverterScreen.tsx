@@ -3,12 +3,12 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { CONVERTER_CURRENCIES, CONVERTER_PAIRS, dictionaries, fmtNum, parseLocaleNumber, type Locale } from '@tresh/shared';
 import { COLORS, FONTS } from '../lib/theme';
 import { useRates } from '../hooks/useRates';
-import { ChevronDownIcon, ChevronLeftIcon, SwapIcon } from '../components/Icons';
+import { ChevronDownIcon, SwapIcon } from '../components/Icons';
 
 const ALL_CODES = ['USD', ...CONVERTER_CURRENCIES.map((c) => c.code)];
 
 /** Web'in ana sayfasındaki döviz çeviricinin mobil karşılığı. */
-export default function ConverterScreen({ locale, onBack, backLabel }: { locale: Locale; onBack: () => void; backLabel: string }) {
+export default function ConverterScreen({ locale }: { locale: Locale }) {
   const d = dictionaries[locale].landing;
   const { rates } = useRates(CONVERTER_PAIRS);
   const [amount, setAmount] = useState('1');
@@ -39,11 +39,6 @@ export default function ConverterScreen({ locale, onBack, backLabel }: { locale:
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
-      <Pressable style={styles.backBtn} onPress={onBack} hitSlop={10} accessibilityLabel={backLabel}>
-        <ChevronLeftIcon />
-        <Text style={styles.backText}>{backLabel}</Text>
-      </Pressable>
-
       <Text style={styles.label}>{d.converterTitle}</Text>
 
       <View style={styles.field}>
@@ -117,8 +112,6 @@ export default function ConverterScreen({ locale, onBack, backLabel }: { locale:
 
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 16 },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: -6, paddingVertical: 4, marginBottom: 6 },
-  backText: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 14 },
   label: { fontFamily: FONTS.body, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 10 },
   field: {
     flexDirection: 'row', alignItems: 'center', gap: 10,

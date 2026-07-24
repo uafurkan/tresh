@@ -56,6 +56,21 @@ export function BellIcon({ size = 16, color = COLORS.contentSecondary }: IconPro
   );
 }
 
+/** Ev — web'deki HomeButton'ın (üst köşedeki daire) birebir aynısı. */
+export function HomeIcon({ size = 17, color = COLORS.contentSecondary }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 11.5 12 4l8 7.5M6.5 9.8V19a1 1 0 0 0 1 1H10a1 1 0 0 0 1-1v-3.5a1 1 0 0 1 1-1h0a1 1 0 0 1 1 1V19a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1V9.8"
+        stroke={color}
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 /** Döviz çevirici — çift yönlü ok (web: CurrencyConverter takas düğmesi). */
 export function SwapIcon({ size = 15, color = COLORS.contentSecondary }: IconProps) {
   return (

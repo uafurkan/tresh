@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, Tex
 import { CRYPTO_BASES, PAIR_CATALOG, fmtNum, pairKey, parseLocaleNumber, type AppDict, type Locale, type PairDef } from '@tresh/shared';
 import { COLORS, FONTS } from '../lib/theme';
 import ThresholdSlider from '../components/ThresholdSlider';
-import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from '../components/Icons';
+import { ChevronDownIcon, ChevronUpIcon } from '../components/Icons';
 import { checkNow, sendTestPush, type CheckNowResult } from '../lib/push';
 
 interface Props {
@@ -19,7 +19,6 @@ interface Props {
   onValueChange: (v: number | null) => void;
   onSave: () => void;
   onDelete?: () => void;
-  onCancel: () => void;
   pushEnabled: boolean;
   pushBusy: boolean;
   pushError: string | null;
@@ -28,7 +27,7 @@ interface Props {
 
 export default function SetScreen({
   d, locale, isEditing, pairIdx, onSelectPair, dir, onSelectDir, liveRate, value, onValueChange,
-  onSave, onDelete, onCancel, pushEnabled, pushBusy, pushError, onTogglePush,
+  onSave, onDelete, pushEnabled, pushBusy, pushError, onTogglePush,
 }: Props) {
   const [query, setQuery] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -96,13 +95,6 @@ export default function SetScreen({
       keyboardShouldPersistTaps="handled"
       scrollEnabled={!scrollLocked}
     >
-      <View style={styles.headerRow}>
-        <Pressable style={styles.backBtn} onPress={onCancel} hitSlop={10} accessibilityLabel={d.back}>
-          <ChevronLeftIcon />
-          <Text style={styles.backText}>{d.back}</Text>
-        </Pressable>
-      </View>
-
       <Text style={styles.title}>{d.setTitle}</Text>
       <Text style={styles.subtitle}>{isEditing ? d.editSubtitle : d.setSubtitle}</Text>
 
@@ -284,9 +276,6 @@ export default function SetScreen({
 
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 16 },
-  headerRow: { marginBottom: 4 },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: -6, paddingVertical: 4 },
-  backText: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 14 },
   title: { fontFamily: FONTS.headingRegular, fontSize: 24, color: COLORS.contentPrimary, marginTop: 2 },
   subtitle: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.contentSecondary, marginTop: 4, marginBottom: 18, lineHeight: 18 },
   label: { fontFamily: FONTS.body, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 8 },
