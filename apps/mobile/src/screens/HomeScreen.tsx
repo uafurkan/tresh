@@ -9,7 +9,7 @@ import {
   type Locale,
   type Threshold,
 } from '@tresh/shared';
-import { COLORS } from '../lib/theme';
+import { COLORS, FONTS } from '../lib/theme';
 import { CloseIcon, PauseIcon, PlayIcon } from '../components/Icons';
 import type { LiveRate } from '../hooks/useRates';
 
@@ -139,8 +139,8 @@ export default function HomeScreen({ d, locale, thresholds, rates, selectedId, o
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 16, paddingBottom: 12 },
   empty: { alignItems: 'center', paddingTop: 32, paddingHorizontal: 16, paddingBottom: 8 },
-  emptyTitle: { fontSize: 22, fontWeight: '600', color: COLORS.contentPrimary, marginBottom: 8, textAlign: 'center' },
-  emptyBody: { fontSize: 14, lineHeight: 20, color: COLORS.contentSecondary, textAlign: 'center', maxWidth: 280 },
+  emptyTitle: { fontFamily: FONTS.headingSemiBold, fontSize: 22, color: COLORS.contentPrimary, marginBottom: 8, textAlign: 'center' },
+  emptyBody: { fontFamily: FONTS.body, fontSize: 14, lineHeight: 20, color: COLORS.contentSecondary, textAlign: 'center', maxWidth: 280 },
   list: { flex: 1 },
   row: {
     flexDirection: 'row',
@@ -153,11 +153,11 @@ const styles = StyleSheet.create({
   },
   rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 },
   rowTextCol: { flex: 1, minWidth: 0 },
-  pairLabel: { fontSize: 14, color: COLORS.contentPrimary, letterSpacing: 0.3 },
-  pairSub: { fontSize: 12, color: COLORS.contentSecondary, marginTop: 2 },
+  pairLabel: { fontFamily: FONTS.mono, fontSize: 14, color: COLORS.contentPrimary, letterSpacing: 0.3 },
+  pairSub: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.contentSecondary, marginTop: 2 },
   rowRight: { alignItems: 'flex-end' },
-  rowRate: { fontSize: 14 },
-  rowStatus: { fontSize: 11, marginTop: 2 },
+  rowRate: { fontFamily: FONTS.mono, fontSize: 14 },
+  rowStatus: { fontFamily: FONTS.body, fontSize: 11, marginTop: 2 },
   rowActions: { flexDirection: 'column', gap: 6 },
   iconBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
   cta: {
@@ -167,10 +167,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 4,
   },
-  ctaText: { color: '#04121a', fontSize: 16, fontWeight: '700' },
+  ctaText: { fontFamily: FONTS.bodyBold, color: '#04121a', fontSize: 16 },
   secondaryCta: {
     marginTop: 8, paddingVertical: 13, borderRadius: 18, alignItems: 'center',
     borderWidth: 1, borderColor: 'rgba(143,165,179,0.2)', backgroundColor: 'rgba(11,22,34,0.5)',
   },
-  secondaryCtaText: { color: COLORS.contentSecondary, fontSize: 14, fontWeight: '600' },
+  secondaryCtaText: { fontFamily: FONTS.bodySemiBold, color: COLORS.contentSecondary, fontSize: 14 },
 });

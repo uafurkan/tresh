@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { CONVERTER_CURRENCIES, CONVERTER_PAIRS, dictionaries, fmtNum, parseLocaleNumber, type Locale } from '@tresh/shared';
-import { COLORS } from '../lib/theme';
+import { COLORS, FONTS } from '../lib/theme';
 import { useRates } from '../hooks/useRates';
 import { ChevronDownIcon, ChevronLeftIcon, SwapIcon } from '../components/Icons';
 
@@ -118,17 +118,17 @@ export default function ConverterScreen({ locale, onBack, backLabel }: { locale:
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 16 },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: -6, paddingVertical: 4, marginBottom: 6 },
-  backText: { color: COLORS.contentSecondary, fontSize: 14 },
-  label: { fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 10 },
+  backText: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 14 },
+  label: { fontFamily: FONTS.body, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 10 },
   field: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: 'rgba(11,22,34,0.7)', borderWidth: 1, borderColor: 'rgba(143,165,179,0.2)',
     borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12,
   },
-  amountInput: { flex: 1, fontSize: 18, color: COLORS.contentPrimary, padding: 0 },
-  resultText: { flex: 1, fontSize: 18, color: COLORS.contentPrimary },
+  amountInput: { fontFamily: FONTS.mono, flex: 1, fontSize: 18, color: COLORS.contentPrimary, padding: 0 },
+  resultText: { fontFamily: FONTS.mono, flex: 1, fontSize: 18, color: COLORS.contentPrimary },
   codeBtn: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  codeText: { color: COLORS.water, fontSize: 14, fontWeight: '600' },
+  codeText: { fontFamily: FONTS.monoMedium, color: COLORS.water, fontSize: 14 },
   swapBtn: {
     alignSelf: 'center', width: 36, height: 36, borderRadius: 18, marginVertical: 10,
     alignItems: 'center', justifyContent: 'center',
@@ -136,8 +136,8 @@ const styles = StyleSheet.create({
   },
   board: { marginTop: 22, borderTopWidth: 1, borderTopColor: 'rgba(143,165,179,0.12)', paddingTop: 16 },
   boardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 7 },
-  boardCode: { color: COLORS.contentSecondary, fontSize: 14 },
-  boardValue: { color: COLORS.contentPrimary, fontSize: 14 },
+  boardCode: { fontFamily: FONTS.mono, color: COLORS.contentSecondary, fontSize: 14 },
+  boardValue: { fontFamily: FONTS.mono, color: COLORS.contentPrimary, fontSize: 14 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(4,9,14,0.8)', justifyContent: 'center', paddingHorizontal: 40 },
   modalCard: {
     maxHeight: '60%', backgroundColor: '#0B1622', borderRadius: 16,
@@ -145,6 +145,6 @@ const styles = StyleSheet.create({
   },
   modalRow: { paddingVertical: 14, paddingHorizontal: 20 },
   modalRowOn: { backgroundColor: 'rgba(52,227,214,0.1)' },
-  modalRowText: { color: '#EAF3F6', fontSize: 15, textAlign: 'center' },
-  modalRowTextOn: { color: COLORS.water, fontWeight: '600' },
+  modalRowText: { fontFamily: FONTS.mono, color: '#EAF3F6', fontSize: 15, textAlign: 'center' },
+  modalRowTextOn: { fontFamily: FONTS.monoMedium, color: COLORS.water },
 });

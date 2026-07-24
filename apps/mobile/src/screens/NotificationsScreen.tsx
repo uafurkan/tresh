@@ -1,6 +1,6 @@
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import type { AppDict } from '@tresh/shared';
-import { COLORS } from '../lib/theme';
+import { COLORS, FONTS } from '../lib/theme';
 import { ChevronLeftIcon } from '../components/Icons';
 import type { NotifLogEntry } from '../lib/notifLog';
 
@@ -88,21 +88,21 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, marginTop: 8 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   backBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },
-  title: { fontSize: 19, fontWeight: '700', color: COLORS.contentPrimary },
+  title: { fontFamily: FONTS.headingSemiBold, fontSize: 19, color: COLORS.contentPrimary },
   clearBtn: { borderRadius: 10, paddingVertical: 6, paddingHorizontal: 12, backgroundColor: 'rgba(255,150,74,0.08)', borderWidth: 1, borderColor: 'rgba(255,150,74,0.4)' },
-  clearBtnText: { color: COLORS.overflow, fontSize: 12, fontWeight: '600' },
+  clearBtnText: { fontFamily: FONTS.bodySemiBold, color: COLORS.overflow, fontSize: 12 },
   pushCard: { borderRadius: 16, padding: 14, marginBottom: 16, backgroundColor: COLORS.bgRaised },
   pushRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   pushTextCol: { flex: 1 },
-  pushTitle: { color: COLORS.contentPrimary, fontSize: 14, fontWeight: '600' },
-  pushBody: { color: COLORS.contentSecondary, fontSize: 12, marginTop: 2, lineHeight: 16 },
-  pushError: { color: COLORS.overflow, fontSize: 12, marginTop: 8, lineHeight: 16 },
+  pushTitle: { fontFamily: FONTS.bodySemiBold, color: COLORS.contentPrimary, fontSize: 14 },
+  pushBody: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 12, marginTop: 2, lineHeight: 16 },
+  pushError: { fontFamily: FONTS.body, color: COLORS.overflow, fontSize: 12, marginTop: 8, lineHeight: 16 },
   empty: { alignItems: 'center', paddingTop: 24 },
-  emptyTitle: { fontSize: 20, fontWeight: '600', color: COLORS.contentPrimary, marginBottom: 8, textAlign: 'center' },
-  emptyBody: { fontSize: 14, lineHeight: 20, color: COLORS.contentSecondary, textAlign: 'center', maxWidth: 280 },
+  emptyTitle: { fontFamily: FONTS.headingRegular, fontSize: 20, color: COLORS.contentPrimary, marginBottom: 8, textAlign: 'center' },
+  emptyBody: { fontFamily: FONTS.body, fontSize: 14, lineHeight: 20, color: COLORS.contentSecondary, textAlign: 'center', maxWidth: 280 },
   card: { borderRadius: 16, padding: 14, marginBottom: 8, backgroundColor: 'rgba(11,22,34,0.6)', borderWidth: 1, borderColor: 'rgba(143,165,179,0.14)' },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
-  cardTitle: { color: COLORS.contentPrimary, fontSize: 14, flex: 1 },
-  cardTime: { color: COLORS.contentSecondary, fontSize: 11 },
-  cardBody: { color: COLORS.contentSecondary, fontSize: 13, lineHeight: 18, marginTop: 4 },
+  cardTitle: { fontFamily: FONTS.body, color: COLORS.contentPrimary, fontSize: 14, flex: 1 },
+  cardTime: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 11 },
+  cardBody: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 13, lineHeight: 18, marginTop: 4 },
 });

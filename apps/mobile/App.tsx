@@ -1,9 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import * as Localization from 'expo-localization';
+import * as SplashScreen from 'expo-splash-screen';
+import { useFonts as useBricolageFonts, BricolageGrotesque_400Regular, BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque';
+import { useFonts as useMartianFonts, MartianMono_400Regular, MartianMono_500Medium } from '@expo-google-fonts/martian-mono';
+import {
+  useFonts as useHankenFonts,
+  HankenGrotesk_400Regular,
+  HankenGrotesk_500Medium,
+  HankenGrotesk_600SemiBold,
+  HankenGrotesk_700Bold,
+} from '@expo-google-fonts/hanken-grotesk';
 import { CRYPTO_BASES, PAIR_CATALOG, dictionaries, fmtNum, pairKey, tensionOf, type Locale, type Threshold } from '@tresh/shared';
 
-import { COLORS } from './src/lib/theme';
+import { COLORS, FONTS } from './src/lib/theme';
 import { loadThresholds, saveThresholds } from './src/lib/storage';
 import { clearNotifLog, logNotifLocal, readNotifLog, type NotifLogEntry } from './src/lib/notifLog';
 import { useRates } from './src/hooks/useRates';
@@ -33,7 +43,25 @@ function clampPx(min: number, vwPct: number, max: number, width: number): number
 /** Alt panelin ekran yüksekliğine oranı — okuma bloğunun üst sınırı da buna bağlı. */
 const PANEL_HEIGHT_RATIO = 0.66;
 
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
 export default function App() {
+  const [bricolageReady] = useBricolageFonts({ BricolageGrotesque_400Regular, BricolageGrotesque_600SemiBold });
+  const [martianReady] = useMartianFonts({ MartianMono_400Regular, MartianMono_500Medium });
+  const [hankenReady] = useHankenFonts({
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
+  });
+  const fontsReady = bricolageReady && martianReady && hankenReady;
+
+  useEffect(() => {
+    if (fontsReady) SplashScreen.hideAsync().catch(() => {});
+  }, [fontsReady]);
+
+  if (!fontsReady) return null;
+
   return (
     <ErrorBoundary>
       <AppInner />
@@ -378,17 +406,17 @@ const styles = StyleSheet.create({
   vignetteBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 220, backgroundColor: 'rgba(5,11,20,0.55)' },
   overlay: { ...StyleSheet.absoluteFillObject, zIndex: 2 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8 },
-  headerTitle: { fontSize: 19, fontWeight: '600', color: COLORS.contentPrimary },
-  headerSubtitle: { fontSize: 11, color: COLORS.contentSecondary, marginTop: 1 },
+  headerTitle: { fontFamily: FONTS.headingSemiBold, fontSize: 19, color: COLORS.contentPrimary },
+  headerSubtitle: { fontFamily: FONTS.body, fontSize: 11, color: COLORS.contentSecondary, marginTop: 1 },
   bellBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(18,34,54,0.7)' },
   bellDot: { position: 'absolute', top: 6, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.overflow },
   readout: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  readoutLabel: { fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: COLORS.contentSecondary, marginBottom: 6 },
+  readoutLabel: { fontFamily: FONTS.mono, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: COLORS.contentSecondary, marginBottom: 6 },
   readoutValue: {
-    fontWeight: '400', letterSpacing: -1.5, color: COLORS.contentPrimary,
+    fontFamily: FONTS.mono, letterSpacing: -1.5, color: COLORS.contentPrimary,
     textShadowColor: 'rgba(5,11,20,0.9)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 30,
   },
-  readoutToday: { marginTop: 8, fontSize: 13, color: COLORS.contentSecondary, textAlign: 'center' },
+  readoutToday: { fontFamily: FONTS.mono, marginTop: 8, fontSize: 13, color: COLORS.contentSecondary, textAlign: 'center' },
   banner: {
     position: 'absolute', left: 16, right: 16, top: 76, flexDirection: 'row', alignItems: 'flex-start', gap: 10,
     backgroundColor: 'rgba(18,34,54,0.94)', borderWidth: 1, borderColor: 'rgba(255,150,74,0.42)', borderRadius: 16, padding: 14,
@@ -399,8 +427,8 @@ const styles = StyleSheet.create({
     shadowColor: COLORS.overflow, shadowOpacity: 0.6, shadowRadius: 7, shadowOffset: { width: 0, height: 0 },
   },
   bannerTextCol: { flex: 1 },
-  bannerLabel: { color: COLORS.contentSecondary, fontSize: 11, letterSpacing: 0.6, marginBottom: 2 },
-  bannerText: { color: COLORS.contentPrimary, fontSize: 13, lineHeight: 18 },
+  bannerLabel: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 11, letterSpacing: 0.6, marginBottom: 2 },
+  bannerText: { fontFamily: FONTS.body, color: COLORS.contentPrimary, fontSize: 13, lineHeight: 18 },
   bannerCloseBtn: { paddingHorizontal: 4, paddingTop: 3 },
   panel: {
     position: 'absolute', left: 0, right: 0, bottom: 0, height: `${PANEL_HEIGHT_RATIO * 100}%`, zIndex: 3,

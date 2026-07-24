@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { CRYPTO_BASES, PAIR_CATALOG, fmtNum, pairKey, parseLocaleNumber, type AppDict, type Locale, type PairDef } from '@tresh/shared';
-import { COLORS } from '../lib/theme';
+import { COLORS, FONTS } from '../lib/theme';
 import ThresholdSlider from '../components/ThresholdSlider';
 import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from '../components/Icons';
 import { checkNow, sendTestPush, type CheckNowResult } from '../lib/push';
@@ -286,29 +286,29 @@ const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 16 },
   headerRow: { marginBottom: 4 },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: -6, paddingVertical: 4 },
-  backText: { color: COLORS.contentSecondary, fontSize: 14 },
-  title: { fontSize: 24, fontWeight: '600', color: COLORS.contentPrimary, marginTop: 2 },
-  subtitle: { fontSize: 13, color: COLORS.contentSecondary, marginTop: 4, marginBottom: 18, lineHeight: 18 },
-  label: { fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 8 },
+  backText: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 14 },
+  title: { fontFamily: FONTS.headingRegular, fontSize: 24, color: COLORS.contentPrimary, marginTop: 2 },
+  subtitle: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.contentSecondary, marginTop: 4, marginBottom: 18, lineHeight: 18 },
+  label: { fontFamily: FONTS.body, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 8 },
   pairButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: 'rgba(11,22,34,0.5)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(143,165,179,0.16)',
     paddingVertical: 13, paddingHorizontal: 14, marginBottom: 16,
   },
   pairButtonOpen: { borderColor: 'rgba(52,227,214,0.5)' },
-  pairButtonText: { color: '#EAF3F6', fontSize: 15 },
+  pairButtonText: { fontFamily: FONTS.mono, color: '#EAF3F6', fontSize: 15 },
   pickerBox: {
     backgroundColor: '#0B1622', borderRadius: 12, padding: 6, marginTop: -8, marginBottom: 16,
     borderWidth: 1, borderColor: 'rgba(143,165,179,0.2)',
   },
   searchInput: {
-    color: COLORS.contentPrimary, fontSize: 14, paddingVertical: 10, paddingHorizontal: 10,
+    fontFamily: FONTS.mono, color: COLORS.contentPrimary, fontSize: 14, paddingVertical: 10, paddingHorizontal: 10,
     backgroundColor: 'rgba(18,34,54,0.6)', borderRadius: 10, marginBottom: 4,
   },
-  noMatch: { color: COLORS.contentSecondary, fontSize: 13, paddingHorizontal: 14, paddingVertical: 12 },
+  noMatch: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 13, paddingHorizontal: 14, paddingVertical: 12 },
   pickerRow: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8 },
   pickerRowOn: { backgroundColor: 'rgba(52,227,214,0.1)' },
-  pickerRowText: { color: '#EAF3F6', fontSize: 14 },
+  pickerRowText: { fontFamily: FONTS.mono, color: '#EAF3F6', fontSize: 14 },
   pickerRowTextOn: { color: COLORS.water },
   dirRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
   dirBtn: {
@@ -316,41 +316,41 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(11,22,34,0.5)', borderWidth: 1, borderColor: 'rgba(143,165,179,0.16)',
   },
   dirBtnActive: { backgroundColor: 'rgba(52,227,214,0.14)', borderColor: 'rgba(52,227,214,0.5)' },
-  dirBtnText: { color: COLORS.contentSecondary, fontSize: 14 },
+  dirBtnText: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 14 },
   dirBtnTextActive: { color: COLORS.water },
   sliderRow: { flexDirection: 'row', gap: 18, marginBottom: 20 },
   valueCol: { flex: 1, justifyContent: 'center' },
   valueInput: {
-    fontSize: 42, fontWeight: '500', color: COLORS.contentPrimary, padding: 0, lineHeight: 48,
+    fontFamily: FONTS.monoMedium, fontSize: 42, color: COLORS.contentPrimary, padding: 0, lineHeight: 48,
   },
-  helper: { marginTop: 8, fontSize: 13, lineHeight: 18, color: COLORS.contentSecondary },
+  helper: { fontFamily: FONTS.body, marginTop: 8, fontSize: 13, lineHeight: 18, color: COLORS.contentSecondary },
   pushCard: {
     borderRadius: 16, borderWidth: 1, borderColor: 'rgba(143,165,179,0.15)',
     backgroundColor: 'rgba(11,22,34,0.55)', padding: 14, marginBottom: 16,
   },
   pushRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pushTextCol: { flex: 1 },
-  pushTitle: { color: COLORS.contentPrimary, fontSize: 13 },
-  pushBody: { color: COLORS.contentSecondary, fontSize: 11.5, marginTop: 4, lineHeight: 16 },
-  pushError: { color: COLORS.overflow, fontSize: 11.5, marginTop: 8, lineHeight: 16 },
+  pushTitle: { fontFamily: FONTS.body, color: COLORS.contentPrimary, fontSize: 13 },
+  pushBody: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 11.5, marginTop: 4, lineHeight: 16 },
+  pushError: { fontFamily: FONTS.body, color: COLORS.overflow, fontSize: 11.5, marginTop: 8, lineHeight: 16 },
   testRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   testBtn: {
     borderRadius: 8, paddingVertical: 7, paddingHorizontal: 12,
     borderWidth: 1, borderColor: 'rgba(52,227,214,0.4)', backgroundColor: 'rgba(52,227,214,0.08)',
   },
-  testBtnText: { color: COLORS.water, fontSize: 12 },
+  testBtnText: { fontFamily: FONTS.body, color: COLORS.water, fontSize: 12 },
   checkBtn: {
     borderRadius: 8, paddingVertical: 7, paddingHorizontal: 12,
     borderWidth: 1, borderColor: 'rgba(255,150,74,0.4)', backgroundColor: 'rgba(255,150,74,0.08)',
   },
-  checkBtnText: { color: COLORS.overflow, fontSize: 12 },
-  statusText: { width: '100%', fontSize: 11.5, lineHeight: 16 },
+  checkBtnText: { fontFamily: FONTS.body, color: COLORS.overflow, fontSize: 12 },
+  statusText: { fontFamily: FONTS.body, width: '100%', fontSize: 11.5, lineHeight: 16 },
   btnDisabled: { opacity: 0.5 },
   saveBtn: { backgroundColor: COLORS.water, borderRadius: 20, paddingVertical: 16, alignItems: 'center' },
-  saveBtnText: { color: '#04121a', fontSize: 16, fontWeight: '700' },
+  saveBtnText: { fontFamily: FONTS.bodyBold, color: '#04121a', fontSize: 16 },
   deleteBtn: {
     marginTop: 10, paddingVertical: 14, borderRadius: 16, alignItems: 'center',
     backgroundColor: 'rgba(255,150,74,0.1)', borderWidth: 1, borderColor: 'rgba(255,150,74,0.3)',
   },
-  deleteBtnText: { color: COLORS.overflow, fontSize: 14, fontWeight: '600' },
+  deleteBtnText: { fontFamily: FONTS.bodySemiBold, color: COLORS.overflow, fontSize: 14 },
 });

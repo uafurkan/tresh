@@ -36,7 +36,8 @@
           "color": "#34E3D6"
         }
       ],
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      "expo-font"
     ],
     "notification": {
       "iosDisplayInForeground": true
