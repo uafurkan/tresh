@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import * as Localization from 'expo-localization';
-import * as SplashScreen from 'expo-splash-screen';
 import { useFonts as useBricolageFonts, BricolageGrotesque_400Regular, BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque';
 import { useFonts as useMartianFonts, MartianMono_400Regular, MartianMono_500Medium } from '@expo-google-fonts/martian-mono';
 import {
@@ -43,9 +42,19 @@ function clampPx(min: number, vwPct: number, max: number, width: number): number
 /** Alt panelin ekran yüksekliğine oranı — okuma bloğunun üst sınırı da buna bağlı. */
 const PANEL_HEIGHT_RATIO = 0.66;
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
-
 export default function App() {
+  return (
+    <ErrorBoundary>
+      <FontGate />
+    </ErrorBoundary>
+  );
+}
+
+/** Fontlar hazır olana kadar App'i geciktirir — ErrorBoundary'nin
+ *  içinde çalışır ki render sırasında atılan herhangi bir hata (yalnızca
+ *  sonsuz "hazır değil" durumu değil) de artık beyaz ekran yerine
+ *  görünür bir hata mesajına dönüşsün. */
+function FontGate() {
   // DİKKAT: useFonts'un ikinci elemanı (hata) önceden yok sayılıyordu —
   // font yüklemesi herhangi bir sebeple hata verirse `loaded` hiç true
   // olmuyor, "fontsReady" sonsuza dek false kalıyor ve aşağıdaki
@@ -74,17 +83,9 @@ export default function App() {
 
   const ready = fontsReady || timedOut;
 
-  useEffect(() => {
-    if (ready) SplashScreen.hideAsync().catch(() => {});
-  }, [ready]);
-
   if (!ready) return null;
 
-  return (
-    <ErrorBoundary>
-      <AppInner />
-    </ErrorBoundary>
-  );
+  return <AppInner />;
 }
 
 function AppInner() {
