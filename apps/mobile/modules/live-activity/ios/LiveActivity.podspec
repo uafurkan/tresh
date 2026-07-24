@@ -8,7 +8,10 @@ Pod::Spec.new do |s|
   s.summary        = 'Tresh — Dynamic Island / Live Activity köprüsü (JS <-> ActivityKit).'
   s.author         = 'Tresh'
   s.homepage       = 'https://treshapp.vercel.app'
-  s.platforms      = { :ios => '16.1' }
+  # Ana uygulamayla aynı hedef (15.1) — ActivityKit 16.2+ çağrıları Swift
+  # tarafında @available korumalarıyla runtime'da ayrılıyor. Pod'u 16.2'ye
+  # sabitlemek eski iOS'larda framework yüklenmemesine yol açardı.
+  s.platforms      = { :ios => '15.1' }
   s.source         = { git: '' }
   s.static_framework = true
 

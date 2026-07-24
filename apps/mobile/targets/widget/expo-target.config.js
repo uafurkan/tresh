@@ -11,7 +11,7 @@
 module.exports = {
   type: 'widget',
   name: 'TreshWidget',
-  deploymentTarget: '16.1',
+  deploymentTarget: '16.2',
   colors: {
     $accent: '#34E3D6',
   },

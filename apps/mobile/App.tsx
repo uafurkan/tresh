@@ -11,6 +11,7 @@ import { enablePush, syncMobileThresholds } from './src/lib/push';
 import { LiveActivity } from './modules/live-activity';
 import WaterBackground from './src/components/WaterBackground';
 import ErrorBoundary from './src/components/ErrorBoundary';
+import SwipeBack from './src/components/SwipeBack';
 import HomeScreen from './src/screens/HomeScreen';
 import SetScreen from './src/screens/SetScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
@@ -199,6 +200,12 @@ function AppInner() {
   };
 
   const openNotifications = useCallback(() => setScreen('notifications'), []);
+  /** Tek geri dönüş noktası — hem kenardan kaydırma hem de geri butonları bunu çağırır. */
+  const goBack = useCallback(() => {
+    setScreen('home');
+    setEditingId(null);
+    setNewValue(null);
+  }, []);
   const clearAllNotifications = useCallback(() => {
     clearNotifLog();
     setNotifLog([]);
@@ -284,6 +291,7 @@ function AppInner() {
       </SafeAreaView>
 
       <View style={styles.panel}>
+        <SwipeBack enabled={screen !== 'home'} onBack={goBack}>
         {screen === 'home' && (
           <HomeScreen
             d={d}
@@ -312,7 +320,7 @@ function AppInner() {
             onValueChange={setNewValue}
             onSave={submitThreshold}
             onDelete={editingId ? () => removeThreshold(editingId) : undefined}
-            onCancel={() => { setScreen('home'); setEditingId(null); setNewValue(null); }}
+            onCancel={goBack}
           />
         )}
         {screen === 'notifications' && (
@@ -324,8 +332,10 @@ function AppInner() {
             pushBusy={pushBusy}
             pushError={pushError}
             onTogglePush={togglePush}
+            onBack={goBack}
           />
         )}
+        </SwipeBack>
       </View>
     </View>
   );

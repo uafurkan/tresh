@@ -11,9 +11,10 @@ interface Props {
   pushBusy: boolean;
   pushError: string | null;
   onTogglePush: () => void;
+  onBack: () => void;
 }
 
-export default function NotificationsScreen({ d, entries, onClearAll, pushEnabled, pushBusy, pushError, onTogglePush }: Props) {
+export default function NotificationsScreen({ d, entries, onClearAll, pushEnabled, pushBusy, pushError, onTogglePush, onBack }: Props) {
   const relTime = (ts: number) => {
     const diffMin = Math.max(0, Math.round((Date.now() - ts) / 60000));
     if (diffMin < 1) return d.justNow;
@@ -26,7 +27,12 @@ export default function NotificationsScreen({ d, entries, onClearAll, pushEnable
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>{d.notifTitle}</Text>
+        <View style={styles.headerLeft}>
+          <Pressable style={styles.backBtn} onPress={onBack} hitSlop={10} accessibilityLabel={d.back}>
+            <Text style={styles.backGlyph}>‹</Text>
+          </Pressable>
+          <Text style={styles.title}>{d.notifTitle}</Text>
+        </View>
         {entries.length > 0 && (
           <Pressable style={styles.clearBtn} onPress={onClearAll}>
             <Text style={styles.clearBtnText}>{d.clearAll}</Text>
@@ -79,6 +85,9 @@ export default function NotificationsScreen({ d, entries, onClearAll, pushEnable
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, marginTop: 8 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  backBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },
+  backGlyph: { color: COLORS.contentPrimary, fontSize: 30, lineHeight: 32, fontWeight: '300' },
   title: { fontSize: 19, fontWeight: '700', color: COLORS.contentPrimary },
   clearBtn: { borderRadius: 10, paddingVertical: 6, paddingHorizontal: 12, backgroundColor: 'rgba(255,150,74,0.08)', borderWidth: 1, borderColor: 'rgba(255,150,74,0.4)' },
   clearBtnText: { color: COLORS.overflow, fontSize: 12, fontWeight: '600' },
