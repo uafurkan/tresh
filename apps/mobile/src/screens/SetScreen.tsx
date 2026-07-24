@@ -115,19 +115,6 @@ export default function SetScreen({
       </View>
 
       <Text style={styles.label}>{d.thresholdValue}</Text>
-      <Pressable
-        onPress={() => {
-          if (liveRate != null) {
-            onValueChange(liveRate);
-            setTextValue(fmtNum(liveRate, cat.decimals, locale));
-          }
-        }}
-        style={styles.liveRateRow}
-      >
-        <Text style={styles.liveRateLabel}>{liveRate != null ? d.useCurrentRate : d.waitingLive}</Text>
-        <Text style={styles.liveRateValue}>{liveRate != null ? fmtNum(liveRate, cat.decimals, locale) : '· · ·'}</Text>
-      </Pressable>
-
       <View style={styles.stepperRow}>
         <Pressable style={styles.stepBtn} onPress={() => bump(-1)}>
           <Text style={styles.stepBtnText}>–</Text>
@@ -185,13 +172,7 @@ const styles = StyleSheet.create({
   dirBtnActive: { backgroundColor: 'rgba(52,227,214,0.15)', borderColor: 'rgba(52,227,214,0.5)' },
   dirBtnText: { color: COLORS.contentSecondary, fontSize: 14, fontWeight: '600' },
   dirBtnTextActive: { color: COLORS.water },
-  liveRateRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: COLORS.bgRaised, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, marginBottom: 12,
-  },
-  liveRateLabel: { color: COLORS.contentSecondary, fontSize: 13 },
-  liveRateValue: { color: COLORS.water, fontSize: 16, fontWeight: '600' },
-  stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 24 },
+  stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8, marginBottom: 24 },
   stepBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.bgRaised, alignItems: 'center', justifyContent: 'center' },
   stepBtnText: { color: COLORS.contentPrimary, fontSize: 22, fontWeight: '600' },
   valueInput: {
