@@ -208,8 +208,13 @@ function AppInner() {
   // Okuma bloğu, alttaki panelin ARKASINDA kalmamalı — panel ekranın alt
   // %66'sını kaplıyor, dolayısıyla üst sınır panelin üst kenarının bir miktar
   // üstünde tutulur (web'de de aynı "yüzeye tutun ama panele girme" kuralı var).
-  const panelHeightRatio =
+  const rawPanelHeightRatio =
     screen === 'set' ? PANEL_HEIGHT_RATIO_SET : screen === 'notifications' ? PANEL_HEIGHT_RATIO_NOTIFICATIONS : PANEL_HEIGHT_RATIO_HOME;
+  // Panel, üst çubuktaki ana sayfa/zil butonlarının üzerine hiçbir zaman
+  // çıkmamalı — panel zIndex'i header'dan yüksek olduğu için örtüşen
+  // bölgede dokunuşlar butonlara değil panele gider (butonlar "çalışmaz" görünür).
+  const MIN_PANEL_TOP = 128;
+  const panelHeightRatio = Math.min(rawPanelHeightRatio, 1 - MIN_PANEL_TOP / win.height);
   const panelTop = win.height * (1 - PANEL_HEIGHT_RATIO_HOME);
   const readoutMaxTop = Math.max(120, panelTop - 150);
   const readoutTop = onSetScreen ? 84 : Math.max(120, Math.min(surfaceY - 150, readoutMaxTop));
@@ -449,7 +454,7 @@ const styles = StyleSheet.create({
   vignetteTop: { position: 'absolute', left: 0, right: 0, top: 0, height: 140, backgroundColor: 'rgba(5,11,20,0.35)' },
   vignetteBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 220, backgroundColor: 'rgba(5,11,20,0.55)' },
   overlay: { ...StyleSheet.absoluteFillObject, zIndex: 2 },
-  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8 },
+  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, zIndex: 5 },
   headerTitle: { fontFamily: FONTS.headingSemiBold, fontSize: 19, color: COLORS.contentPrimary },
   headerSubtitle: { fontFamily: FONTS.body, fontSize: 11, color: COLORS.contentSecondary, marginTop: 1 },
   headerBackBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
