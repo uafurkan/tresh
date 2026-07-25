@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   },
   panelTint: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(4,9,14,0.5)' },
   panelHighlight: {
-    position: 'absolute', left: 0, right: 0, top: 0, height: 1,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    position: 'absolute', left: 40, right: 40, top: 0, height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 1,
   },
 });
