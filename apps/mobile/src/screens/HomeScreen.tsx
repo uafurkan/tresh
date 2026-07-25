@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   cta: {
     backgroundColor: COLORS.water,
     borderRadius: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
     marginTop: 4,
   },

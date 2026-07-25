@@ -39,8 +39,14 @@ function clampPx(min: number, vwPct: number, max: number, width: number): number
   return Math.min(max, Math.max(min, width * (vwPct / 100)));
 }
 
-/** Alt panelin ekran yüksekliğine oranı — okuma bloğunun üst sınırı da buna bağlı. */
-const PANEL_HEIGHT_RATIO = 0.66;
+/** Alt panelin ekran yüksekliğine oranı — okuma bloğunun üst sınırı da buna bağlı.
+ *  Ana ekranda su seviyesi görselinin görünür kalması için düşük tutulur; "set" ekranı
+ *  üstteki okuma bloğuyla çakışmayacak kadar yüksek, "notifications" ekranında okuma
+ *  bloğu zaten panelin arkasında kaldığından en yüksek orana çıkabilir — amaç, tipik
+ *  içerikte hiçbir ekranın scroll gerektirmemesi. */
+const PANEL_HEIGHT_RATIO_HOME = 0.66;
+const PANEL_HEIGHT_RATIO_SET = 0.76;
+const PANEL_HEIGHT_RATIO_NOTIFICATIONS = 0.86;
 
 export default function App() {
   return (
@@ -202,7 +208,9 @@ function AppInner() {
   // Okuma bloğu, alttaki panelin ARKASINDA kalmamalı — panel ekranın alt
   // %66'sını kaplıyor, dolayısıyla üst sınır panelin üst kenarının bir miktar
   // üstünde tutulur (web'de de aynı "yüzeye tutun ama panele girme" kuralı var).
-  const panelTop = win.height * (1 - PANEL_HEIGHT_RATIO);
+  const panelHeightRatio =
+    screen === 'set' ? PANEL_HEIGHT_RATIO_SET : screen === 'notifications' ? PANEL_HEIGHT_RATIO_NOTIFICATIONS : PANEL_HEIGHT_RATIO_HOME;
+  const panelTop = win.height * (1 - PANEL_HEIGHT_RATIO_HOME);
   const readoutMaxTop = Math.max(120, panelTop - 150);
   const readoutTop = onSetScreen ? 84 : Math.max(120, Math.min(surfaceY - 150, readoutMaxTop));
   const readoutFontSize = onSetScreen ? clampPx(40, 7.5, 76, win.width) : clampPx(44, 8, 86, win.width);
@@ -373,7 +381,7 @@ function AppInner() {
         )}
       </SafeAreaView>
 
-      <View style={styles.panel}>
+      <View style={[styles.panel, { height: `${panelHeightRatio * 100}%` }]}>
         {/* Liquid Glass (iOS 26): kontrol katmanının içeriğin üzerinde
             gerçek bulanıklıkla yüzmesi gerekiyor — Expo Go'da native
             Liquid Glass API'lerine erişim yok (Dynamic Island'daki gibi
@@ -472,7 +480,7 @@ const styles = StyleSheet.create({
   bannerText: { fontFamily: FONTS.body, color: COLORS.contentPrimary, fontSize: 13, lineHeight: 18 },
   bannerCloseBtn: { paddingHorizontal: 4, paddingTop: 3 },
   panel: {
-    position: 'absolute', left: 0, right: 0, bottom: 0, height: `${PANEL_HEIGHT_RATIO * 100}%`, zIndex: 3,
+    position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 3,
     borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', borderBottomWidth: 0,
     paddingTop: 18, paddingBottom: 28,

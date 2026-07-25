@@ -162,7 +162,7 @@ export default function SetScreen({
           onDrag={onSliderDrag}
           onDragStart={() => setScrollLocked(true)}
           onDragEnd={() => setScrollLocked(false)}
-          height={210}
+          height={160}
         />
         <View style={styles.valueCol}>
           <Text style={styles.label}>{d.threshold}</Text>
@@ -276,13 +276,13 @@ export default function SetScreen({
 
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 16 },
-  title: { fontFamily: FONTS.headingRegular, fontSize: 24, color: COLORS.contentPrimary, marginTop: 2 },
-  subtitle: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.contentSecondary, marginTop: 4, marginBottom: 18, lineHeight: 18 },
-  label: { fontFamily: FONTS.body, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 8 },
+  title: { fontFamily: FONTS.headingRegular, fontSize: 22, color: COLORS.contentPrimary, marginTop: 0 },
+  subtitle: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.contentSecondary, marginTop: 2, marginBottom: 12, lineHeight: 18 },
+  label: { fontFamily: FONTS.body, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 6 },
   pairButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: 'rgba(11,22,34,0.5)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(143,165,179,0.16)',
-    paddingVertical: 13, paddingHorizontal: 14, marginBottom: 16,
+    paddingVertical: 11, paddingHorizontal: 14, marginBottom: 12,
   },
   pairButtonOpen: { borderColor: 'rgba(52,227,214,0.5)' },
   pairButtonText: { fontFamily: FONTS.mono, color: '#EAF3F6', fontSize: 15 },
@@ -299,23 +299,23 @@ const styles = StyleSheet.create({
   pickerRowOn: { backgroundColor: 'rgba(52,227,214,0.1)' },
   pickerRowText: { fontFamily: FONTS.mono, color: '#EAF3F6', fontSize: 14 },
   pickerRowTextOn: { color: COLORS.water },
-  dirRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
+  dirRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   dirBtn: {
-    flex: 1, paddingVertical: 13, borderRadius: 12, alignItems: 'center',
+    flex: 1, paddingVertical: 11, borderRadius: 12, alignItems: 'center',
     backgroundColor: 'rgba(11,22,34,0.5)', borderWidth: 1, borderColor: 'rgba(143,165,179,0.16)',
   },
   dirBtnActive: { backgroundColor: 'rgba(52,227,214,0.14)', borderColor: 'rgba(52,227,214,0.5)' },
   dirBtnText: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 14 },
   dirBtnTextActive: { color: COLORS.water },
-  sliderRow: { flexDirection: 'row', gap: 18, marginBottom: 20 },
+  sliderRow: { flexDirection: 'row', gap: 18, marginBottom: 14 },
   valueCol: { flex: 1, justifyContent: 'center' },
   valueInput: {
-    fontFamily: FONTS.monoMedium, fontSize: 42, color: COLORS.contentPrimary, padding: 0, lineHeight: 48,
+    fontFamily: FONTS.monoMedium, fontSize: 38, color: COLORS.contentPrimary, padding: 0, lineHeight: 44,
   },
-  helper: { fontFamily: FONTS.body, marginTop: 8, fontSize: 13, lineHeight: 18, color: COLORS.contentSecondary },
+  helper: { fontFamily: FONTS.body, marginTop: 6, fontSize: 12.5, lineHeight: 17, color: COLORS.contentSecondary },
   pushCard: {
     borderRadius: 16, borderWidth: 1, borderColor: 'rgba(143,165,179,0.15)',
-    backgroundColor: 'rgba(11,22,34,0.55)', padding: 14, marginBottom: 16,
+    backgroundColor: 'rgba(11,22,34,0.55)', padding: 12, marginBottom: 12,
   },
   pushRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pushTextCol: { flex: 1 },
@@ -335,10 +335,10 @@ const styles = StyleSheet.create({
   checkBtnText: { fontFamily: FONTS.body, color: COLORS.overflow, fontSize: 12 },
   statusText: { fontFamily: FONTS.body, width: '100%', fontSize: 11.5, lineHeight: 16 },
   btnDisabled: { opacity: 0.5 },
-  saveBtn: { backgroundColor: COLORS.water, borderRadius: 20, paddingVertical: 16, alignItems: 'center' },
+  saveBtn: { backgroundColor: COLORS.water, borderRadius: 20, paddingVertical: 14, alignItems: 'center' },
   saveBtnText: { fontFamily: FONTS.bodyBold, color: '#04121a', fontSize: 16 },
   deleteBtn: {
-    marginTop: 10, paddingVertical: 14, borderRadius: 16, alignItems: 'center',
+    marginTop: 8, paddingVertical: 12, borderRadius: 16, alignItems: 'center',
     backgroundColor: 'rgba(255,150,74,0.1)', borderWidth: 1, borderColor: 'rgba(255,150,74,0.3)',
   },
   deleteBtnText: { fontFamily: FONTS.bodySemiBold, color: COLORS.overflow, fontSize: 14 },

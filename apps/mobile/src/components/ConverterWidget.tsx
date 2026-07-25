@@ -6,6 +6,8 @@ import { useRates } from '../hooks/useRates';
 import { ChevronDownIcon, SwapIcon } from './Icons';
 
 const ALL_CODES = ['USD', ...CONVERTER_CURRENCIES.map((c) => c.code)];
+/** Ana ekrana gömülü haldeyken tablo tüm listeyi göstermez — scroll'suz sığması için ilk birkaçı yeter. */
+const BOARD_PREVIEW_COUNT = 4;
 
 /**
  * Web'in ana sayfasındaki hızlı çevirici widget'ı — web'de olduğu gibi
@@ -74,7 +76,7 @@ export default function ConverterWidget({ locale }: { locale: Locale }) {
 
       <View style={styles.board}>
         <Text style={styles.label}>{d.boardTitle}</Text>
-        {CONVERTER_CURRENCIES.map((c) => {
+        {CONVERTER_CURRENCIES.slice(0, BOARD_PREVIEW_COUNT).map((c) => {
           const v = usdValueOf[c.code];
           return (
             <View key={c.code} style={styles.boardRow}>
@@ -114,24 +116,24 @@ export default function ConverterWidget({ locale }: { locale: Locale }) {
 }
 
 const styles = StyleSheet.create({
-  root: { marginTop: 22 },
-  label: { fontFamily: FONTS.body, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 10 },
+  root: { marginTop: 16 },
+  label: { fontFamily: FONTS.body, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: COLORS.contentSecondary, marginBottom: 8 },
   field: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: 'rgba(11,22,34,0.7)', borderWidth: 1, borderColor: 'rgba(143,165,179,0.2)',
-    borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12,
+    borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10,
   },
   amountInput: { fontFamily: FONTS.mono, flex: 1, fontSize: 18, color: COLORS.contentPrimary, padding: 0 },
   resultText: { fontFamily: FONTS.mono, flex: 1, fontSize: 18, color: COLORS.contentPrimary },
   codeBtn: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   codeText: { fontFamily: FONTS.monoMedium, color: COLORS.water, fontSize: 14 },
   swapBtn: {
-    alignSelf: 'center', width: 36, height: 36, borderRadius: 18, marginVertical: 10,
+    alignSelf: 'center', width: 32, height: 32, borderRadius: 16, marginVertical: 6,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(11,22,34,0.7)', borderWidth: 1, borderColor: 'rgba(143,165,179,0.2)',
   },
-  board: { marginTop: 22, borderTopWidth: 1, borderTopColor: 'rgba(143,165,179,0.12)', paddingTop: 16 },
-  boardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 7 },
+  board: { marginTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(143,165,179,0.12)', paddingTop: 12 },
+  boardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 5 },
   boardCode: { fontFamily: FONTS.mono, color: COLORS.contentSecondary, fontSize: 14 },
   boardValue: { fontFamily: FONTS.mono, color: COLORS.contentPrimary, fontSize: 14 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(4,9,14,0.8)', justifyContent: 'center', paddingHorizontal: 40 },
