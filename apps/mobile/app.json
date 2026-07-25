@@ -13,7 +13,8 @@
       "supportsTablet": false,
       "infoPlist": {
         "NSSupportsLiveActivities": true,
-        "NSMotionUsageDescription": "Su terazisi efekti için cihazın eğimi kullanılır."
+        "NSMotionUsageDescription": "Su terazisi efekti için cihazın eğimi kullanılır.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
