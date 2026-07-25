@@ -381,6 +381,8 @@ function AppInner() {
         )}
       </SafeAreaView>
 
+      <View pointerEvents="none" style={[styles.panelHighlight, { bottom: `${panelHeightRatio * 100}%`, marginBottom: 4 }]} />
+
       <View style={[styles.panel, { height: `${panelHeightRatio * 100}%` }]}>
         {/* Liquid Glass (iOS 26): kontrol katmanının içeriğin üzerinde
             gerçek bulanıklıkla yüzmesi gerekiyor — Expo Go'da native
@@ -390,7 +392,6 @@ function AppInner() {
             aynı estetiğe olabildiğince yaklaşıyoruz. */}
         <BlurView intensity={42} tint="dark" style={StyleSheet.absoluteFillObject} />
         <View pointerEvents="none" style={styles.panelTint} />
-        <View pointerEvents="none" style={styles.panelHighlight} />
         <SwipeBack enabled={screen !== 'home'} onBack={goBack}>
         {screen === 'home' && (
           <HomeScreen
@@ -487,7 +488,7 @@ const styles = StyleSheet.create({
   },
   panelTint: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(4,9,14,0.5)' },
   panelHighlight: {
-    position: 'absolute', left: 40, right: 40, top: 0, height: StyleSheet.hairlineWidth,
+    position: 'absolute', left: 40, right: 40, zIndex: 4, height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 1,
   },
 });
