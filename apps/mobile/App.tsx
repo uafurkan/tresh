@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   panel: {
     position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 3,
     borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', borderBottomWidth: 0,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', borderBottomWidth: 0, borderTopWidth: 0,
     paddingTop: 18, paddingBottom: 28,
   },
   panelTint: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(4,9,14,0.5)' },
