@@ -77,9 +77,11 @@ App Store taslağıyla aynı kaynak.
 
 Play Store, App Store'dan farklı olarak birkaç ekstra grafik istiyor:
 
-- [ ] **Feature graphic** (1024×500, zorunlu) — mağaza sayfasının en üstünde
-      çıkan banner. Şu an yok, hazırlanması lazım (canvas-design ile
-      oluşturabilirim, istersen şimdi yaparım).
+- [x] **Feature graphic** (1024×500) — `assets/store/feature-graphic.png`
+      olarak hazırlandı: gerçek marka renkleri (#04090E / #34E3D6), gerçek
+      logo tipografisi (Bricolage Grotesque), gerçek tagline ve uygulamanın
+      imza su-seviyesi/eşik görseli — literal ekran görüntüsü değil, marka
+      kimliğinden üretilmiş bir banner.
 - [ ] **Ekran görüntüleri** (en az 2, telefon için) — App Store için
       kullanacağımız 1320×2868 görüntüler Play Store'da da kabul ediliyor
       (min 320px – maks 3840px, 16:9–9:16 arası oran serbest).
