@@ -110,6 +110,11 @@ kullanabiliriz, tek şart: içeriğin App Store'a yüklenecek SON sürümle
 - [ ] Copyright satırındaki isim/şirket adı teyit edilmeli.
 - [ ] SKU önerisi (`tresh-ios-001`) onaylanmalı veya değiştirilmeli.
 - [ ] Taze ekran görüntüleri (madde 4).
+- [ ] **`tresh.vercel.app/privacy` şu an 404 veriyor** (kontrol ettim, kod
+      içinde route var ama canlı deploy'da yok/güncel değil) — Apple hem
+      Privacy Policy URL'i zorunlu tutuyor hem de tıklayıp kontrol ediyor,
+      bu link canlı olmadan başvuru reddedilir. Web app'in yeniden
+      deploy edilmesi gerekiyor.
 
 ## 6. Başvuru öncesi otomatik uygunluk kontrolleri (yapıldı)
 
