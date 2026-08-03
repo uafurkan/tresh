@@ -68,8 +68,8 @@ App Store taslağıyla aynı kaynak.
 - **Kategori**: Finans
 - **İçerik derecelendirmesi**: Play Console'daki anket (IARC) doldurulacak
   — şiddet/hassas içerik yok, muhtemelen "3+ / Everyone" çıkar.
-- **Gizlilik Politikası URL'i**: iOS'takiyle aynı — `tresh.vercel.app`
-  üzerinde canlı bir `/privacy` sayfası olması lazım (madde 5'te not var).
+- **Gizlilik Politikası URL'i**: `https://treshapp.vercel.app/privacy`
+  (canlı, doğrulandı).
 - **İletişim e-postası**: Play Console zorunlu tutuyor, bir destek maili
   gerekiyor.
 
@@ -92,10 +92,8 @@ Play Store, App Store'dan farklı olarak birkaç ekstra grafik istiyor:
 
 ## 5. Eksik / kararlaştırılması gereken
 
-- [ ] `tresh.vercel.app/privacy` şu an 404 veriyor (kontrol ettim) — Play
-      Console gizlilik politikası linkini zorunlu tutuyor, bu link canlı
-      olmadan başvuru tamamlanamaz. Web app'in deploy'unu kontrol etmemiz
-      lazım.
+- [x] ~~Privacy Policy URL canlı değil~~ — yanlış domain test edilmişti,
+      doğrusu `treshapp.vercel.app/privacy`, canlı ve doğrulandı.
 - [ ] Destek e-postası adresi.
 - [ ] Feature graphic tasarımı (madde 4).
 

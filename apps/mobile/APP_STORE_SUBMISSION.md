@@ -53,11 +53,11 @@ toplar. Hesap/ödeme adımı en sona bırakıldı; buradaki her şey o adımdan
   ```
 - **Keywords** (100 karakter, virgülle ayrılmış, boşluksuz):
   `currency,exchange rate,alert,forex,crypto,price alert,usd,try,threshold,notification`
-- **Support URL**: `https://tresh.app/support` (böyle bir sayfa yoksa web
-  app'e eklenmesi lazım — aşağıda not var)
-- **Marketing URL** (opsiyonel): `https://tresh.app`
-- **Privacy Policy URL**: web app'teki mevcut sayfa, örn.
-  `https://tresh.app/en/privacy` (web'in canlı domaini neyse onunla)
+- **Support URL**: `https://treshapp.vercel.app/support` (böyle bir sayfa
+  yoksa web app'e eklenmesi lazım — aşağıda not var)
+- **Marketing URL** (opsiyonel): `https://treshapp.vercel.app`
+- **Privacy Policy URL**: `https://treshapp.vercel.app/privacy` (canlı,
+  doğrulandı — aşağıda TR karşılığı da var)
 
 ### Türkçe (yerelleştirme)
 - **Subtitle**: `Döviz eşik alarmı`
@@ -110,11 +110,10 @@ kullanabiliriz, tek şart: içeriğin App Store'a yüklenecek SON sürümle
 - [ ] Copyright satırındaki isim/şirket adı teyit edilmeli.
 - [ ] SKU önerisi (`tresh-ios-001`) onaylanmalı veya değiştirilmeli.
 - [ ] Taze ekran görüntüleri (madde 4).
-- [ ] **`tresh.vercel.app/privacy` şu an 404 veriyor** (kontrol ettim, kod
-      içinde route var ama canlı deploy'da yok/güncel değil) — Apple hem
-      Privacy Policy URL'i zorunlu tutuyor hem de tıklayıp kontrol ediyor,
-      bu link canlı olmadan başvuru reddedilir. Web app'in yeniden
-      deploy edilmesi gerekiyor.
+- [x] ~~Privacy Policy URL canlı değil~~ — düzeltildi: yanlış domain test
+      edilmişti (`tresh.vercel.app` diye boş bir adres). Doğru domain
+      `treshapp.vercel.app`, `/privacy` ve `/tr/privacy` canlı ve 200
+      dönüyor, doğrulandı.
 
 ## 6. Başvuru öncesi otomatik uygunluk kontrolleri (yapıldı)
 
