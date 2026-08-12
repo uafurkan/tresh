@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
-import { CRYPTO_BASES, PAIR_CATALOG, fmtNum, pairKey, parseLocaleNumber, type AppDict, type Locale, type PairDef } from '@tresh/shared';
+import { PERCENT_STEP_BASES, PAIR_CATALOG, fmtNum, pairKey, parseLocaleNumber, type AppDict, type Locale, type PairDef } from '@tresh/shared';
 import { COLORS, FONTS } from '../lib/theme';
 import ThresholdSlider from '../components/ThresholdSlider';
 import { ChevronDownIcon, ChevronUpIcon } from '../components/Icons';
@@ -37,7 +37,7 @@ export default function SetScreen({
   const cat = PAIR_CATALOG[pairIdx];
   const catKey = pairKey(cat.base, cat.quote);
 
-  const defaultOffset = CRYPTO_BASES.has(cat.base) ? (liveRate ?? 0) * 0.015 : Math.pow(10, -cat.decimals);
+  const defaultOffset = PERCENT_STEP_BASES.has(cat.base) ? (liveRate ?? 0) * 0.015 : Math.pow(10, -cat.decimals);
   const effValue = value ?? (liveRate != null ? liveRate + defaultOffset * (dir === 'above' ? 1 : -1) : null);
   const sliderMin = (liveRate ?? effValue ?? 0) - cat.span / 2;
 

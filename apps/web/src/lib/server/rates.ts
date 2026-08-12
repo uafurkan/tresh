@@ -1,4 +1,7 @@
-import { PAIR_CATALOG, CONVERTER_PAIRS, CRYPTO_BASES, pairKey } from '@tresh/shared';
+import { PAIR_CATALOG, CONVERTER_PAIRS, CRYPTO_BASES, COMMODITY_BASES, pairKey } from '@tresh/shared';
+
+/** Emtia tabanları için Yahoo Finance'in kendi ticker'ları (vadeli işlem, USD bazlı). */
+const COMMODITY_YAHOO_SYMBOLS: Record<string, string> = { XAU: 'GC=F', XAG: 'SI=F' };
 
 export interface RateQuote {
   pair: string;
@@ -27,8 +30,11 @@ async function fetchJson(url: string): Promise<any> {
 
 /** Yahoo Finance — anahtar gerektirmez, gerçek zamanlıya en yakın kaynak. */
 async function fromYahoo(base: string, quote: string): Promise<RateQuote> {
-  // Kripto varlıklar Yahoo'da "BTC-USD" biçiminde, fiat pariteler "EURUSD=X" biçiminde.
-  const sym = CRYPTO_BASES.has(base) ? `${base}-${quote}` : `${base}${quote}=X`;
+  // Kripto varlıklar Yahoo'da "BTC-USD" biçiminde, fiat pariteler "EURUSD=X" biçiminde,
+  // emtialar (altın/gümüş) ise kendi vadeli işlem ticker'ında ve yalnızca USD bazında.
+  const commoditySym = COMMODITY_BASES.has(base) ? COMMODITY_YAHOO_SYMBOLS[base] : null;
+  if (commoditySym && quote !== 'USD') throw new Error('yahoo: commodity only quotes in USD directly');
+  const sym = commoditySym ?? (CRYPTO_BASES.has(base) ? `${base}-${quote}` : `${base}${quote}=X`);
   const data = await fetchJson(
     `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1m&range=1d`
   );
@@ -93,14 +99,17 @@ export async function getRate(base: string, quote: string): Promise<RateQuote> {
 
   // Yahoo (ve diğer sağlayıcılar) BTC/TRY gibi kripto↔fiat-dışı-USD çaprazlarını
   // doğrudan desteklemiyor — önce CoinGecko'dan gerçek BTC/TRY kuru denenir,
-  // o da düşerse BTC-USD × USD-TRY ile sentetik hesaplanır.
-  if (CRYPTO_BASES.has(base) && quote !== 'USD') {
-    try {
-      const q = await fromCoinGecko(base, quote);
-      (q as any).fetchedAt = Date.now();
-      cache.set(key, q);
-      return q;
-    } catch { /* CoinGecko yoksa sentetiğe düş */ }
+  // o da düşerse BTC-USD × USD-TRY ile sentetik hesaplanır. Altın/gümüş için
+  // CoinGecko yok, doğrudan sentetik çapraza düşülür.
+  if ((CRYPTO_BASES.has(base) || COMMODITY_BASES.has(base)) && quote !== 'USD') {
+    if (CRYPTO_BASES.has(base)) {
+      try {
+        const q = await fromCoinGecko(base, quote);
+        (q as any).fetchedAt = Date.now();
+        cache.set(key, q);
+        return q;
+      } catch { /* CoinGecko yoksa sentetiğe düş */ }
+    }
     try {
       const [cryptoUsd, usdQuote] = await Promise.all([getRate(base, 'USD'), getRate('USD', quote)]);
       const q: RateQuote = {

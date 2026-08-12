@@ -11,7 +11,7 @@ import {
   HankenGrotesk_600SemiBold,
   HankenGrotesk_700Bold,
 } from '@expo-google-fonts/hanken-grotesk';
-import { CRYPTO_BASES, PAIR_CATALOG, dictionaries, fmtNum, pairKey, tensionOf, type Locale, type Threshold } from '@tresh/shared';
+import { PERCENT_STEP_BASES, PAIR_CATALOG, dictionaries, fmtNum, pairKey, tensionOf, type Locale, type Threshold } from '@tresh/shared';
 
 import { COLORS, FONTS } from './src/lib/theme';
 import { loadThresholds, saveThresholds } from './src/lib/storage';
@@ -182,7 +182,7 @@ function AppInner() {
 
   const setCat = PAIR_CATALOG[newPairIdx];
   const setLive = rates[pairKey(setCat.base, setCat.quote)]?.rate ?? null;
-  const defaultOffset = CRYPTO_BASES.has(setCat.base) ? (setLive ?? 0) * 0.015 : Math.pow(10, -setCat.decimals);
+  const defaultOffset = PERCENT_STEP_BASES.has(setCat.base) ? (setLive ?? 0) * 0.015 : Math.pow(10, -setCat.decimals);
   const effNewValue = newValue ?? (setLive != null ? setLive + defaultOffset * (newDir === 'above' ? 1 : -1) : null);
 
   const selected = thresholds.find((t) => t.id === selectedId) ?? thresholds[0] ?? null;
