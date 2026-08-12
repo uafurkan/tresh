@@ -62,6 +62,9 @@ export interface AppDict {
   pair: string;
   pairSearchPlaceholder: string;
   pairNoMatch: string;
+  categoryFiat: string;
+  categoryCrypto: string;
+  categoryMetal: string;
   notifyWhen: string;
   dirAbove: string;
   dirBelow: string;
@@ -182,6 +185,9 @@ export const dictionaries: Record<Locale, Dict> = {
       pair: 'Pair',
       pairSearchPlaceholder: 'Search a pair or coin…',
       pairNoMatch: 'No match.',
+      categoryFiat: 'Currencies',
+      categoryCrypto: 'Crypto',
+      categoryMetal: 'Precious metals',
       notifyWhen: 'Notify me when',
       dirAbove: 'If it rises above',
       dirBelow: 'If it falls below',
@@ -309,6 +315,9 @@ export const dictionaries: Record<Locale, Dict> = {
       pair: 'Parite',
       pairSearchPlaceholder: 'Parite veya coin ara…',
       pairNoMatch: 'Eşleşme yok.',
+      categoryFiat: 'Para birimleri',
+      categoryCrypto: 'Kripto',
+      categoryMetal: 'Değerli madenler',
       notifyWhen: 'Haber ver, kur',
       dirAbove: 'Üstüne çıkarsa',
       dirBelow: 'Altına düşerse',

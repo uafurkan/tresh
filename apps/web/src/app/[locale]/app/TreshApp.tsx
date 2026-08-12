@@ -692,6 +692,18 @@ function SetPanel({
     if (!q) return true;
     return `${p.base}/${p.quote}`.toLowerCase().includes(q) || p.base.toLowerCase().includes(q) || p.quote.toLowerCase().includes(q);
   });
+  // Arama sonuçları kategoriye göre gruplanır (Para birimleri / Kripto / Değerli madenler).
+  const pairGroups = useMemo(() => {
+    const order: PairDef['category'][] = [];
+    const byCat = new Map<PairDef['category'], PairDef[]>();
+    for (const p of pairMatches) {
+      if (!byCat.has(p.category)) { byCat.set(p.category, []); order.push(p.category); }
+      byCat.get(p.category)!.push(p);
+    }
+    return order.map((cat) => ({ cat, items: byCat.get(cat)! }));
+  }, [pairMatches]);
+  const categoryLabel = (cat: PairDef['category']) =>
+    cat === 'fiat' ? d.categoryFiat : cat === 'crypto' ? d.categoryCrypto : d.categoryMetal;
 
   // Sürükleme sırasında DOM'a doğrudan yazar — React state'i tetiklemez,
   // böylece her pointermove'da tüm ağacı yeniden render etmeden fareyi
@@ -826,20 +838,27 @@ function SetPanel({
               {pairMatches.length === 0 ? (
                 <div className="px-3.5 py-3 text-[13px] text-content-secondary">{d.pairNoMatch}</div>
               ) : (
-                pairMatches.map((p) => {
-                  const i = PAIR_CATALOG.indexOf(p);
-                  const on = i === newPairIdx;
-                  return (
-                    <button
-                      key={pairKey(p.base, p.quote)}
-                      onClick={() => { onSelectPair(i); setPairSearchOpen(false); }}
-                      className="num block w-full px-3.5 py-3 text-left text-[14px] transition-colors"
-                      style={{ color: on ? '#34E3D6' : '#EAF3F6', background: on ? 'rgba(52,227,214,0.1)' : 'transparent' }}
-                    >
-                      {p.base}/{p.quote}
-                    </button>
-                  );
-                })
+                pairGroups.map(({ cat, items }) => (
+                  <div key={cat}>
+                    <div className="px-3.5 pb-1 pt-3 text-[10.5px] uppercase tracking-[1.2px] text-content-secondary">
+                      {categoryLabel(cat)}
+                    </div>
+                    {items.map((p) => {
+                      const i = PAIR_CATALOG.indexOf(p);
+                      const on = i === newPairIdx;
+                      return (
+                        <button
+                          key={pairKey(p.base, p.quote)}
+                          onClick={() => { onSelectPair(i); setPairSearchOpen(false); }}
+                          className="num block w-full px-3.5 py-3 text-left text-[14px] transition-colors"
+                          style={{ color: on ? '#34E3D6' : '#EAF3F6', background: on ? 'rgba(52,227,214,0.1)' : 'transparent' }}
+                        >
+                          {p.base}/{p.quote}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))
               )}
             </div>
           </>

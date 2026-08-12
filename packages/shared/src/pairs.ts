@@ -1,31 +1,41 @@
+/** Parite gruplandırması: pariteyi seçim listesinde hangi başlık altında göstereceğimiz. */
+export type PairCategory = 'fiat' | 'crypto' | 'metal';
+
 export interface PairDef {
   base: string;
   quote: string;
   decimals: number;
   /** Görsel su aralığı — eşik/su seviyesi bu banda normalize edilir. */
   span: number;
+  category: PairCategory;
 }
 
 export const PAIR_CATALOG: PairDef[] = [
-  { base: 'USD', quote: 'TRY', decimals: 2, span: 1.2 },
-  { base: 'EUR', quote: 'TRY', decimals: 2, span: 1.4 },
-  { base: 'EUR', quote: 'USD', decimals: 4, span: 0.028 },
-  { base: 'GBP', quote: 'USD', decimals: 4, span: 0.03 },
-  { base: 'GBP', quote: 'JPY', decimals: 2, span: 6 },
-  { base: 'USD', quote: 'JPY', decimals: 2, span: 5 },
-  { base: 'BTC', quote: 'USD', decimals: 0, span: 6000 },
-  { base: 'BTC', quote: 'TRY', decimals: 0, span: 300000 },
-  { base: 'XAU', quote: 'USD', decimals: 2, span: 220 },
-  { base: 'XAU', quote: 'TRY', decimals: 0, span: 10000 },
-  { base: 'XAG', quote: 'USD', decimals: 2, span: 3.5 },
-  { base: 'XAG', quote: 'TRY', decimals: 0, span: 160 },
+  { base: 'USD', quote: 'TRY', decimals: 2, span: 1.2, category: 'fiat' },
+  { base: 'EUR', quote: 'TRY', decimals: 2, span: 1.4, category: 'fiat' },
+  { base: 'EUR', quote: 'USD', decimals: 4, span: 0.028, category: 'fiat' },
+  { base: 'GBP', quote: 'USD', decimals: 4, span: 0.03, category: 'fiat' },
+  { base: 'GBP', quote: 'JPY', decimals: 2, span: 6, category: 'fiat' },
+  { base: 'USD', quote: 'JPY', decimals: 2, span: 5, category: 'fiat' },
+  { base: 'BTC', quote: 'USD', decimals: 0, span: 6000, category: 'crypto' },
+  { base: 'BTC', quote: 'TRY', decimals: 0, span: 300000, category: 'crypto' },
+  { base: 'ETH', quote: 'USD', decimals: 0, span: 400, category: 'crypto' },
+  { base: 'ETH', quote: 'TRY', decimals: 0, span: 20000, category: 'crypto' },
+  { base: 'XAU', quote: 'USD', decimals: 2, span: 220, category: 'metal' },
+  { base: 'XAU', quote: 'TRY', decimals: 0, span: 10000, category: 'metal' },
+  { base: 'XAG', quote: 'USD', decimals: 2, span: 3.5, category: 'metal' },
+  { base: 'XAG', quote: 'TRY', decimals: 0, span: 160, category: 'metal' },
+  { base: 'XPT', quote: 'USD', decimals: 2, span: 80, category: 'metal' },
+  { base: 'XPT', quote: 'TRY', decimals: 0, span: 3500, category: 'metal' },
+  { base: 'XPD', quote: 'USD', decimals: 2, span: 90, category: 'metal' },
+  { base: 'XPD', quote: 'TRY', decimals: 0, span: 4000, category: 'metal' },
 ];
 
 /** Yahoo Finance'te "BASE-QUOTE" ticker biçimini kullanan kripto varlıklar. */
 export const CRYPTO_BASES = new Set(['BTC', 'ETH']);
 
-/** Emtia bazlı pariteler (altın, gümüş) — kripto gibi USD üzerinden sentetik çapraz gerektirir. */
-export const COMMODITY_BASES = new Set(['XAU', 'XAG']);
+/** Emtia bazlı pariteler (altın, gümüş, platin, paladyum) — kripto gibi USD üzerinden sentetik çapraz gerektirir. */
+export const COMMODITY_BASES = new Set(['XAU', 'XAG', 'XPT', 'XPD']);
 
 /** Eşik varsayılan adımı yüzdesel hesaplanan (sabit ondalık basamak yerine) tabanlar. */
 export const PERCENT_STEP_BASES = new Set([...CRYPTO_BASES, ...COMMODITY_BASES]);
@@ -50,8 +60,11 @@ export const CONVERTER_CURRENCIES: ConverterCurrency[] = [
   { code: 'AUD', name: 'Australian Dollar', pair: 'AUD/USD', invert: false },
   { code: 'CNY', name: 'Chinese Yuan', pair: 'USD/CNY', invert: true },
   { code: 'BTC', name: 'Bitcoin', pair: 'BTC/USD', invert: false },
+  { code: 'ETH', name: 'Ethereum', pair: 'ETH/USD', invert: false },
   { code: 'XAU', name: 'Gold', pair: 'XAU/USD', invert: false },
   { code: 'XAG', name: 'Silver', pair: 'XAG/USD', invert: false },
+  { code: 'XPT', name: 'Platinum', pair: 'XPT/USD', invert: false },
+  { code: 'XPD', name: 'Palladium', pair: 'XPD/USD', invert: false },
 ];
 
 export const CONVERTER_PAIRS = [...new Set(CONVERTER_CURRENCIES.map((c) => c.pair))];

@@ -1,7 +1,7 @@
 import { PAIR_CATALOG, CONVERTER_PAIRS, CRYPTO_BASES, COMMODITY_BASES, pairKey } from '@tresh/shared';
 
 /** Emtia tabanları için Yahoo Finance'in kendi ticker'ları (vadeli işlem, USD bazlı). */
-const COMMODITY_YAHOO_SYMBOLS: Record<string, string> = { XAU: 'GC=F', XAG: 'SI=F' };
+const COMMODITY_YAHOO_SYMBOLS: Record<string, string> = { XAU: 'GC=F', XAG: 'SI=F', XPT: 'PL=F', XPD: 'PA=F' };
 
 export interface RateQuote {
   pair: string;

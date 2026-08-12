@@ -52,6 +52,21 @@ export default function SetScreen({
     );
   }, [query]);
 
+  // Seçim listesi kategoriye göre gruplanır (Para birimleri / Kripto / Değerli
+  // madenler) — kategori sırası PAIR_CATALOG'un doğal sırasıyla belirlenir.
+  const grouped = useMemo(() => {
+    const order: PairDef['category'][] = [];
+    const byCat = new Map<PairDef['category'], PairDef[]>();
+    for (const p of matches) {
+      if (!byCat.has(p.category)) { byCat.set(p.category, []); order.push(p.category); }
+      byCat.get(p.category)!.push(p);
+    }
+    return order.map((cat) => ({ cat, items: byCat.get(cat)! }));
+  }, [matches]);
+
+  const categoryLabel = (cat: PairDef['category']) =>
+    cat === 'fiat' ? d.categoryFiat : cat === 'crypto' ? d.categoryCrypto : d.categoryMetal;
+
   // Büyük rakam alanı: sürükleme sırasında her karede React state'i güncellemek
   // yerine doğrudan TextInput'a yazılır (web'de de aynı sebeple imperative).
   const valueInputRef = useRef<TextInput>(null);
@@ -113,28 +128,33 @@ export default function SetScreen({
             onChangeText={setQuery}
             autoCapitalize="characters"
           />
-          <ScrollView style={{ maxHeight: 220 }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+          <ScrollView style={{ maxHeight: 260 }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
             {matches.length === 0 ? (
               <Text style={styles.noMatch}>{d.pairNoMatch}</Text>
             ) : (
-              matches.map((p) => {
-                const idx = PAIR_CATALOG.indexOf(p);
-                const on = idx === pairIdx;
-                return (
-                  <Pressable
-                    key={pairKey(p.base, p.quote)}
-                    style={[styles.pickerRow, on && styles.pickerRowOn]}
-                    onPress={() => {
-                      onSelectPair(idx);
-                      onValueChange(null);
-                      setPickerOpen(false);
-                      setQuery('');
-                    }}
-                  >
-                    <Text style={[styles.pickerRowText, on && styles.pickerRowTextOn]}>{p.base}/{p.quote}</Text>
-                  </Pressable>
-                );
-              })
+              grouped.map(({ cat, items }) => (
+                <View key={cat}>
+                  <Text style={styles.categoryLabel}>{categoryLabel(cat)}</Text>
+                  {items.map((p) => {
+                    const idx = PAIR_CATALOG.indexOf(p);
+                    const on = idx === pairIdx;
+                    return (
+                      <Pressable
+                        key={pairKey(p.base, p.quote)}
+                        style={[styles.pickerRow, on && styles.pickerRowOn]}
+                        onPress={() => {
+                          onSelectPair(idx);
+                          onValueChange(null);
+                          setPickerOpen(false);
+                          setQuery('');
+                        }}
+                      >
+                        <Text style={[styles.pickerRowText, on && styles.pickerRowTextOn]}>{p.base}/{p.quote}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ))
             )}
           </ScrollView>
         </View>
@@ -295,6 +315,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(18,34,54,0.6)', borderRadius: 10, marginBottom: 4,
   },
   noMatch: { fontFamily: FONTS.body, color: COLORS.contentSecondary, fontSize: 13, paddingHorizontal: 14, paddingVertical: 12 },
+  categoryLabel: {
+    fontFamily: FONTS.body, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 1.2,
+    color: COLORS.contentSecondary, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4,
+  },
   pickerRow: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8 },
   pickerRowOn: { backgroundColor: 'rgba(52,227,214,0.1)' },
   pickerRowText: { fontFamily: FONTS.mono, color: '#EAF3F6', fontSize: 14 },
