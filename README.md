@@ -1,73 +1,102 @@
 # Tresh
 
-Currency threshold-alert app. Pick a pair (e.g. USD/TRY) and a limit; get a push
-notification the moment the live rate crosses it — even with the app closed.
+**Tresh is an open-source, self-hostable threshold-alert app for exchange rates and market prices.** Pick a pair (for example USD/TRY, BTC/USD, or XAU/USD), choose a level, and get a push notification when the live rate crosses it — without continuously watching a chart.
 
 > *"Tell me when it hits my number, I don't want to babysit charts."*
 
-**Languages:** English is the default (`/`, `/app`); Turkish lives under `/tr`
-(`/tr`, `/tr/app`). Locale routing is handled by `src/middleware.ts`, all UI
-strings live in `src/lib/i18n.ts`, and push notifications are sent in the
-subscriber's language.
+Tresh is designed as both a usable application and a small open-source foundation for reliable rate monitoring: provider fallback, stale-data handling, threshold evaluation, Web Push, localization, and self-hosted deployment.
+
+**Languages:** English is the default (`/`, `/app`); Turkish lives under `/tr` (`/tr`, `/tr/app`). Push notifications follow the subscriber's language.
+
+## Why Tresh
+
+Many market-alert tools are closed services. Tresh aims to keep the core workflow understandable and self-hostable:
+
+- define a market threshold;
+- obtain a rate through a resilient provider chain;
+- make stale/unavailable data explicit;
+- evaluate crossings in the background;
+- deliver a push notification;
+- keep deployment simple enough for an individual developer to operate.
+
+The long-term open-source direction is to make the provider abstraction, threshold engine, and notification logic increasingly reusable outside the main application.
 
 ## Architecture
 
-- **Next.js 14 (App Router) + TypeScript + Tailwind** — SSG landing, client app at `/app`.
-- **Canvas water engine** — `src/components/WaterCanvas.tsx`; a faithful port of the
-  prototype's layered sine-wave engine. No chart library.
-- **Live rates API** — `GET /api/rates?pairs=USD/TRY,EUR/USD`. Always up thanks to a
-  provider chain: **Yahoo Finance** (keyless, near real-time) → **exchangerate.host**
-  (if `RATES_API_KEY` is set) → **open.er-api.com** → **frankfurter.app**. If one source
-  goes down, the next takes over; if all fail, the last reading is served marked stale.
-  The client polls every 15 s; the server keeps a 10 s cache.
-- **Web Push** — VAPID + `public/sw.js`. Subscription + thresholds (+ locale) are stored
-  server-side via `POST /api/push/subscribe`.
-- **Background checks** — `/api/cron/check` fetches rates, detects threshold crossings
-  and sends push notifications (protected by `CRON_SECRET`). On Vercel **Pro** set the
-  cron in `vercel.json` to `* * * * *`; on the **Hobby** plan Vercel crons are limited
-  to daily, so keep the daily cron as a safety net and add a free external pinger
-  (e.g. cron-job.org) that calls the endpoint every minute with an
-  `Authorization: Bearer <CRON_SECRET>` header.
-- **Repository abstraction** — subscriptions persist in Upstash Redis when its REST env
-  vars are set, otherwise in memory (`src/lib/server/store.ts`). The client copy of
-  thresholds lives in `localStorage` (`src/lib/client/storage.ts`) — the interfaces are
-  stable for a later move to Supabase/Postgres.
+- **Next.js + TypeScript + Tailwind** — web application and server-side rate/notification endpoints.
+- **Shared market-pair logic** — reusable pair definitions and threshold behavior across the project.
+- **Live rates API** — rate retrieval uses multiple sources with fallback behavior. If one source is unavailable, another can take over; if fresh data cannot be obtained, stale state is surfaced rather than silently treated as current.
+- **Web Push** — VAPID-based browser notifications.
+- **Background checks** — a protected cron endpoint evaluates threshold crossings and sends notifications.
+- **Repository abstraction** — subscriptions can use persistent backing storage while the interfaces stay isolated from the UI.
+- **Mobile work** — the repository also contains mobile-facing application work sharing the same product model.
 
 ## Setup
 
 ```bash
-pnpm install          # or npm install
+pnpm install
 cp .env.example .env.local
-npm run generate:vapid   # paste the generated keys into .env.local
-pnpm dev              # http://localhost:3000
+pnpm dev
 ```
+
+Depending on the workspace/package you are running, the repository scripts may expose more specific web or mobile commands. See `package.json` and workspace package scripts for the current commands.
 
 ## Environment variables
 
+Common deployment variables include:
+
 | Variable | Required | Description |
 |---|---|---|
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | For push | Generate with `npm run generate:vapid` |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | For push | Same value as the public key |
-| `VAPID_SUBJECT` | No | `mailto:...` contact address |
-| `RATES_API_KEY` | No | exchangerate.host key; the keyless chain works without it |
-| `CRON_SECRET` | In production | Protects the cron route (Vercel sends `Authorization: Bearer` automatically) |
-| `UPSTASH_REDIS_REST_URL` / `..._TOKEN` | Recommended in production | Persistent store for subscriptions |
-| `NEXT_PUBLIC_SITE_URL` | No | Site URL for canonical/OG tags |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | For push | VAPID credentials for Web Push |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | For push | Browser-visible VAPID public key |
+| `VAPID_SUBJECT` | No | Contact subject, usually `mailto:...` |
+| `RATES_API_KEY` | Provider-dependent | Optional key for configured rate providers |
+| `CRON_SECRET` | In production | Protects the background-check endpoint |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Recommended in production | Persistent subscription/threshold storage |
+| `NEXT_PUBLIC_SITE_URL` | No | Canonical public site URL |
 
-## Deploy
+Never commit production credentials.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fuafurkan%2Ftresh&env=VAPID_PUBLIC_KEY,VAPID_PRIVATE_KEY,NEXT_PUBLIC_VAPID_PUBLIC_KEY,CRON_SECRET&project-name=tresh)
+## Self-hosting
 
-1. Connect the repo to Vercel and enter the env vars in the dashboard.
-2. The daily cron in `vercel.json` is set up automatically. For minute-level alerts on the Hobby plan, point cron-job.org (free) at `https://<your-domain>/api/cron/check` every minute with header `Authorization: Bearer <CRON_SECRET>`; on Pro, just change the schedule to `* * * * *`.
-3. Add `UPSTASH_REDIS_REST_URL/TOKEN` for end-to-end push — the in-memory store is
-   not shared across serverless instances.
+Tresh is intended to be deployable by other developers rather than tied to a single hosted instance.
 
-## Prototype
+For a typical deployment:
 
-The binding visual references live in `/prototype` (`Tresh.dc.html` mobile,
-`TreshWeb.dc.html` web).
+1. Fork or clone the repository.
+2. Configure the required environment variables.
+3. Deploy the web application to a compatible Next.js host.
+4. Configure persistent storage for subscriptions/thresholds.
+5. Schedule the protected background-check endpoint at the interval appropriate for your deployment.
+6. Configure VAPID keys if you want Web Push.
+
+Provider availability and host cron limits vary, so deployments should keep fallback and stale-data behavior enabled rather than assuming every external service is continuously available.
+
+## Contributing
+
+Contributions are welcome, especially around:
+
+- provider adapters and fallback reliability;
+- stale-data and failure-state handling;
+- threshold evaluation;
+- notification reliability;
+- accessibility and localization;
+- tests and reproducible bug reports;
+- self-hosting documentation;
+- extracting reusable open-source packages.
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+## Open-source roadmap
+
+Near-term maintenance priorities include:
+
+- stronger automated coverage for provider and threshold edge cases;
+- clearer provider-health and stale-data diagnostics;
+- improved self-hosting documentation;
+- contributor-friendly issues and examples;
+- separating generally useful provider/threshold logic into reusable packages where that improves the public API.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Tresh is released under the [MIT License](LICENSE).
